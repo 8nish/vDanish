@@ -11,7 +11,15 @@
   var ROOT = body.getAttribute('data-root') || '';
   var PAGE = body.getAttribute('data-page') || 'home';
   var POSTS = (window.POSTS || []).slice().sort(function (a, b) { return b.date.localeCompare(a.date) || (b.no || 0) - (a.no || 0); });
-  var SERIES = SITE.series || { lab: { name: 'HOL LOG', page: 'series.html' }, study: { name: 'STUDY LOG', page: 'study-log.html' } };
+  // Clean URLs: GitHub Pages serves /about for about.html, so links never show ".html".
+  // If someone arrives on an old ".html" address, tidy the address bar too.
+  try {
+    var path = location.pathname, clean = path.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+    if (clean !== path) history.replaceState(null, '', clean + location.search + location.hash);
+  } catch (e) {}
+  function url(page) { return (ROOT + (page || '')) || './'; }
+
+  var SERIES = SITE.series || { lab: { name: 'HOL LOG', page: 'series' }, study: { name: 'STUDY LOG', page: 'study-log' } };
   function seriesOf(p) { return p.type === 'study' ? SERIES.study : SERIES.lab; }
   function codeOf(p) { return p.code || (seriesOf(p).name + ' #' + (String(p.no).length === 1 ? '0' + p.no : p.no)); }
 
@@ -23,7 +31,7 @@
   function pad(n) { n = String(n == null ? '' : n); return n.length === 1 ? '0' + n : n; }
   function fmtDate(iso) { var d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
   function topic(t) { return SITE.topics[t] || { label: t.toUpperCase(), color: '#94a3b8', desc: '' }; }
-  function postUrl(p) { return ROOT + 'posts/' + p.slug + '.html'; }
+  function postUrl(p) { return ROOT + 'posts/' + p.slug; }
   function colorOf(p) { return topic(p.tags[0] || '').color; }
   function isNote(p) { return p.type === 'study'; }
   var LABS = POSTS.filter(function (p) { return !isNote(p); });
@@ -53,18 +61,18 @@
   function renderChrome() {
     var current = PAGE === 'post' ? POSTS.filter(function (x) { return x.slug === body.getAttribute('data-slug'); })[0] : null;
     var active = PAGE === 'study' ? 'series' : PAGE === 'post' ? (current && isNote(current) ? 'series' : 'home') : PAGE;
-    var links = [['index.html', 'Articles', 'home'], ['series.html', 'Series', 'series'], ['about.html', 'About', 'about']];
+    var links = [['', 'Articles', 'home'], [SERIES.lab.page, 'Series', 'series'], ['about', 'About', 'about']];
     var h = $('#site-header');
     if (h) {
       h.className = 'site-header';
       h.innerHTML =
         '<nav class="nav" aria-label="Main">' +
-          '<a class="brand" href="' + ROOT + 'index.html" aria-label="vDanish home">' +
+          '<a class="brand" href="' + url() + '" aria-label="vDanish home">' +
             '<img src="' + ROOT + 'assets/logo-mark.svg" alt="" width="30" height="30">' +
             '<span class="word"><em>v</em>DANISH</span>' +
           '</a>' +
           '<div class="links">' + links.map(function (l) {
-            return '<a href="' + ROOT + l[0] + '"' + (l[2] === active ? ' aria-current="page"' : '') + '>' + l[1] + '</a>';
+            return '<a href="' + url(l[0]) + '"' + (l[2] === active ? ' aria-current="page"' : '') + '>' + l[1] + '</a>';
           }).join('') + '</div>' +
           '<button class="theme-toggle" id="themeToggle" type="button">' + ICON.moon + ICON.sun + '</button>' +
         '</nav>';
@@ -75,11 +83,11 @@
       f.innerHTML =
         '<div class="wrap">' +
           '<div class="foot-grid">' +
-            '<div><a class="brand" href="' + ROOT + 'index.html"><img src="' + ROOT + 'assets/logo-mark.svg" alt="" width="30" height="30"><span class="word"><em>v</em>DANISH</span></a>' +
+            '<div><a class="brand" href="' + url() + '"><img src="' + ROOT + 'assets/logo-mark.svg" alt="" width="30" height="30"><span class="word"><em>v</em>DANISH</span></a>' +
             '<p>Lab notes on VMware Cloud Foundation, NSX and vSphere, written while working through the Broadcom Hands-on Labs one at a time.</p></div>' +
             '<div class="foot-links">' +
-              '<div><b>SITE</b><a href="' + ROOT + 'index.html">Articles</a><a href="' + ROOT + 'about.html">About</a></div>' +
-              '<div><b>SERIES</b><a href="' + ROOT + SERIES.lab.page + '">' + esc(SERIES.lab.name) + '</a><a href="' + ROOT + SERIES.study.page + '">' + esc(SERIES.study.name) + '</a></div>' +
+              '<div><b>SITE</b><a href="' + url() + '">Articles</a><a href="' + url('about') + '">About</a></div>' +
+              '<div><b>SERIES</b><a href="' + url(SERIES.lab.page) + '">' + esc(SERIES.lab.name) + '</a><a href="' + url(SERIES.study.page) + '">' + esc(SERIES.study.name) + '</a></div>' +
               '<div><b>LINKS</b><a href="' + esc(SITE.catalogUrl) + '" target="_blank" rel="noopener noreferrer">Lab catalog ↗</a>' + (SITE.linkedin ? '<a href="' + esc(SITE.linkedin) + '" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>' : '') + '</div>' +
             '</div>' +
           '</div>' +
@@ -207,7 +215,7 @@
     // author strip
     $('#authorStrip').innerHTML = '<span class="hexav" aria-hidden="true">' + esc(SITE.initials) + '</span>' +
       '<div><b>Written by ' + esc(SITE.author) + '</b><small>CCIE at 20 · 3× VCAP · 4× VCP · VMware Cloud Foundation &amp; NSX</small></div>' +
-      '<a href="' + ROOT + 'about.html">About me ' + ICON.arrow + '</a>';
+      '<a href="' + url('about') + '">About me ' + ICON.arrow + '</a>';
     animateRings();
   }
 
@@ -393,12 +401,12 @@
     $('#postHead').innerHTML =
       '<div class="wrap">' +
         (isNote(p) ? '<a class="back" href="' + ROOT + SERIES.study.page + '">← all ' + esc(SERIES.study.name.toLowerCase()) + ' entries</a>'
-                   : '<a class="back" href="' + ROOT + 'index.html#labs">← all lab notes</a>') +
+                   : '<a class="back" href="' + url() + '#labs">← all lab notes</a>') +
         '<div class="post-tags" style="--c:' + colorOf(p) + '"><span class="code">' + esc(codeOf(p)) + '</span>' + statusHTML(p) + chips(p) + '</div>' +
         '<h1>' + esc(p.title) + '</h1>' +
         '<p class="lead">' + esc(p.excerpt) + '</p>' +
         '<div class="byline"><span class="hexav" aria-hidden="true">' + esc(SITE.initials) + '</span>' +
-          '<a href="' + ROOT + 'about.html">' + esc(SITE.author) + '</a>' +
+          '<a href="' + url('about') + '">' + esc(SITE.author) + '</a>' +
           '<span>' + esc(p.dateLabel || fmtDate(p.date)) + '</span><span>' + p.read + ' min read</span><span>' + esc(seriesOf(p).name) + ' · #' + esc(pad(p.no)) + '</span></div>' +
       '</div>';
 

@@ -1,7 +1,8 @@
 /* =============================================================
    Site settings + the list of entries.
    To publish a new entry:
-     1. Copy any file in /posts, rename it to <slug>.html, set
+     1. Copy any file in /posts, rename it to <slug>.html (the site links
+        to it without the .html, e.g. /posts/<slug>), set
         data-slug on its <body> and paste the article HTML into
         the <div class="prose" id="postBody"> block.
      2. Add one entry to POSTS below with the same slug.
@@ -15,8 +16,8 @@ window.SITE = {
   catalogUrl: 'https://labs.hol.vmware.com/HOL/catalog',
   catalogTarget: 60,           // Hands-on Labs you aim to finish in HOL LOG
   series: {                    // the two series: labs and study notes
-    lab:   { name: 'HOL LOG',   page: 'series.html' },
-    study: { name: 'STUDY LOG', page: 'study-log.html' }
+    lab:   { name: 'HOL LOG',   page: 'series' },
+    study: { name: 'STUDY LOG', page: 'study-log' }
   },
   topics: {                    // key used in "tags" → label and accent colour
     vcf:        { label: 'VCF',        color: '#a78bfa' },
