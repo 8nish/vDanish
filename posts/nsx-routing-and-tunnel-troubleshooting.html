@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Troubleshooting NSX Routing and Tunnels · vDanish Lab Notes</title>
+<meta name="description" content="Traceflow, routing tables and vmkping for NSX routing and TEP tunnel problems.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="nsx-routing-and-tunnel-troubleshooting">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>Building a Tier-1 for VM-to-VM traffic, connecting it to a Tier-0 for the outside world, and then fixing it when it didn't work.</p>
+
+          <h2>Goals</h2>
+          <ul class="checks">
+            <li>Understand how Tier-1 and Tier-0 connect VMs to each other and to outside networks</li>
+            <li>Learn ways to troubleshoot routing and tunnels in NSX</li>
+          </ul>
+
+          <h2>What I covered</h2>
+          <ul>
+            <li>Set up a Tier-1 for VM-to-VM traffic and connected it to a Tier-0 for external access.</li>
+            <li>Used Traceflow, ping, routing tables and alarms to find problems.</li>
+            <li>Scenario: no external access because the Tier-1 wasn't advertising its networks and the Tier-0 wasn't passing them to the physical router.</li>
+            <li>Drew my own troubleshooting flowcharts for east-west and north-south routing.</li>
+          </ul>
+
+          <h2>Lessons learned</h2>
+          <ul>
+            <li>A VM can ping its gateway and still fail to reach a VM on another host if the tunnel between the hosts is down.</li>
+            <li>A configured route is not necessarily an active route.</li>
+            <li>For external access, Tier-1 must advertise its networks and Tier-0 must share them with the physical router.</li>
+          </ul>
+
+          <h2>Testing TEPs and MTU with vmkping</h2>
+<pre data-lang="esx shell"><code># Can this host's TEP reach the other host's TEP?
+vmkping ++netstack=vxlan &lt;TEP-IP&gt;
+
+# Can a full 1600-byte packet get through without fragmenting?
+vmkping ++netstack=vxlan -d -s 1572 &lt;TEP-IP&gt;</code></pre>
+          <p>For the payload size, subtract 28 bytes from the MTU you want to test: 20 for the IP header and 8 for ICMP. <code>-d</code> stops fragmentation, so the test only passes if the whole packet fits.</p>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More entries"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the log</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSX Federation and Firewall Day-2 Operations · vDanish Lab Notes</title>
+<meta name="description" content="NSX Federation Global and Local Managers, sync, Tier-0 options and RTEP versus TEP.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="nsx-federation-and-firewall-day-2">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>Multi-site NSX with Federation, plus a firewall troubleshooting flowchart and day-2 operations.</p>
+
+          <h2>Goals</h2>
+          <ul class="checks">
+            <li>Strengthen Federation and multi-site concepts</li>
+            <li>Build a DFW and Gateway Firewall troubleshooting flowchart</li>
+            <li>Cover day-2 operations of firewalls</li>
+          </ul>
+
+          <h2>What I covered</h2>
+          <ul>
+            <li>Global Manager clusters, active and standby in two locations.</li>
+            <li>Sync: GM to LM through the async replicator, and LM to LM through APH.</li>
+            <li>Objects created on the GM are read-only on LMs; ownership can move from LM to GM.</li>
+            <li>RTT recommendations, Tier-0 and Tier-1 span, and Tier-0 primary and secondary locations.</li>
+            <li>RTEPs on edge nodes. Started URL filtering and FQDN analysis, to revisit.</li>
+          </ul>
+
+          <h2>Lessons learned</h2>
+          <ul>
+            <li>RTEP supports fragmentation and TEP doesn't, so RTEP works at 1500 MTU (though it isn't recommended).</li>
+            <li>The packet walk from location A to location B.</li>
+            <li>Do most of the configuration on the Global Manager, not the Local Managers.</li>
+          </ul>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More entries"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the log</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

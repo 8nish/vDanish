@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vCenter Troubleshooting and vDefend Firewall Basics · vDanish Lab Notes</title>
+<meta name="description" content="vMotion, HA and DRS refresher, ESX connection issues, and Distributed Firewall building blocks.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="vcenter-troubleshooting-and-vdefend-dfw">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>A vCenter refresher in the morning, the building blocks of the vDefend firewall after that.</p>
+
+          <h2>Goals</h2>
+          <ul class="checks">
+            <li>Strengthen vCenter troubleshooting</li>
+            <li>Cover vDefend topics such as the Distributed and Gateway Firewall</li>
+          </ul>
+
+          <h2>What I covered</h2>
+          <ul>
+            <li>vMotion, HA and DRS, and common issues like ESX not responding to vCenter.</li>
+            <li>Added remediations to my NSX east-west and north-south troubleshooting flowchart.</li>
+            <li>Firewall concepts: policies, rules, groups, services and context profiles.</li>
+            <li>Policy settings (TCP strict, locked, stateful), time-based policies and identity firewall.</li>
+            <li>Blocking known malicious IPs with the built-in threat feed.</li>
+          </ul>
+
+          <h2>Lessons learned</h2>
+          <ul>
+            <li>The order of the DFW policy categories (below).</li>
+            <li>Context profile attributes such as App ID, custom URL and FQDN.</li>
+            <li>A DFW troubleshooting flowchart with remediations.</li>
+          </ul>
+
+          <h2>DFW categories, in order</h2>
+          <ol>
+            <li>Ethernet</li>
+            <li>Emergency</li>
+            <li>Infrastructure</li>
+            <li>Environment</li>
+            <li>Application</li>
+          </ol>
+          <div class="callout tip"><b>Time-based rules</b>They depend on accurate time, so NTP is critical.</div>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More entries"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the log</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

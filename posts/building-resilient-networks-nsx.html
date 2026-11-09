@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building Resilient Networks with VMware NSX · vDanish Lab Notes</title>
+<meta name="description" content="Distributed and centralized transit gateways, a three-tier app on VPCs, and delegating networking to tenants with projects, quotas and roles.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="building-resilient-networks-nsx">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>This lab is about how networking gets consumed in VCF 9: which kind of connectivity to give your VPCs, how to build an app on them, and how to hand day-to-day networking to project admins while quotas keep things under control. It has three modules, and I took a screenshot at almost every step. Click any photo to see it full screen.</p>
+
+          <h2>Lab topology</h2>
+
+          <p>By the end of Module 2, this is what the lab builds: a web VM in <strong>Corp-VPC</strong>, and app and database VMs in <strong>Shared SVC - VPC</strong>, each on a different kind of subnet, all behind one transit gateway.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/1.png" alt="Lab topology: Corp-VPC and Shared SVC - VPC behind a transit gateway, with the main console on 10.1.10.128/25." width="730" height="634" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 1</span>Lab topology: Corp-VPC and Shared SVC - VPC behind a transit gateway, with the main console on 10.1.10.128/25.</figcaption>
+          </figure>
+
+          <h2>Module 1: Network connectivity types</h2>
+
+          <p>A VPC reaches the physical network through a <strong>transit gateway (TGW)</strong>. VCF 9 gives you two ways to build it, and the lab sets up both on the same site.</p>
+
+          <table>
+            <thead><tr><th></th><th>Distributed TGW</th><th>Centralized TGW</th></tr></thead>
+            <tbody>
+              <tr><td>Where routing happens</td><td>On every ESX host</td><td>On NSX Edge nodes</td></tr>
+              <tr><td>Edge nodes needed</td><td>No</td><td>Yes, an edge cluster</td></tr>
+              <tr><td>Physical network needs</td><td>The external VLAN on every host</td><td>BGP (or static) routing to the ToR switches</td></tr>
+              <tr><td>Good for</td><td>Simple, fast setup</td><td>Stateful services such as NAT on the edges</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Distributed transit gateway</h3>
+
+          <p>I configured the site's transit gateway as distributed: external traffic leaves on a VLAN straight from the hosts, so there are no edges in the path.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/2.png" alt="Review and deploy: VLAN 30 for external connectivity, plus the external and private TGW IP blocks." width="1052" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>Review and deploy: VLAN 30 for external connectivity, plus the external and private TGW IP blocks.</figcaption>
+          </figure>
+
+          <p>IP block values:</p>
+
+          <ul>
+            <li><code>VPC_Ext_Block</code>: 10.1.21.0/25</li>
+            <li><code>Priv_VPC_TGW_Block</code>: 10.1.19.128/26</li>
+          </ul>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/3.png" alt="Status validation: the Default Transit Gateway is up in Distributed mode on distributed-vlan-connection-30." width="1302" height="236" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 3</span>Status validation: the Default Transit Gateway is up in Distributed mode on distributed-vlan-connection-30.</figcaption>
+          </figure>
+
+          <p>To try the centralized option on the same site, the distributed setup has to go first. The lab provides a pre-written script that removes it from the CLI in three steps: disconnect the TGW attachments, clear the IP blocks from the VPC connectivity profile, and delete the distributed VLAN connection.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/4.png" alt="Removing the distributed TGW from the CLI with the lab&#x27;s Disconnect-TGW script." width="852" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 4</span>Removing the distributed TGW from the CLI with the lab's Disconnect-TGW script.</figcaption>
+          </figure>
+
+          <h3>Centralized transit gateway</h3>
+
+          <p>A centralized TGW sends north-south traffic through NSX Edge nodes, so it has a longer list of prerequisites.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/5.png" alt="Prerequisites for a centralized transit gateway." width="980" height="582" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>Prerequisites for a centralized transit gateway.</figcaption>
+          </figure>
+
+          <p>The ones that matter most: plan an Edge TEP VLAN (the host TEP VLAN can be reused), make sure the cluster can fit at least two edge nodes (they reserve 100% of their memory), have two BGP peers ready on the ToR switches, and use external IP blocks that don't overlap with management, uplink or Edge TEP subnets.</p>
+
+          <p><strong>Edge configuration.</strong> A centralized gateway needs an edge cluster to host it, so I configured a two-node edge cluster.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/6.png" alt="Edge cluster settings for the centralized gateway." width="1110" height="402" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 6</span>Edge cluster settings for the centralized gateway.</figcaption>
+          </figure>
+
+          <p>Uplinks for <code>edge-mgmt-01a</code>, with the BGP configuration:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/7.png" alt="edge-mgmt-01a uplinks and BGP peering." width="1551" height="616" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 7</span>edge-mgmt-01a uplinks and BGP peering.</figcaption>
+          </figure>
+
+          <div class="callout tip"><b>BGP checklist</b>Both peering routers need connectivity to each other. If there's a firewall in between, TCP 179 must be open. And the BGP values (ASN, neighbor IP, password) must match on both sides.</div>
+
+          <p>Edge uplink 2 is optional, but recommended for redundancy. Then the uplink for <code>edge-mgmt-02a</code>; the BGP ASN and password are pre-populated.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/8.png" alt="edge-mgmt-02a uplink." width="774" height="616" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 8</span>edge-mgmt-02a uplink.</figcaption>
+          </figure>
+
+          <p>IP blocks:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/9.png" alt="IP blocks for the centralized transit gateway." width="1050" height="452" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 9</span>IP blocks for the centralized transit gateway.</figcaption>
+          </figure>
+
+          <ul>
+            <li>VPC external IP block: 10.11.0.0/24</li>
+            <li>Private - TGW IP block: 192.168.4.0/24</li>
+          </ul>
+
+          <p>Review and deploy:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/10.png" alt="Review and deploy: the two edge nodes, their uplinks to the ToR switches and the overlay/VLAN networks." width="754" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 10</span>Review and deploy: the two edge nodes, their uplinks to the ToR switches and the overlay/VLAN networks.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Tip</b>This deployment takes about 15 minutes. Move on to Module 2 and come back to check it.</div>
+
+          <h2>Module 2: A three-tier app on VPCs</h2>
+
+          <p>Each tier goes on a different <strong>subnet type</strong>, and the subnet type is what decides who can reach it:</p>
+
+          <table>
+            <thead><tr><th>Subnet type</th><th>Reachable from</th><th>Used for</th></tr></thead>
+            <tbody>
+              <tr><td>Public</td><td>Outside the VPC, through the TGW, without NAT</td><td>Web-Subnet-Public</td></tr>
+              <tr><td>Private - TGW</td><td>Other VPCs through the transit gateway; outside only with NAT</td><td>App-Subnet-TGW</td></tr>
+              <tr><td>Private - VPC</td><td>Only from inside its own VPC</td><td>DB-Subnet-Private</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Create the VPCs</h3>
+
+          <p>Logged in to vCenter and created a VPC:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/11.png" alt="Virtual Private Clouds &gt; Actions &gt; New VPC." width="1174" height="374" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>Virtual Private Clouds &gt; Actions &gt; New VPC.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/12.png" alt="Creating Corp-VPC." width="758" height="584" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 12</span>Creating Corp-VPC.</figcaption>
+          </figure>
+
+          <p>Then a second VPC, <strong>Shared SVC - VPC</strong>, with the private VPC IP CIDR <code>192.168.2.0/24</code>.</p>
+
+          <h3>Create the subnets</h3>
+
+          <p>Created a public subnet for the web tier in Corp-VPC:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/13.png" alt="Corp-VPC &gt; Actions &gt; New Subnet." width="1158" height="518" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 13</span>Corp-VPC &gt; Actions &gt; New Subnet.</figcaption>
+          </figure>
+
+          <p>This subnet also acts as a DHCP server for the workloads attached to it, so the web VMs get their addresses automatically.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/14.png" alt="Web-Subnet-Public: Public access mode, auto-allocated /29 from the IP block, DHCP server enabled." width="1069" height="610" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 14</span>Web-Subnet-Public: Public access mode, auto-allocated /29 from the IP block, DHCP server enabled.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/15.png" alt="Validating the Web-Subnet-Public settings before finishing." width="1064" height="610" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 15</span>Validating the Web-Subnet-Public settings before finishing.</figcaption>
+          </figure>
+
+          <p>Next, a <strong>Private - TGW</strong> subnet for the app tier, in Shared SVC - VPC:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/16.png" alt="Creating App-Subnet-TGW in Shared SVC - VPC." width="1066" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 16</span>Creating App-Subnet-TGW in Shared SVC - VPC.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/17.png" alt="Validation of App-Subnet-TGW." width="1070" height="610" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 17</span>Validation of App-Subnet-TGW.</figcaption>
+          </figure>
+
+          <p>Then a <strong>Private - VPC</strong> subnet in Shared SVC - VPC for the database:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/18.png" alt="Creating DB-Subnet-Private in Shared SVC - VPC." width="1072" height="610" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 18</span>Creating DB-Subnet-Private in Shared SVC - VPC.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/19.png" alt="Validation of DB-Subnet-Private." width="1068" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 19</span>Validation of DB-Subnet-Private.</figcaption>
+          </figure>
+
+          <p>All three subnets in place:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/20.png" alt="The three subnets created across the two VPCs." width="450" height="576" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 20</span>The three subnets created across the two VPCs.</figcaption>
+          </figure>
+
+          <h3>Attach the VMs</h3>
+
+          <p>Connected the web VMs to their subnet:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/21.png" alt="Connecting the web VMs to Web-Subnet-Public." width="1052" height="596" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 21</span>Connecting the web VMs to Web-Subnet-Public.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/22.png" alt="Selecting both web VMs." width="1224" height="662" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 22</span>Selecting both web VMs.</figcaption>
+          </figure>
+
+          <p>Then the app and DB VMs to their subnets. Another way to do this is through each VM's own settings.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/23.png" alt="Connecting app-01a to App-Subnet-TGW." width="1226" height="660" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 23</span>Connecting app-01a to App-Subnet-TGW.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/24.png" alt="Connecting db-01a to DB-Subnet-Private." width="1224" height="656" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 24</span>Connecting db-01a to DB-Subnet-Private.</figcaption>
+            </figure>
+          </div>
+
+          <p>The topology view confirms it, though it's a bit hard to read at the lab's screen resolution.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/25.png" alt="VPC topology in vCenter." width="1362" height="468" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 25</span>VPC topology in vCenter.</figcaption>
+          </figure>
+
+          <h3>Give the app server an external IP</h3>
+
+          <p>App-Subnet-TGW is private, so nothing outside the VPCs can reach app-01a directly. Assigning it an <strong>external IP</strong> sets up NAT, which gives it an address that is reachable from outside.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/26.png" alt="Assigning an external IP to app-01a on App-Subnet-TGW." width="778" height="598" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 26</span>Assigning an external IP to app-01a on App-Subnet-TGW.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/27.png" alt="External IP assignment settings." width="1148" height="516" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 27</span>External IP assignment settings.</figcaption>
+            </figure>
+          </div>
+
+          <p>app-01a now has two addresses: its internal IP and the external NAT IP.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/28.png" alt="app-01a with both an internal and an external IP." width="1268" height="126" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 28</span>app-01a with both an internal and an external IP.</figcaption>
+          </figure>
+
+          <h3>Test connectivity</h3>
+
+          <p><strong>From the main console:</strong> web-01a and app-01a answer, but db-01a doesn't. The Private - VPC subnet can't be reached from anything outside its VPC.</p>
+
+<pre data-lang="bash"><code>ping -c 2 web-01a.site-a.vcf.lab
+ping -c 2 app-01a.site-a.vcf.lab
+ping -c 2 192.168.2.3</code></pre>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/29.png" alt="From the main console: web-01a and app-01a reply, db-01a (192.168.2.3) doesn&#x27;t." width="922" height="654" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 29</span>From the main console: web-01a and app-01a reply, db-01a (192.168.2.3) doesn't.</figcaption>
+          </figure>
+
+          <p><strong>From web-01a</strong> (over SSH):</p>
+
+          <ul>
+            <li><code>ping -c 2 172.31.0.179</code>: app-01a's internal IP <strong>is reachable</strong>. Its transit subnet allows traffic between VPCs in the same private cloud. The main console can't reach this IP; it used app-01a's external NAT address instead.</li>
+            <li><code>ping -c 2 192.168.2.3</code>: db-01a <strong>is not reachable</strong>. It sits on a Private - VPC subnet in a different VPC.</li>
+          </ul>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/30.png" alt="From web-01a: app-01a&#x27;s internal IP replies, db-01a doesn&#x27;t." width="864" height="646" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 30</span>From web-01a: app-01a's internal IP replies, db-01a doesn't.</figcaption>
+          </figure>
+
+          <p><strong>From app-01a</strong> (over SSH), all three succeed:</p>
+
+          <ul>
+            <li><code>web-01a</code>: the Private - TGW subnet reaches web-01a in the other VPC.</li>
+            <li><code>db-01a</code>: both subnets are in the same VPC.</li>
+            <li><code>10.1.10.130</code>: the main console, outside the VPC, through app-01a's external NAT address.</li>
+          </ul>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/31.png" alt="From app-01a: web-01a, db-01a and the main console all reply." width="866" height="644" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 31</span>From app-01a: web-01a, db-01a and the main console all reply.</figcaption>
+          </figure>
+
+          <table>
+            <thead><tr><th>From</th><th>To</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>Main console</td><td>web-01a / app-01a</td><td>✓ reachable</td></tr>
+              <tr><td>Main console</td><td>db-01a</td><td>✗ blocked</td></tr>
+              <tr><td>web-01a</td><td>app-01a (internal IP)</td><td>✓ reachable</td></tr>
+              <tr><td>web-01a</td><td>db-01a</td><td>✗ blocked</td></tr>
+              <tr><td>app-01a</td><td>web-01a, db-01a, main console</td><td>✓ reachable</td></tr>
+            </tbody>
+          </table>
+
+          <h2>Module 3: Cloud networking with projects and roles</h2>
+
+          <p>The last module is about acting as the cloud network admin: build the shared pieces once, then hand each tenant a <strong>project</strong> with its own connectivity, IP blocks, quotas and admin, so they can run their own VPCs.</p>
+
+          <h3>Build a VNA cluster</h3>
+
+          <p>A <strong>Virtual Network Appliance (VNA) cluster</strong> adds services such as stateful NAT, load balancing and DNS forwarding to VPCs that use a distributed connection, without needing a Tier-0 gateway.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/32.png" alt="NSX &gt; System &gt; VNA Clusters &gt; Add Cluster." width="812" height="584" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 32</span>NSX &gt; System &gt; VNA Clusters &gt; Add Cluster.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/33.png" alt="VNA cluster settings." width="1204" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 33</span>VNA cluster settings.</figcaption>
+            </figure>
+          </div>
+
+          <p>It's a two-node cluster:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/34.png" alt="The two VNA nodes: VNA1 added on cluster-mgmt-01a, then cloned as VNA2." width="1117" height="584" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 34</span>The two VNA nodes: VNA1 added on cluster-mgmt-01a, then cloned as VNA2.</figcaption>
+          </figure>
+
+          <p>Clicked apply on both nodes, then save. The build takes a while, so I carried on with the lab.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/35.png" alt="VNA cluster build in progress." width="1340" height="158" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 35</span>VNA cluster build in progress.</figcaption>
+          </figure>
+
+          <h3>Create the tenant projects</h3>
+
+          <p>Built a project for <strong>Tenant A</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/36.png" alt="Creating the Tenant A project." width="1004" height="464" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 36</span>Creating the Tenant A project.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/37.png" alt="Tenant A project settings." width="860" height="646" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 37</span>Tenant A project settings.</figcaption>
+            </figure>
+          </div>
+
+          <p>For the external connection, I created a new one:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/38.png" alt="Creating a new external connection for Tenant A." width="934" height="586" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 38</span>Creating a new external connection for Tenant A.</figcaption>
+          </figure>
+
+          <p>The connection type is <strong>Distributed VLAN</strong>. It connects through the transit gateway, so no Tier-0 gateway or Edge nodes are needed.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/39.png" alt="Distributed VLAN connection for Tenant A on VLAN 34." width="862" height="646" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 39</span>Distributed VLAN connection for Tenant A on VLAN 34.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/40.png" alt="Tenant A external connection assigned." width="934" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 40</span>Tenant A external connection assigned.</figcaption>
+            </figure>
+          </div>
+
+          <p>For external IP blocks, I created a new one too:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/41.png" alt="Creating Tenant A&#x27;s external IP block." width="938" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 41</span>Creating Tenant A's external IP block.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/42.png" alt="IP block settings." width="1222" height="566" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 42</span>IP block settings.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/43.png" alt="IP block assigned to the project." width="942" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 43</span>IP block assigned to the project.</figcaption>
+            </figure>
+          </div>
+
+          <p>Applied, then verified the configuration:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/44.png" alt="Tenant A project configuration." width="1224" height="378" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 44</span>Tenant A project configuration.</figcaption>
+          </figure>
+
+          <p>Then the same for <strong>Tenant B</strong>: a project, a new external connection and a new IP block.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/45.png" alt="Creating the Tenant B project." width="858" height="648" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 45</span>Creating the Tenant B project.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/46.png" alt="New external connection for Tenant B." width="866" height="646" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 46</span>New external connection for Tenant B.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/47.png" alt="Tenant B external connection assigned." width="942" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 47</span>Tenant B external connection assigned.</figcaption>
+            </figure>
+          </div>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/48.png" alt="New IP block for Tenant B." width="1224" height="580" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 48</span>New IP block for Tenant B.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/49.png" alt="Tenant B IP block assigned." width="932" height="588" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 49</span>Tenant B IP block assigned.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Set quotas</h3>
+
+          <p>Quotas are how the network team keeps control after handing projects over. I assigned a quota to Tenant A and set the project's <strong>VPC limit to 2</strong>, so the tenant can't create more VPCs than that.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/50.png" alt="Creating a quota for Tenant A." width="862" height="646" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 50</span>Creating a quota for Tenant A.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/51.png" alt="VPC limit set to 2." width="942" height="586" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 51</span>VPC limit set to 2.</figcaption>
+          </figure>
+
+          <p>Made sure it's applied to the right tenant:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/52.png" alt="Quota applied to Tenant A." width="1224" height="370" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 52</span>Quota applied to Tenant A.</figcaption>
+          </figure>
+
+          <p>Then a limit for Tenant B, also applied to the right tenant:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/53.png" alt="Creating a quota for Tenant B." width="944" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 53</span>Creating a quota for Tenant B.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/54.png" alt="Quota applied to Tenant B." width="1224" height="418" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 54</span>Quota applied to Tenant B.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Delegate admin roles</h3>
+
+          <p>Created two local users, <code>TenantA-Admin</code> and <code>TenantB-Admin</code>, and activated both with a password.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/55.png" alt="Creating the tenant admin users." width="822" height="626" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 55</span>Creating the tenant admin users.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/56.png" alt="Activating the users." width="1332" height="66" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 56</span>Activating the users.</figcaption>
+            </figure>
+          </div>
+
+          <p>Added <code>TenantA-Admin</code> to the Tenant A project with the <strong>Project Admin</strong> role:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/57.png" alt="Adding TenantA-Admin to the Tenant A project." width="866" height="646" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 57</span>Adding TenantA-Admin to the Tenant A project.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/58.png" alt="Selecting the user." width="734" height="624" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 58</span>Selecting the user.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/59.png" alt="Set Roles/Scope: Project Admin for TenantA-Admin." width="766" height="598" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 59</span>Set Roles/Scope: Project Admin for TenantA-Admin.</figcaption>
+          </figure>
+
+          <p>Then the same for Tenant B, with the same role:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/60.png" alt="TenantB-Admin added to the Tenant B project with the same role." width="732" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 60</span>TenantB-Admin added to the Tenant B project with the same role.</figcaption>
+          </figure>
+
+          <h3>Give Tenant A the VNA cluster</h3>
+
+          <p>Assigning the VNA cluster to a project lets that tenant's VPCs use its services. In Manage Projects, I edited Tenant A:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/61.png" alt="Editing the Tenant A project." width="1224" height="422" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 61</span>Editing the Tenant A project.</figcaption>
+          </figure>
+
+          <p>And set the edge / VNA cluster:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/62.png" alt="Selecting the VNA cluster for Tenant A." width="1212" height="356" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 62</span>Selecting the VNA cluster for Tenant A.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/63.png" alt="VNA cluster assigned to Tenant A." width="944" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 63</span>VNA cluster assigned to Tenant A.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Work as the tenant</h3>
+
+          <p>Logged out and logged back in as <code>TenantA-Admin</code>, to see the project from the tenant's side:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/64.png" alt="Logged in as the Tenant A admin." width="610" height="634" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 64</span>Logged in as the Tenant A admin.</figcaption>
+          </figure>
+
+          <p>Created a VPC:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/65.png" alt="Creating Tenant A - VPC with the private CIDR 192.168.5.0/24." width="808" height="632" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 65</span>Creating Tenant A - VPC with the private CIDR 192.168.5.0/24.</figcaption>
+          </figure>
+
+          <p>Then, in the advanced settings, a public subnet:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/66.png" alt="Additional configurations: setting the subnets for the new VPC." width="872" height="634" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 66</span>Additional configurations: setting the subnets for the new VPC.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/67.png" alt="Tenant A Public IP: Public access mode, Tenant A Ext IP Block, auto-allocated /28." width="1260" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 67</span>Tenant A Public IP: Public access mode, Tenant A Ext IP Block, auto-allocated /28.</figcaption>
+            </figure>
+          </div>
+
+          <p>Edited the default VPC connectivity profile and created a new IP block:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/68.png" alt="Editing the default VPC connectivity profile." width="1356" height="570" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 68</span>Editing the default VPC connectivity profile.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/69.png" alt="Creating a new IP block." width="1224" height="574" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 69</span>Creating a new IP block.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then turned on both <strong>N-S services</strong> and <strong>Default outbound NAT</strong>. With outbound NAT on, private subnets in the VPC can reach the outside world without each VM needing its own external IP.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/70.png" alt="N-S services and Default outbound NAT enabled." width="1330" height="300" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 70</span>N-S services and Default outbound NAT enabled.</figcaption>
+          </figure>
+
+          <p>Created a new Private - TGW subnet in the Tenant A VPC:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/71.png" alt="Creating a Private - TGW subnet in the Tenant A VPC." width="652" height="630" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 71</span>Creating a Private - TGW subnet in the Tenant A VPC.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/72.png" alt="Private - TGW subnet settings." width="1366" height="428" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 72</span>Private - TGW subnet settings.</figcaption>
+            </figure>
+          </div>
+
+          <p>Both subnets are now present:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-02-vcf-l/73.png" alt="Tenant A Public IP and TenantA-PTGW-IP subnets." width="1362" height="94" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 73</span>Tenant A Public IP and TenantA-PTGW-IP subnets.</figcaption>
+          </figure>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li>A <strong>distributed TGW</strong> is the quickest path: no edges, but the external VLAN has to be on every host.</li>
+            <li>A <strong>centralized TGW</strong> needs an edge cluster and BGP to the ToR switches, so plan the prerequisites first.</li>
+            <li>The <strong>subnet type</strong> decides reachability: Public, Private - TGW or Private - VPC.</li>
+            <li><strong>Projects, quotas and roles</strong> let the network team hand day-to-day work to tenants without losing control.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+          <p>I ran the lab twice on November 9, 2026. Both runs earned a certificate of completion.</p>
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/completion-1.jpg" alt="Certificate of Completion for Building Resilient Networks with VMware NSX (HOL-2704-02-VCF-L), first run" width="804" height="745" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Certificate 1</span>First run: 12:31 PM to 3:46 PM, 180 minutes.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-02-vcf-l/completion-2.jpg" alt="Certificate of Completion for Building Resilient Networks with VMware NSX (HOL-2704-02-VCF-L), second run" width="805" height="746" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Certificate 2</span>Second run: 4:03 PM to 7:20 PM, 149 minutes.</figcaption>
+            </figure>
+          </div>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

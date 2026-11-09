@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What's New in vSphere: Compute in VCF 9.1 · vDanish Lab Notes</title>
+<meta name="description" content="Memory tiering, cluster-level configuration management, vLCM images and live patching in VCF 9.1.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="whats-new-vsphere-compute-vcf-9-1">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>A tour of the compute features that are new in VCF 9.1, with most of the time spent on memory tiering and cluster-level configuration.</p>
+
+          <h2>What I did</h2>
+          <ul>
+            <li>Learned the basics of memory tiering: DRAM plus an NVMe tier.</li>
+            <li>Configured memory tiering at the cluster level and at the host level.</li>
+            <li>Reconfigured DRS for a cluster.</li>
+            <li>Imported a VIB from a file and added it to the cluster image in vLCM.</li>
+            <li>Live-patched a cluster without putting hosts into full maintenance mode.</li>
+          </ul>
+
+          <h2>Cluster configuration management</h2>
+          <ol>
+            <li>Imported the configuration from a reference host.</li>
+            <li>Validated the other hosts against it.</li>
+            <li>Ran the pre-check in vCenter.</li>
+            <li>Applied the configuration to the rest of the cluster.</li>
+          </ol>
+          <h2>Lab completed</h2>
+          <!-- Screenshot: save it as assets/shots/whats-new-vsphere-compute-vcf-9-1.png, then replace the
+               <div class="shot-ph">...</div> below with:
+               <img src="../assets/shots/whats-new-vsphere-compute-vcf-9-1.png" alt="Lab completion screen for What&#x27;s New in vSphere: Compute in VCF 9.1"> -->
+          <figure class="shot">
+            <div class="shot-ph"><b>Lab completion screenshot</b><small>coming soon</small></div>
+            <figcaption>Completion screen for What's New in vSphere: Compute in VCF 9.1.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

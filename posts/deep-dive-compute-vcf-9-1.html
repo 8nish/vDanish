@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive: Compute on VCF 9.1 · vDanish Lab Notes</title>
+<meta name="description" content="Licensing and rightsizing in VCF Operations, cluster desired state and drift remediation, plus planning tools.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="deep-dive-compute-vcf-9-1">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>A deeper compute lab that leans on VCF Operations for licensing and rightsizing, and on desired state for keeping hosts consistent.</p>
+
+          <h2>What I did</h2>
+          <ul>
+            <li>Viewed license status and usage analytics in VCF Operations.</li>
+            <li>Rightsized VMs using the VCF Operations recommendations.</li>
+            <li>Set a desired state for a cluster to manage configuration at cluster level.</li>
+            <li>Changed NTP on one host, saw it go out of compliance, then remediated the drift.</li>
+            <li>Ran show commands with PowerCLI against the SDDC.</li>
+          </ul>
+
+          <h2>Useful links</h2>
+          <ul>
+            <li><a href="https://knowledge.broadcom.com/external/article/313548/counting-cores-for-vmware-cloud-foundati.html" target="_blank" rel="noopener noreferrer">Counting cores for VCF licensing (KB 313548)</a></li>
+            <li><a href="https://docs.vmware.com/en/VMware-PowerCLI/latest/powercli/" target="_blank" rel="noopener noreferrer">PowerCLI documentation</a></li>
+            <li><a href="https://vmware.github.io/vcf-upgrade-planner/" target="_blank" rel="noopener noreferrer">VCF upgrade planner</a></li>
+            <li><a href="https://configmax.broadcom.com/guest?vmwareproduct=ESX&amp;release=9.1.0&amp;categories=2-0" target="_blank" rel="noopener noreferrer">Configuration maximums for ESX 9.1</a></li>
+          </ul>
+          <h2>Lab completed</h2>
+          <!-- Screenshot: save it as assets/shots/deep-dive-compute-vcf-9-1.png, then replace the
+               <div class="shot-ph">...</div> below with:
+               <img src="../assets/shots/deep-dive-compute-vcf-9-1.png" alt="Lab completion screen for Deep Dive: Compute on VCF 9.1"> -->
+          <figure class="shot">
+            <div class="shot-ph"><b>Lab completion screenshot</b><small>coming soon</small></div>
+            <figcaption>Completion screen for Deep Dive: Compute on VCF 9.1.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

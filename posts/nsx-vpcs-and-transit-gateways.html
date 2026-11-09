@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSX VPCs and Transit Gateways · vDanish Lab Notes</title>
+<meta name="description" content="NSX projects and VPCs, distributed versus centralized transit gateways and subnet behaviour.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="nsx-vpcs-and-transit-gateways">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>VPCs bring self-service, isolated networking to NSX. This day covered how they are built and how traffic leaves them.</p>
+
+          <h2>Goals</h2>
+          <ul class="checks">
+            <li>Explain VPCs, projects, admin roles and default isolation</li>
+            <li>Compare distributed and centralized transit gateways</li>
+            <li>Identify how private, private-TGW and public subnets behave</li>
+            <li>Choose NAT and connectivity options for common traffic flows</li>
+          </ul>
+
+          <h2>What I covered</h2>
+          <ul>
+            <li>How VPCs give isolated, self-service networking across projects.</li>
+            <li>Distributed versus centralized transit gateways, including routing and services.</li>
+            <li>How each subnet type communicates inside and outside a VPC.</li>
+            <li>NAT options, and validating VPC connectivity in vCenter.</li>
+          </ul>
+
+          <h2>Lessons learned</h2>
+          <ul>
+            <li>VPCs in different projects are isolated unless explicitly connected.</li>
+            <li>A distributed transit gateway needs the same external VLAN on every ESX host.</li>
+            <li>Private subnets need NAT or an external IP to reach the outside; public subnets don't.</li>
+            <li>Centralized gateways support custom NAT, and some features need active-standby mode.</li>
+          </ul>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More entries"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the log</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

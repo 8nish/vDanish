@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCX Service Mesh, Network Extension and MON · vDanish Lab Notes</title>
+<meta name="description" content="HCX profiles, service mesh, Network Extension and Mobility Optimized Networking.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="hcx-service-mesh-and-network-extension">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>Second HCX day: building the service mesh, stretching networks so VMs keep their IPs, and routing locally with MON.</p>
+
+          <h2>Goals</h2>
+          <ul class="checks">
+            <li>Explain how network and compute profiles define appliance networking, services and placement</li>
+            <li>Create and validate a service mesh between paired sites</li>
+            <li>Choose Network Extension topologies that keep VM IP addresses</li>
+            <li>Configure Mobility Optimized Networking and troubleshoot failures</li>
+          </ul>
+
+          <h2>What I covered</h2>
+          <ul>
+            <li>The setup order: network profiles, then compute profiles, then the service mesh.</li>
+            <li>One service mesh versus separate meshes for migration and Network Extension.</li>
+            <li>Creating a Network Extension, the NSX segment configuration and activation checks.</li>
+            <li>Troubleshooting transport zones, IP pools, tunnels, MTU, bandwidth and gateways.</li>
+          </ul>
+
+          <h2>Lessons learned</h2>
+          <ul>
+            <li>Size the appliance IP pools before deploying. Every enabled appliance needs an address.</li>
+            <li>Split services or add appliance pairs when bandwidth, stretched-network limits or availability call for it.</li>
+            <li>Check tunnels, topology, diagnostics and extension status before migrating anything.</li>
+            <li>With MON, enable the destination Tier-1 and use policy-based routing for traffic that must still go through the source.</li>
+          </ul>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More entries"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the log</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

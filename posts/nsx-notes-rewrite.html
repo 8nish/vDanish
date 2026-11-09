@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rewriting My NSX Notes: Switching and Routing · vDanish Lab Notes</title>
+<meta name="description" content="Turning messy NSX notes into permanent ones, from Geneve packet walks to failover timers.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="nsx-notes-rewrite">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>Two days of rewriting rough NSX notes into something I can come back to.</p>
+
+          <h2>Goals</h2>
+          <ul class="checks">
+            <li>Strengthen NSX knowledge</li>
+          </ul>
+
+          <h2>What I covered</h2>
+          <ul>
+            <li>Uplink profiles, and the logical switching packet walk with Geneve.</li>
+            <li>Controller tables: VNI to TEP, VM MAC to TEP, and VM MAC to VM IP.</li>
+            <li>Logical routing in the logical and physical view; Tier-0 versus Tier-1; single and multi-tier.</li>
+            <li>Edges, how gateways are realized as DR and SR, and gateway interfaces.</li>
+            <li>BGP and OSPF in NSX, and failover with BFD and routing timers.</li>
+          </ul>
+
+          <h2>Lessons learned</h2>
+          <ul>
+            <li>The best way to remember something is to rewrite the notes.</li>
+          </ul>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More entries"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the log</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

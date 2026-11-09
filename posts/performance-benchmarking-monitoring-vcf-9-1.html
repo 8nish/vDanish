@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Performance Benchmarking and Monitoring on VCF 9.1 · vDanish Lab Notes</title>
+<meta name="description" content="Cluster performance in VCF Operations, real-time metrics, the esxtop columns that matter and VMmark.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="performance-benchmarking-monitoring-vcf-9-1">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>This lab is about reading performance: where to look in VCF Operations, how to correlate cluster metrics and what esxtop is telling you.</p>
+
+          <h2>What I did</h2>
+          <ul>
+            <li>Viewed cluster performance metrics and constraints in VCF Operations.</li>
+            <li>Correlated CPU capacity usage and contention, memory contention and demand, and workload.</li>
+            <li>Used the storage overview dashboard and previewed the real-time metrics UI.</li>
+            <li>Monitored hosts with esxtop.</li>
+            <li>Looked at VMmark for performance benchmarking.</li>
+          </ul>
+
+          <h2>esxtop cheat sheet</h2>
+          <table>
+            <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+            <tbody>
+              <tr><td>ID / GID</td><td>Process ID / group ID</td></tr>
+              <tr><td>NAME</td><td>World or group name</td></tr>
+              <tr><td>NWLD</td><td>Number of worlds in the group</td></tr>
+              <tr><td>%USED</td><td>Physical CPU core cycles used</td></tr>
+              <tr><td>%RUN</td><td>Share of scheduled time the world ran</td></tr>
+              <tr><td>%SYS</td><td>Time on interrupts and system work; high values point to heavy I/O</td></tr>
+              <tr><td>%WAIT</td><td>Time blocked or busy-waiting</td></tr>
+              <tr><td>%VMWAIT</td><td>VM time blocked waiting for events</td></tr>
+              <tr><td>%RDY</td><td>Ready to run but queued for a CPU</td></tr>
+              <tr><td>%IDLE</td><td>VM idle time</td></tr>
+            </tbody>
+          </table>
+          <h2>Lab completed</h2>
+          <!-- Screenshot: save it as assets/shots/performance-benchmarking-monitoring-vcf-9-1.png, then replace the
+               <div class="shot-ph">...</div> below with:
+               <img src="../assets/shots/performance-benchmarking-monitoring-vcf-9-1.png" alt="Lab completion screen for Performance Benchmarking and Monitoring on VCF 9.1"> -->
+          <figure class="shot">
+            <div class="shot-ph"><b>Lab completion screenshot</b><small>coming soon</small></div>
+            <figcaption>Completion screen for Performance Benchmarking and Monitoring on VCF 9.1.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

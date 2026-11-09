@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vDefend Firewall Security Journey: DFW 1-2-3-4 · vDanish Lab Notes</title>
+<meta name="description" content="From imported asset data to application ringfencing in four stages in the Security Services Platform UI.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="vdefend-firewall-security-journey">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>This lab follows the vDefend DFW 1-2-3-4 approach in the Security Services Platform (SSP) UI: get visibility first, then segment from broad to fine.</p>
+
+          <h2>Getting the inventory in</h2>
+          <ul>
+            <li>Imported the data center assets into SSP from a CSV file.</li>
+            <li>Used them to build dynamic groups for workloads and static groups for infrastructure services.</li>
+          </ul>
+
+          <h2>The four stages</h2>
+          <ol>
+            <li><strong>Report:</strong> generated a security segmentation report to see the current posture.</li>
+            <li><strong>Infrastructure services:</strong> segmented shared services such as NTP, DNS and LDAP.</li>
+            <li><strong>Environments:</strong> macro-segmentation between environments.</li>
+            <li><strong>Applications:</strong> micro-segmentation and ringfencing per application.</li>
+          </ol>
+
+          <div class="callout tip"><b>Worth knowing</b>NAPP is end of life. SSP is where these security features live now.</div>
+          <h2>Lab completed</h2>
+          <!-- Screenshot: save it as assets/shots/vdefend-firewall-security-journey.png, then replace the
+               <div class="shot-ph">...</div> below with:
+               <img src="../assets/shots/vdefend-firewall-security-journey.png" alt="Lab completion screen for vDefend Firewall Security Journey: DFW 1-2-3-4"> -->
+          <figure class="shot">
+            <div class="shot-ph"><b>Lab completion screenshot</b><small>coming soon</small></div>
+            <figcaption>Completion screen for vDefend Firewall Security Journey: DFW 1-2-3-4.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

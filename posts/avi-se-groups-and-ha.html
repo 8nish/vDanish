@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avi Refresher: Service Engine Groups and HA · vDanish Lab Notes</title>
+<meta name="description" content="Avi packet walks, Controller failures, Service Engine sizing and SE group HA modes.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="post" data-root="../" data-slug="avi-se-groups-and-ha">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>Going back through the Avi workshop recordings and filling in my notes.</p>
+
+          <h2>Goals</h2>
+          <ul class="checks">
+            <li>Refresh Avi workshop knowledge</li>
+          </ul>
+
+          <h2>What I covered</h2>
+          <ul>
+            <li>Inline and one-arm load balancer packet walks.</li>
+            <li>The Controller cluster, and what happens when one or two nodes fail.</li>
+            <li>Virtual services per SE, SEs per SE group, and SE sizing.</li>
+            <li>Moving an SE from one group to another.</li>
+            <li>SE group HA modes: active-standby, active-active (compact and distributed), and N+M.</li>
+          </ul>
+
+          <h2>Lessons learned</h2>
+          <ul>
+            <li>SE groups self-heal and rebalance their workload.</li>
+            <li>How an SE failure plays out in each HA mode.</li>
+          </ul>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More entries"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the log</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js"></script>
+<script src="../assets/site.js"></script>
+</body>
+</html>

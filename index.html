@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vDanish Lab Notes · HOL LOG</title>
+<meta name="description" content="Lab notes on VMware Cloud Foundation, NSX and vSphere, and HOL LOG: one engineer working through every Broadcom Hands-on Lab.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="home" data-root="">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<a class="skip" href="#main">Skip to content</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow"><span>~/hol-log · entry #<span id="heroDay">00</span></span></span>
+        <h1>Hands-on Labs.<br><span>One at a time.</span></h1>
+        <p class="lead">I'm working through the Broadcom Hands-on Labs catalog and writing down what matters in each lab.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#labs">Read the lab notes <svg class="ico ico-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn" href="https://labs.hol.vmware.com/HOL/catalog" target="_blank" rel="noopener noreferrer">Lab catalog <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
+        </div>
+      </div>
+      <div class="console" aria-label="Series status">
+        <div class="console-bar"><i></i><i></i><i></i><span>danish@lab-pod: ~</span></div>
+        <pre id="console"></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="shead" id="labs">
+      <span class="num">01</span><h2>Lab notes</h2><span class="rule"></span>
+    </div>
+    <div class="filterbar">
+      <div class="filters" id="rail" role="group" aria-label="Filter lab notes by topic"></div>
+      <div class="side">
+        <span class="mono" style="font-size:12px;color:var(--muted)" id="labCount"></span>
+        <label class="search">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="search" type="search" placeholder="Search labs, cmdlets…" aria-label="Search lab notes" autocomplete="off">
+        </label>
+      </div>
+    </div>
+    <div class="labs" id="grid"></div>
+    <div class="empty" id="empty" hidden>
+      <p>No lab notes match that yet.</p>
+      <button class="btn" type="button" id="resetFilter">Show all labs</button>
+    </div>
+
+    <div class="shead">
+      <span class="num">02</span><h2>Series</h2><span class="rule"></span>
+    </div>
+    <div class="series-stack">
+      <a class="series-band" href="series.html">
+        <span id="seriesRing"></span>
+        <div>
+          <span class="eyebrow">hands-on labs</span>
+          <h3>HOL LOG</h3>
+          <p id="seriesText"></p>
+        </div>
+        <span class="btn">View the timeline <svg class="ico ico-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="series-band" href="study-log.html">
+        <span id="studyRing"></span>
+        <div>
+          <span class="eyebrow">study notes</span>
+          <h3>STUDY LOG</h3>
+          <p id="studyText"></p>
+        </div>
+        <span class="btn">View the timeline <svg class="ico ico-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+    <div class="author" id="authorStrip"></div>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="assets/posts.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>
