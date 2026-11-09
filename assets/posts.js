@@ -46,43 +46,43 @@ window.POSTS = [
     excerpt: 'Going back through the Avi workshop: packet walks, Controller failures, Service Engine sizing and the SE group HA modes.',
     tags: ['avi'], date: '2026-11-07', status: 'completed', read: 2 },
 
-  { no: 8, type: 'lab', slug: 'performance-benchmarking-monitoring-vcf-9-1', code: '',
+  { no: 8, type: 'lab', slug: 'performance-benchmarking-monitoring-vcf-9-1', code: 'HOL-2704-04-VCF-L',
     title: 'Performance Benchmarking and Monitoring on VCF 9.1',
     excerpt: 'Reading cluster performance in VCF Operations, the real-time metrics view, the esxtop columns that matter and a first look at VMmark.',
     tags: ['vcf', 'vsphere'], date: '2026-11-04', status: 'completed', read: 4 },
 
-  { no: 7, type: 'lab', slug: 'deep-dive-compute-vcf-9-1', code: '',
+  { no: 7, type: 'lab', slug: 'deep-dive-compute-vcf-9-1', code: 'HOL-2706-02-VCF-L',
     title: 'Deep Dive: Compute on VCF 9.1',
     excerpt: 'Licensing views and rightsizing in VCF Operations, cluster desired state and fixing drift, plus planning tools worth bookmarking.',
     tags: ['vcf', 'vsphere'], date: '2026-11-04', status: 'completed', read: 3 },
 
-  { no: 6, type: 'lab', slug: 'memory-tiering-vcf-9-1-spotlight', code: '',
+  { no: 6, type: 'lab', slug: 'memory-tiering-vcf-9-1-spotlight', code: 'HOL-2703-01-VCF-L',
     title: 'Memory Tiering in VCF 9.1: Spotlight',
     excerpt: 'A focused look at memory tiering: the NVMe tier, per-VM advanced parameters and enabling it again from the CLI.',
     tags: ['vsphere', 'vcf'], date: '2026-11-03', status: 'completed', read: 3 },
 
-  { no: 5, type: 'lab', slug: 'whats-new-vsphere-compute-vcf-9-1', code: '',
+  { no: 5, type: 'lab', slug: 'whats-new-vsphere-compute-vcf-9-1', code: 'HOL-2706-01-VCF-L',
     title: "What's New in vSphere: Compute in VCF 9.1",
     excerpt: 'Memory tiering, cluster-level configuration management, vLCM images and live patching without full maintenance mode.',
     tags: ['vsphere', 'vcf'], date: '2026-11-03', status: 'completed', read: 3 },
 
-  { no: 4, type: 'lab', slug: 'virtualization-101', code: '',
+  { no: 4, type: 'lab', slug: 'virtualization-101', code: 'HOL-2535-01-VCF-L',
     title: 'Virtualization 101',
     excerpt: 'A broad vSphere refresher: templates, tags, HA and DRS, alarms with actions, switches, lockdown mode, SSO and datastores.',
     tags: ['vsphere'], date: '2026-11-01', status: 'completed', read: 3 },
 
   /* ---------- October ---------- */
-  { no: 3, type: 'lab', slug: 'vdefend-firewall-security-journey', code: '',
+  { no: 3, type: 'lab', slug: 'vdefend-firewall-security-journey', code: 'HOL-2770-01-ANS-L',
     title: 'vDefend Firewall Security Journey: DFW 1-2-3-4',
     excerpt: 'Going from imported asset data to application ringfencing in four stages, inside the Security Services Platform UI.',
     tags: ['vdefend', 'nsx'], date: '2026-10-29', status: 'completed', read: 3 },
 
-  { no: 2, type: 'lab', slug: 'vcf-9-1-cross-vpc-connectivity', code: '',
+  { no: 2, type: 'lab', slug: 'vcf-9-1-cross-vpc-connectivity', code: 'HOL-2704-08-VCF-L',
     title: 'VCF 9.1 Advanced Networking and Cross VPC Connectivity',
     excerpt: 'Creating VPCs from vCenter and VCF Automation, adding private and public subnets, and attaching workloads to them.',
     tags: ['nsx', 'vcf'], date: '2026-10-29', status: 'completed', read: 3 },
 
-  { no: 1, type: 'lab', slug: 'advanced-networking-vcf-9-1', code: '',
+  { no: 1, type: 'lab', slug: 'advanced-networking-vcf-9-1', code: 'HOL-2705-02-VCF-L',
     title: 'Advanced Networking in VMware Cloud Foundation 9.1',
     excerpt: 'Onboarding a second NSX Manager from the Global Manager, Tier-0 BGP with a route map, RTEPs on the edges and stretched segments.',
     tags: ['nsx', 'vcf'], date: '2026-10-29', status: 'completed', read: 3 },

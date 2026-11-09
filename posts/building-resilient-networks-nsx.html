@@ -33,8 +33,8 @@
           <p>By the end of Module 2, this is what the lab builds: a web VM in <strong>Corp-VPC</strong>, and app and database VMs in <strong>Shared SVC - VPC</strong>, each on a different kind of subnet, all behind one transit gateway.</p>
 
           <figure class="shot">
-            <img src="../assets/shots/hol-2704-02-vcf-l/1.png" alt="Lab topology: Corp-VPC and Shared SVC - VPC behind a transit gateway, with the main console on 10.1.10.128/25." width="730" height="634" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 1</span>Lab topology: Corp-VPC and Shared SVC - VPC behind a transit gateway, with the main console on 10.1.10.128/25.</figcaption>
+            <img src="../assets/shots/hol-2704-02-vcf-l/topology.svg" alt="Lab topology: the main console on 10.1.10.128/25 reaches a transit gateway through the vPOD router. Behind it, Corp-VPC holds web-01a on a public subnet, and Shared SVC - VPC holds app-01a on a Private - TGW subnet and db-01a on a Private - VPC subnet." width="1200" height="800" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 1</span>Lab topology: the main console, vPOD router and transit gateway, with Corp-VPC and Shared SVC - VPC behind it. Subnets are colour-coded by type.</figcaption>
           </figure>
 
           <h2>Module 1: Network connectivity types</h2>

@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-labelledby="t d">
+  <title id="t">Lab topology: HOL-2704-02-VCF-L</title>
+  <desc id="d">The main console on 10.1.10.128/25 connects through the vPOD router to a transit gateway. The transit gateway connects Corp-VPC, with web-01a on a public subnet, and Shared SVC - VPC, with app-01a on a private transit gateway subnet and db-01a on a private VPC subnet.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/>
+    </pattern>
+    <linearGradient id="tgw" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <symbol id="arrows" viewBox="-20 -20 40 40">
+      <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0-15v30M-15 0h30"/>
+        <path d="M-5-10 0-15 5-10M-5 10 0 15 5 10M-10-5-15 0-10 5M10-5 15 0 10 5"/>
+      </g>
+    </symbol>
+    <symbol id="vm" viewBox="0 0 80 60">
+      <rect x="2" y="2" width="76" height="56" rx="10" fill="#0f1a2e" stroke="currentColor" stroke-width="3"/>
+      <text x="40" y="37" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="17" font-weight="700" fill="currentColor">VM</text>
+    </symbol>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="800" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="800" rx="18" fill="url(#grid)"/>
+  <text x="40" y="48" font-family="JetBrains Mono, Consolas, monospace" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2704-02-VCF-L · LAB TOPOLOGY</text>
+
+  <!-- legend -->
+  <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" fill="#c6d1e2">
+    <rect x="806" y="30" width="356" height="112" rx="12" fill="#0f1626" stroke="#2c3b58"/>
+    <text x="826" y="56" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="600" letter-spacing="1.5" fill="#7f8ea8">SUBNET TYPES</text>
+    <rect x="826" y="70" width="26" height="6" rx="3" fill="#34d399"/><text x="864" y="78"><tspan font-weight="700" fill="#eef3fb">Public</tspan>: reachable from outside</text>
+    <rect x="826" y="94" width="26" height="6" rx="3" fill="#22d3ee"/><text x="864" y="102"><tspan font-weight="700" fill="#eef3fb">Private - TGW</tspan>: other VPCs, NAT out</text>
+    <rect x="826" y="118" width="26" height="6" rx="3" fill="#a78bfa"/><text x="864" y="126"><tspan font-weight="700" fill="#eef3fb">Private - VPC</tspan>: own VPC only</text>
+  </g>
+
+  <!-- console network -->
+  <line x1="190" y1="150" x2="556" y2="150" stroke="#7f8ea8" stroke-width="3"/>
+  <text x="330" y="138" font-family="JetBrains Mono, Consolas, monospace" font-size="16" fill="#c6d1e2">10.1.10.128/25</text>
+  <text x="200" y="174" font-family="JetBrains Mono, Consolas, monospace" font-size="14" fill="#7f8ea8">.130</text>
+  <text x="514" y="174" font-family="JetBrains Mono, Consolas, monospace" font-size="14" fill="#7f8ea8">.129</text>
+
+  <!-- main console -->
+  <g transform="translate(100 112)">
+    <rect x="0" y="0" width="90" height="62" rx="8" fill="#0f1a2e" stroke="#94a3b8" stroke-width="3"/>
+    <rect x="10" y="10" width="70" height="42" rx="3" fill="#1b2b48"/>
+    <path d="M35 62v10h20V62M25 76h40" stroke="#94a3b8" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <text x="145" y="216" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" fill="#eef3fb">Main Console</text>
+
+  <!-- vPOD router -->
+  <circle cx="600" cy="150" r="44" fill="#1f2937" stroke="#94a3b8" stroke-width="3"/>
+  <use href="#arrows" x="574" y="124" width="52" height="52" color="#e6eef8"/>
+  <text x="600" y="90" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#eef3fb">vPOD Router</text>
+
+  <!-- router to TGW -->
+  <line x1="600" y1="194" x2="600" y2="266" stroke="#7f8ea8" stroke-width="3"/>
+
+  <!-- transit gateway -->
+  <circle cx="600" cy="310" r="44" fill="url(#tgw)"/>
+  <use href="#arrows" x="574" y="284" width="52" height="52" color="#041320"/>
+  <g font-family="Inter, Segoe UI, Arial, sans-serif">
+    <text x="664" y="292" font-size="18" font-weight="700" fill="#eef3fb">Transit Gateway</text>
+    <text x="664" y="316" font-size="14" fill="#c6d1e2">External IP block: <tspan font-family="JetBrains Mono, Consolas, monospace" fill="#34d399">10.1.0.0/24</tspan></text>
+    <text x="664" y="338" font-size="14" fill="#c6d1e2">Private TGW block: <tspan font-family="JetBrains Mono, Consolas, monospace" fill="#22d3ee">172.16.100.0/24</tspan></text>
+  </g>
+
+  <!-- TGW to VPC gateways -->
+  <path d="M572 344 290 466" stroke="#7f8ea8" stroke-width="3" fill="none"/>
+  <path d="M628 344 870 466" stroke="#7f8ea8" stroke-width="3" fill="none"/>
+
+  <!-- Corp-VPC -->
+  <rect x="70" y="420" width="440" height="350" rx="16" fill="#0f1626" fill-opacity=".85" stroke="#3b82f6" stroke-width="2.5"/>
+  <text x="490" y="452" text-anchor="end" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#60a5fa">Corp-VPC</text>
+  <circle cx="290" cy="500" r="34" fill="#0f1a2e" stroke="#3b82f6" stroke-width="3"/>
+  <use href="#arrows" x="270" y="480" width="40" height="40" color="#60a5fa"/>
+  <line x1="290" y1="534" x2="290" y2="612" stroke="#3b82f6" stroke-width="3"/>
+  <rect x="120" y="609" width="340" height="7" rx="3.5" fill="#34d399"/>
+  <text x="290" y="596" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#eef3fb">Web-Subnet-Public</text>
+  <line x1="290" y1="616" x2="290" y2="650" stroke="#34d399" stroke-width="3"/>
+  <use href="#vm" x="250" y="650" width="80" height="60" color="#34d399"/>
+  <text x="290" y="738" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="15" font-weight="600" fill="#eef3fb">web-01a</text>
+
+  <!-- Shared SVC - VPC -->
+  <rect x="590" y="420" width="540" height="350" rx="16" fill="#0f1626" fill-opacity=".85" stroke="#2dd4bf" stroke-width="2.5"/>
+  <text x="1110" y="452" text-anchor="end" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#5eead4">Shared SVC - VPC</text>
+  <circle cx="870" cy="500" r="34" fill="#0f1a2e" stroke="#2dd4bf" stroke-width="3"/>
+  <use href="#arrows" x="850" y="480" width="40" height="40" color="#5eead4"/>
+  <rect x="902" y="458" width="48" height="24" rx="6" fill="#2dd4bf"/>
+  <text x="926" y="475" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="13" font-weight="700" fill="#041320">NAT</text>
+  <path d="M850 528 805 609M890 528 935 609" stroke="#2dd4bf" stroke-width="3" fill="none"/>
+  <rect x="640" y="609" width="210" height="7" rx="3.5" fill="#22d3ee"/>
+  <rect x="890" y="609" width="210" height="7" rx="3.5" fill="#a78bfa"/>
+  <text x="640" y="596" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#eef3fb">App-Subnet-TGW</text>
+  <text x="1100" y="596" text-anchor="end" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#eef3fb">DB-Subnet-Private</text>
+  <line x1="745" y1="616" x2="745" y2="650" stroke="#22d3ee" stroke-width="3"/>
+  <line x1="995" y1="616" x2="995" y2="650" stroke="#a78bfa" stroke-width="3"/>
+  <use href="#vm" x="705" y="650" width="80" height="60" color="#22d3ee"/>
+  <use href="#vm" x="955" y="650" width="80" height="60" color="#a78bfa"/>
+  <text x="745" y="738" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="15" font-weight="600" fill="#eef3fb">app-01a</text>
+  <text x="995" y="738" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="15" font-weight="600" fill="#eef3fb">db-01a</text>
+  <text x="860" y="760" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" fill="#7f8ea8">Private IP block: <tspan font-family="JetBrains Mono, Consolas, monospace" fill="#c6d1e2">192.168.2.0/24</tspan></text>
+</svg>

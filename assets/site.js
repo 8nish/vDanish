@@ -61,7 +61,7 @@
         '<nav class="nav" aria-label="Main">' +
           '<a class="brand" href="' + ROOT + 'index.html" aria-label="vDanish home">' +
             '<img src="' + ROOT + 'assets/logo-mark.svg" alt="" width="30" height="30">' +
-            '<span class="word"><em>v</em>DANISH</span><span class="tagbadge">lab notes</span>' +
+            '<span class="word"><em>v</em>DANISH</span>' +
           '</a>' +
           '<div class="links">' + links.map(function (l) {
             return '<a href="' + ROOT + l[0] + '"' + (l[2] === active ? ' aria-current="page"' : '') + '>' + l[1] + '</a>';
@@ -410,7 +410,7 @@
 
     $('#postSide').innerHTML =
       '<div class="sheet"><h2>' + (isNote(p) ? 'STUDY SHEET' : 'LAB SHEET') + '</h2><dl>' +
-        (p.code ? '<div><dt>Lab code</dt><dd>' + esc(p.code) + '</dd></div>' : '') +
+        (p.code ? '<div><dt>Code</dt><dd>' + esc(p.code) + '</dd></div>' : '') +
         '<div><dt>Series</dt><dd>' + esc(seriesOf(p).name) + '</dd></div>' +
         '<div><dt>Entry</dt><dd>#' + esc(pad(p.no)) + '</dd></div>' +
         '<div><dt>Date</dt><dd>' + esc(p.dateLabel || fmtDate(p.date)) + '</dd></div>' +
