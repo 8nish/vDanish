@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 910" width="1200" height="910" role="img" aria-labelledby="t d">
+  <title id="t">Lab topology: HOL-2705-02-VCF-L</title>
+  <desc id="d">Two locations joined by NSX Federation, Palo Alto (nsx-mgmt-a) and Frankfurt (nsx-mgmt-b), about 10 ms apart. The active Global Manager nsx-gm-01a is in Palo Alto with a standby in Frankfurt. Each location has an edge node with two uplinks to upstream routers: edge-mgmt-01a peers with AS 65000 on VLANs 19 and 20, edge-mgmt-01b peers with AS 65005 on VLANs 49 and 50. An RTEP tunnel joins the two edges. The stretched Tier-0 mgmt-t0-stretched runs Active Active with local AS 65001, Palo Alto as primary and Frankfurt as secondary, where it presents local AS 65006 and prepends 65006. The distributed-only Tier-1 mgmt-t1-stretched connects web-seg-stretched (10.1.13.128/25) and DB-seg-stretched (10.1.13.0/25), with app01-web-01a and app01-db-01a attached.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/>
+    </pattern>
+    <symbol id="arrows" viewBox="-20 -20 40 40">
+      <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0-15v30M-15 0h30"/>
+        <path d="M-5-10 0-15 5-10M-5 10 0 15 5 10M-10-5-15 0-10 5M10-5 15 0 10 5"/>
+      </g>
+    </symbol>
+    <symbol id="vm" viewBox="0 0 80 56">
+      <rect x="2" y="2" width="76" height="52" rx="10" fill="#0f1a2e" stroke="currentColor" stroke-width="3"/>
+      <text x="40" y="34" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="16" font-weight="700" fill="currentColor">VM</text>
+    </symbol>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="910" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="910" rx="18" fill="url(#grid)"/>
+  <text x="40" y="52" font-family="JetBrains Mono, Consolas, monospace" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2705-02-VCF-L · LAB TOPOLOGY</text>
+
+  <!-- legend -->
+  <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" fill="#c6d1e2">
+    <rect x="720" y="22" width="440" height="70" rx="12" fill="#0f1626" stroke="#2c3b58"/>
+    <line x1="740" y1="47" x2="770" y2="47" stroke="#7f8ea8" stroke-width="3"/>
+    <text x="780" y="52">uplink + eBGP session</text>
+    <line x1="950" y1="47" x2="980" y2="47" stroke="#a78bfa" stroke-width="3" stroke-dasharray="7 5"/>
+    <text x="990" y="52">RTEP tunnel</text>
+    <rect x="740" y="62" width="30" height="18" rx="5" fill="#1e2a44"/>
+    <text x="755" y="75" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="700" fill="#22d3ee">M3</text>
+    <text x="780" y="76">the lab module that builds it</text>
+  </g>
+
+  <!-- site split -->
+  <line x1="600" y1="104" x2="600" y2="892" stroke="#3a4a68" stroke-width="2" stroke-dasharray="10 8"/>
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="13" font-weight="600" letter-spacing="1.5">
+    <text x="310" y="124" text-anchor="middle" fill="#7f8ea8">LOCATION A · PALO ALTO</text>
+    <text x="890" y="124" text-anchor="middle" fill="#7f8ea8">LOCATION B · FRANKFURT</text>
+    <rect x="566" y="108" width="68" height="24" rx="12" fill="#141d31" stroke="#3a4a68"/>
+    <text x="600" y="125" text-anchor="middle" fill="#c6d1e2" letter-spacing="0">10 ms</text>
+  </g>
+
+  <!-- managers -->
+  <g font-family="Inter, Segoe UI, Arial, sans-serif">
+    <rect x="60" y="144" width="240" height="72" rx="12" fill="#0f1626" stroke="#2c3b58" stroke-width="2"/>
+    <text x="78" y="166" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="600" letter-spacing="1.2" fill="#7f8ea8">GLOBAL MANAGER · ACTIVE</text>
+    <text x="78" y="188" font-size="16" font-weight="700" fill="#eef3fb">nsx-gm-01a</text>
+    <text x="78" y="206" font-family="JetBrains Mono, Consolas, monospace" font-size="13" fill="#c6d1e2">10.1.1.37</text>
+
+    <rect x="320" y="144" width="240" height="72" rx="12" fill="#0f1626" stroke="#2c3b58" stroke-width="2"/>
+    <text x="338" y="166" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="600" letter-spacing="1.2" fill="#7f8ea8">LOCAL MANAGER</text>
+    <text x="338" y="188" font-size="16" font-weight="700" fill="#eef3fb">nsx-mgmt-a</text>
+    <text x="338" y="206" font-family="JetBrains Mono, Consolas, monospace" font-size="13" fill="#c6d1e2">10.1.1.21</text>
+
+    <rect x="640" y="144" width="240" height="72" rx="12" fill="#0f1626" stroke="#2c3b58" stroke-width="2"/>
+    <text x="658" y="166" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="600" letter-spacing="1.2" fill="#7f8ea8">GLOBAL MANAGER · STANDBY</text>
+    <text x="658" y="188" font-size="16" font-weight="700" fill="#eef3fb">nsx-gm-01b</text>
+    <text x="658" y="206" font-family="JetBrains Mono, Consolas, monospace" font-size="13" fill="#c6d1e2">10.2.1.37</text>
+
+    <rect x="900" y="144" width="240" height="72" rx="12" fill="#0f1626" stroke="#22d3ee" stroke-width="2"/>
+    <text x="918" y="166" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="600" letter-spacing="1.2" fill="#7f8ea8">LOCAL MANAGER</text>
+    <text x="918" y="188" font-size="16" font-weight="700" fill="#eef3fb">nsx-mgmt-b</text>
+    <text x="918" y="206" font-family="JetBrains Mono, Consolas, monospace" font-size="13" fill="#c6d1e2">10.2.1.21 · onboarded</text>
+    <rect x="1096" y="154" width="30" height="18" rx="5" fill="#1e2a44"/>
+    <text x="1111" y="167" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="700" fill="#22d3ee">M2</text>
+  </g>
+
+  <!-- upstream routers -->
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="13">
+    <circle cx="170" cy="274" r="26" fill="#0f1a2e" stroke="#7f8ea8" stroke-width="3"/>
+    <use href="#arrows" x="152" y="256" width="36" height="36" color="#c6d1e2"/>
+    <circle cx="450" cy="274" r="26" fill="#0f1a2e" stroke="#7f8ea8" stroke-width="3"/>
+    <use href="#arrows" x="432" y="256" width="36" height="36" color="#c6d1e2"/>
+    <circle cx="750" cy="274" r="26" fill="#0f1a2e" stroke="#7f8ea8" stroke-width="3"/>
+    <use href="#arrows" x="732" y="256" width="36" height="36" color="#c6d1e2"/>
+    <circle cx="1030" cy="274" r="26" fill="#0f1a2e" stroke="#7f8ea8" stroke-width="3"/>
+    <use href="#arrows" x="1012" y="256" width="36" height="36" color="#c6d1e2"/>
+
+    <text x="134" y="270" text-anchor="end" fill="#eef3fb">10.1.6.1/25</text>
+    <text x="134" y="288" text-anchor="end" fill="#7f8ea8">VLAN 19</text>
+    <text x="486" y="270" fill="#eef3fb">10.1.6.129/25</text>
+    <text x="486" y="288" fill="#7f8ea8">VLAN 20</text>
+    <text x="714" y="270" text-anchor="end" fill="#eef3fb">10.2.6.1/25</text>
+    <text x="714" y="288" text-anchor="end" fill="#7f8ea8">VLAN 49</text>
+    <text x="1064" y="270" fill="#eef3fb">10.2.6.129/25</text>
+    <text x="1064" y="288" fill="#7f8ea8">VLAN 50</text>
+
+    <rect x="262" y="262" width="96" height="24" rx="12" fill="#141d31" stroke="#3a4a68"/>
+    <text x="310" y="279" text-anchor="middle" font-weight="600" fill="#c6d1e2">AS 65000</text>
+    <rect x="842" y="262" width="96" height="24" rx="12" fill="#141d31" stroke="#3a4a68"/>
+    <text x="890" y="279" text-anchor="middle" font-weight="600" fill="#c6d1e2">AS 65005</text>
+  </g>
+
+  <!-- uplinks: router to edge -->
+  <g stroke="#7f8ea8" stroke-width="3" fill="none">
+    <path d="M182 297 250 352M438 297 370 352"/>
+    <path d="M762 297 830 352M1018 297 950 352"/>
+  </g>
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#c6d1e2">
+    <text x="232" y="334" text-anchor="end">.2</text>
+    <text x="390" y="334">.130</text>
+    <text x="812" y="334" text-anchor="end">.2</text>
+    <text x="970" y="334">.130</text>
+  </g>
+
+  <!-- edges -->
+  <g font-family="JetBrains Mono, Consolas, monospace">
+    <rect x="210" y="352" width="200" height="46" rx="10" fill="#eef3fb"/>
+    <text x="310" y="372" text-anchor="middle" font-size="14" font-weight="700" fill="#0a1120">edge-mgmt-01a</text>
+    <text x="310" y="390" text-anchor="middle" font-size="11" fill="#3a4a68">edgecl-mgmt-a</text>
+    <rect x="790" y="352" width="200" height="46" rx="10" fill="#eef3fb"/>
+    <text x="890" y="372" text-anchor="middle" font-size="14" font-weight="700" fill="#0a1120">edge-mgmt-01b</text>
+    <text x="890" y="390" text-anchor="middle" font-size="11" fill="#3a4a68">edgecl-mgmt-b</text>
+  </g>
+
+  <!-- RTEP tunnel between the edges -->
+  <line x1="410" y1="375" x2="790" y2="375" stroke="#a78bfa" stroke-width="3" stroke-dasharray="9 6"/>
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="12">
+    <rect x="520" y="326" width="160" height="26" rx="13" fill="#1d1733" stroke="#a78bfa"/>
+    <text x="600" y="344" text-anchor="middle" font-weight="600" fill="#c4b5fd">RTEP · MTU 1700</text>
+    <text x="1004" y="368" fill="#c4b5fd">RTEP VLAN 51</text>
+    <text x="1004" y="386" fill="#c6d1e2">10.2.7.2/25</text>
+    <rect x="1112" y="355" width="30" height="18" rx="5" fill="#1e2a44"/>
+    <text x="1127" y="368" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3ee">M2</text>
+  </g>
+
+  <!-- edge to T0 -->
+  <path d="M310 398V452M890 398V452" stroke="#fb923c" stroke-width="3"/>
+
+  <!-- stretched Tier-0 -->
+  <g font-family="Inter, Segoe UI, Arial, sans-serif">
+    <rect x="60" y="452" width="1080" height="96" rx="16" fill="#1a130c" fill-opacity=".9" stroke="#fb923c" stroke-width="2.5" stroke-dasharray="12 6"/>
+    <circle cx="112" cy="500" r="28" fill="#0f1a2e" stroke="#fb923c" stroke-width="3"/>
+    <use href="#arrows" x="94" y="482" width="36" height="36" color="#fdba74"/>
+    <text x="156" y="488" font-size="18" font-weight="700" fill="#fdba74">mgmt-t0-stretched</text>
+    <text x="156" y="510" font-size="14" fill="#c6d1e2">Tier-0 · Active Active · local AS <tspan font-family="JetBrains Mono, Consolas, monospace" fill="#eef3fb">65001</tspan></text>
+    <rect x="156" y="520" width="82" height="20" rx="6" fill="#34d399"/>
+    <text x="197" y="534" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="700" fill="#04140d">PRIMARY</text>
+    <text x="250" y="535" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#7f8ea8">egress for both sites</text>
+
+    <rect x="640" y="468" width="200" height="20" rx="6" fill="#fbbf24"/>
+    <text x="740" y="482" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="700" fill="#1c1200">SECONDARY · PRIORITY 1</text>
+    <text x="640" y="512" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#c6d1e2">to AS 65005: local AS 65006</text>
+    <text x="640" y="532" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#c6d1e2">route map: prepend 65006</text>
+    <rect x="1096" y="464" width="30" height="18" rx="5" fill="#1e2a44"/>
+    <text x="1111" y="477" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="700" fill="#22d3ee">M3</text>
+  </g>
+
+  <!-- T0 to T1 -->
+  <path d="M600 548V596" stroke="#60a5fa" stroke-width="3"/>
+
+  <!-- stretched Tier-1 -->
+  <g font-family="Inter, Segoe UI, Arial, sans-serif">
+    <rect x="60" y="596" width="1080" height="62" rx="16" fill="#0c1424" fill-opacity=".9" stroke="#60a5fa" stroke-width="2.5" stroke-dasharray="12 6"/>
+    <circle cx="112" cy="627" r="22" fill="#0f1a2e" stroke="#60a5fa" stroke-width="3"/>
+    <use href="#arrows" x="98" y="613" width="28" height="28" color="#93c5fd"/>
+    <text x="148" y="624" font-size="17" font-weight="700" fill="#93c5fd">mgmt-t1-stretched</text>
+    <text x="148" y="645" font-size="13" fill="#c6d1e2">Tier-1 · Distributed Only · advertises connected segments</text>
+    <rect x="1096" y="606" width="30" height="18" rx="5" fill="#1e2a44"/>
+    <text x="1111" y="619" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="11" font-weight="700" fill="#22d3ee">M4</text>
+  </g>
+
+  <!-- segments -->
+  <path d="M400 658V726" stroke="#34d399" stroke-width="3"/>
+  <path d="M460 658V776" stroke="#f87171" stroke-width="3"/>
+  <rect x="80" y="723" width="1040" height="7" rx="3.5" fill="#34d399"/>
+  <rect x="80" y="773" width="1040" height="7" rx="3.5" fill="#f87171"/>
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="13">
+    <text x="408" y="712" fill="#34d399">.129</text>
+    <text x="468" y="762" fill="#f87171">.1</text>
+    <text x="1120" y="712" text-anchor="end" font-weight="600" fill="#eef3fb">web-seg-stretched · <tspan fill="#34d399">10.1.13.128/25</tspan></text>
+    <text x="1120" y="762" text-anchor="end" font-weight="600" fill="#eef3fb">DB-seg-stretched · <tspan fill="#f87171">10.1.13.0/25</tspan></text>
+  </g>
+
+  <!-- workloads -->
+  <path d="M160 730V804" stroke="#34d399" stroke-width="3"/>
+  <path d="M300 780V804" stroke="#f87171" stroke-width="3"/>
+  <use href="#vm" x="120" y="804" width="80" height="50" color="#34d399"/>
+  <use href="#vm" x="260" y="804" width="80" height="50" color="#f87171"/>
+  <g font-family="JetBrains Mono, Consolas, monospace" text-anchor="middle">
+    <text x="160" y="876" font-size="14" font-weight="600" fill="#eef3fb">app01-web-01a</text>
+    <text x="160" y="894" font-size="12" fill="#7f8ea8">10.1.13.200</text>
+    <text x="300" y="876" font-size="14" font-weight="600" fill="#eef3fb">app01-db-01a</text>
+    <text x="300" y="894" font-size="12" fill="#7f8ea8">10.1.13.10</text>
+  </g>
+  <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" fill="#7f8ea8">
+    <text x="640" y="822">Both segments exist in both locations</text>
+    <text x="640" y="842" font-family="JetBrains Mono, Consolas, monospace" font-size="12">overlay-vds01-mgmt-01a · overlay-vds01-mgmt-01b</text>
+    <text x="640" y="864">The VMs run in Palo Alto (vc-mgmt-a)</text>
+  </g>
+</svg>

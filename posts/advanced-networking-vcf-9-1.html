@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Advanced Networking in VMware Cloud Foundation 9.1 · vDanish</title>
-<meta name="description" content="Onboarding a second NSX Manager from the Global Manager, Tier-0 BGP with a route map, RTEPs and stretched segments.">
+<meta name="description" content="Onboarding a second site into NSX Federation, RTEPs on the edges, a stretched Tier-0 with BGP and an AS path prepend, and stretched segments for a two-tier app.">
 <meta name="theme-color" content="#070b14">
 <link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css?v=20261110c">
+<link rel="stylesheet" href="../assets/style.css?v=20261110d">
 </head>
 <body data-page="post" data-root="../" data-slug="advanced-networking-vcf-9-1">
 <script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
@@ -26,28 +26,381 @@
       <article>
         <!-- ===== ARTICLE CONTENT START ===== -->
         <div class="prose" id="postBody">
-          <p>A hands-on tour of multi-site networking in VCF 9.1 with NSX Federation, from onboarding a second site to running workloads on segments that span both locations.</p>
+          <p>This lab builds a two-site NSX Federation setup: Palo Alto and Frankfurt, about 10 ms apart. I onboarded Frankfurt into the Global Manager, gave its edge a remote tunnel endpoint, stretched the Tier-0 across both sites with BGP to each site's routers, and put a two-tier app on stretched segments. Module 5, the failover test, didn't work for me; more on that at the end. Click any photo to see it full screen.</p>
 
-          <h2>What I did</h2>
-          <ul>
-            <li>Onboarded a second NSX Manager from the Global Manager.</li>
-            <li>Configured BGP on the Tier-0 gateway and used a route map to control what gets advertised.</li>
-            <li>Configured RTEPs on the edge nodes so overlay traffic can cross between sites.</li>
-            <li>Moved workloads in vCenter from distributed port groups to stretched NSX segments.</li>
-          </ul>
+          <h2>Lab topology</h2>
 
-          <h2>Notes worth keeping</h2>
-          <ul>
-            <li>Objects created on the Global Manager show up read-only on the Local Managers, so do the configuration on the GM.</li>
-            <li>RTEPs are the inter-site tunnel endpoints on the edges, separate from the TEPs used inside a site.</li>
-          </ul>
-          <h2>Lab completed</h2>
-          <!-- Screenshot: save it as assets/shots/advanced-networking-vcf-9-1.png, then replace the
-               <div class="shot-ph">...</div> below with:
-               <img src="../assets/shots/advanced-networking-vcf-9-1.png" alt="Lab completion screen for Advanced Networking in VMware Cloud Foundation 9.1"> -->
+          <p>Palo Alto is the primary location and already sat under the Global Manager. Frankfurt starts as a standalone NSX Manager. By the end, one Tier-0 and one Tier-1 span both sites, and the web and DB segments exist in both.</p>
+
           <figure class="shot">
-            <div class="shot-ph"><b>Lab completion screenshot</b><small>coming soon</small></div>
-            <figcaption>Completion screen for Advanced Networking in VMware Cloud Foundation 9.1.</figcaption>
+            <img src="../assets/shots/hol-2705-02-vcf-l/topology.svg" alt="Lab topology: both locations with their managers, upstream routers and edges, the RTEP between the edges, the stretched Tier-0 and Tier-1, and the two stretched segments with their VMs and IPs." width="1200" height="910" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>Lab topology: both locations with their managers, upstream routers and edges, the RTEP between the edges, the stretched Tier-0 and Tier-1, and the two stretched segments with their VMs and IPs.</figcaption>
+          </figure>
+
+          <h2>Module 1: NSX Federation fundamentals</h2>
+
+          <p>Module 1 is reading only, but it is the part the rest of the lab depends on:</p>
+
+          <ul>
+            <li>The <strong>Global Manager</strong> (GM) holds config that applies to several locations. There is an active GM and a standby in the other site.</li>
+            <li>Each site keeps its own <strong>Local Manager</strong> (LM). Objects pushed from the GM show up there as global objects, and the GM version wins over local config.</li>
+            <li><strong>RTEPs</strong> (remote tunnel endpoints) on the edges carry overlay traffic between sites. They are separate from the normal TEPs used inside a site.</li>
+            <li>A stretched Tier-0 has a <strong>primary</strong> and <strong>secondary</strong> location. North-south traffic leaves through the primary while it is up.</li>
+          </ul>
+
+          <h2>Module 2: Onboarding a local site into Federation</h2>
+
+          <p>On the Global Manager, <strong>System &gt; Location Manager</strong> shows Palo Alto (nsx-mgmt-a) already onboarded, and both GMs in sync. Frankfurt gets added with <strong>Add On-Prem Location</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/1.png" alt="Location Manager on nsx-gm-01a: nsx-mgmt-a onboarded and in sync, with the Add On-Prem Location button below." width="1362" height="554" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 1</span>Location Manager on nsx-gm-01a: nsx-mgmt-a onboarded and in sync, with the Add On-Prem Location button below.</figcaption>
+          </figure>
+
+          <h3>Copy the thumbprint first</h3>
+
+          <p>Before filling in the form, copy the API certificate thumbprint from the manager being onboarded. On Frankfurt's NSX Manager: <strong>System &gt; Appliances &gt; View Details</strong>, then the copy icon next to API cert thumbprint.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/2.png" alt="Appliance details for 10.2.1.21 with the copy icon next to API cert thumbprint." width="1302" height="566" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>Appliance details for 10.2.1.21 with the copy icon next to API cert thumbprint.</figcaption>
+          </figure>
+
+          <p>The GM checks this thumbprint when it first connects, so it knows it is talking to the right manager and not something in the middle.</p>
+
+          <h3>Add the location</h3>
+
+          <p>Then the Frankfurt details, and <strong>Check Version Compatibility</strong> before saving:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/3.png" alt="Add New Location: nsx-mgmt-b, nsx-mgmt-01b.site-b.vcf.lab, the thumbprint, and a compatible version 9.1.0.0." width="564" height="598" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 3</span>Add New Location: nsx-mgmt-b, nsx-mgmt-01b.site-b.vcf.lab, the thumbprint, and a compatible version 9.1.0.0.</figcaption>
+          </figure>
+
+          <p>The yellow banner is worth reading once: after onboarding, policies, groups and profiles from the GM sit above anything configured locally on that site.</p>
+
+          <p>Frankfurt comes up with sync status Success. Next is <strong>Networking</strong> on the new location:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/4.png" alt="nsx-mgmt-b onboarded with sync status Success, and the Networking link." width="1318" height="212" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 4</span>nsx-mgmt-b onboarded with sync status Success, and the Networking link.</figcaption>
+          </figure>
+
+          <h3>Remote tunnel endpoints</h3>
+
+          <p>Networking lists the edge cluster Frankfurt will use for traffic between locations. <strong>Configure</strong> opens the RTEP setup:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/5.png" alt="Edge cluster edgecl-mgmt-b, used for inter-location communication." width="1148" height="400" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>Edge cluster edgecl-mgmt-b, used for inter-location communication.</figcaption>
+          </figure>
+
+          <p>The RTEP is set on the edge node itself, from Frankfurt's manager: <strong>System &gt; Fabric &gt; Edges</strong>, open the cluster, and <strong>Edit Remote Tunnel Endpoint</strong> on the node:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/6.png" alt="On nsx-mgmt-b: the edge node menu with Edit Remote Tunnel Endpoint." width="736" height="602" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 6</span>On nsx-mgmt-b: the edge node menu with Edit Remote Tunnel Endpoint.</figcaption>
+          </figure>
+
+          <p>The values:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/7.png" alt="RTEP VLAN 51, static IP 10.2.7.2/25, gateway 10.2.7.1, inter-location MTU 1700." width="728" height="566" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 7</span>RTEP VLAN 51, static IP 10.2.7.2/25, gateway 10.2.7.1, inter-location MTU 1700.</figcaption>
+          </figure>
+
+          <p>The RTEP lives on its own VLAN (51) with a routed gateway, because it has to reach the other site's RTEP across the WAN. The <strong>1700 MTU</strong> leaves room for the Geneve header on top of normal 1500-byte packets. The WAN between sites has to carry that size, or large packets get dropped while pings still work, which is a slow one to troubleshoot.</p>
+
+          <p>Validated it under the edge node's <strong>Tunnels</strong> tab:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/8.png" alt="Edge Node Details for edge-mgmt-01b: the Remote Tunnel Endpoint section with VLAN 51, 10.2.7.2 and gateway 10.2.7.1." width="1296" height="552" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 8</span>Edge Node Details for edge-mgmt-01b: the Remote Tunnel Endpoint section with VLAN 51, 10.2.7.2 and gateway 10.2.7.1.</figcaption>
+          </figure>
+
+          <h2>Module 3: Tier-0 BGP at the provider boundary</h2>
+
+          <p>The Tier-0 already runs in Palo Alto. This module stretches it to Frankfurt and peers it with Frankfurt's routers.</p>
+
+          <h3>Uplink VLAN segments</h3>
+
+          <p>From the GM, created an uplink segment for VLAN 49 in Frankfurt:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/9.png" alt="edge-mgmt-b-uplink-vlan49: location nsx-mgmt-b, nsx-vlan-transportzone, VLAN 49." width="1314" height="266" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 9</span>edge-mgmt-b-uplink-vlan49: location nsx-mgmt-b, nsx-vlan-transportzone, VLAN 49.</figcaption>
+          </figure>
+
+          <p>And one for VLAN 50, also in Frankfurt:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/10.png" alt="edge-mgmt-b-uplink-vlan50: the same settings on VLAN 50." width="1316" height="264" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 10</span>edge-mgmt-b-uplink-vlan50: the same settings on VLAN 50.</figcaption>
+          </figure>
+
+          <p>They are made on the GM so the stretched Tier-0 can use them, but scoped to nsx-mgmt-b because those VLANs only exist in Frankfurt. Two uplinks to two different routers means losing one router doesn't cut the site off.</p>
+
+          <h3>Stretch the Tier-0 to Frankfurt</h3>
+
+          <p><strong>Networking &gt; Tier-0 Gateways</strong>, then Edit on the existing gateway:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/11.png" alt="Tier-0 Gateways on the GM: Edit on the existing gateway." width="644" height="596" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>Tier-0 Gateways on the GM: Edit on the existing gateway.</figcaption>
+          </figure>
+
+          <p>Added nsx-mgmt-b as a location in <strong>Secondary</strong> mode with edge cluster edgecl-mgmt-b, and left <em>Mark all locations as Primary</em> off:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/12.png" alt="mgmt-t0-stretched: nsx-mgmt-a Primary, nsx-mgmt-b Secondary with fallback Priority 1 on edgecl-mgmt-b." width="1314" height="410" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 12</span>mgmt-t0-stretched: nsx-mgmt-a Primary, nsx-mgmt-b Secondary with fallback Priority 1 on edgecl-mgmt-b.</figcaption>
+          </figure>
+
+          <p>Primary and secondary decides where traffic leaves. While Palo Alto is healthy, all north-south traffic goes out there, and Frankfurt only takes over if Palo Alto fails. Making both primary would send traffic out of both sites, which is fine, but then you have to keep return traffic symmetric yourself.</p>
+
+          <h3>Uplink interfaces in Frankfurt</h3>
+
+          <p>Added two external interfaces on the stretched Tier-0, one per uplink VLAN, both on edge-mgmt-01b:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/13.png" alt="edge-mgmt-b-int-49 on edge-mgmt-01b, connected to edge-mgmt-b-uplink-vlan49." width="1074" height="608" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 13</span>edge-mgmt-b-int-49 on edge-mgmt-01b, connected to edge-mgmt-b-uplink-vlan49.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/14.png" alt="edge-mgmt-b-int-50 on edge-mgmt-01b, connected to edge-mgmt-b-uplink-vlan50." width="1210" height="392" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 14</span>edge-mgmt-b-int-50 on edge-mgmt-01b, connected to edge-mgmt-b-uplink-vlan50.</figcaption>
+            </figure>
+          </div>
+
+          <p>All four interfaces showed Success. int-19 and int-20 are the existing Palo Alto ones:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/15.png" alt="Interfaces: 10.1.6.2/25 and 10.1.6.130/25 in Palo Alto, 10.2.6.2/25 and 10.2.6.130/25 in Frankfurt, all Success." width="1212" height="314" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 15</span>Interfaces: 10.1.6.2/25 and 10.1.6.130/25 in Palo Alto, 10.2.6.2/25 and 10.2.6.130/25 in Frankfurt, all Success.</figcaption>
+          </figure>
+
+          <h3>BGP neighbors</h3>
+
+          <p>Then the two Frankfurt neighbors. The details have to match what the routers expect, or the sessions won't come up:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/16.png" alt="Neighbor 10.2.6.1: location nsx-mgmt-b, remote AS 65005, source 10.2.6.2, neighbor local AS 65006." width="1352" height="488" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 16</span>Neighbor 10.2.6.1: location nsx-mgmt-b, remote AS 65005, source 10.2.6.2, neighbor local AS 65006.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/17.png" alt="Neighbor 10.2.6.129: remote AS 65005, source 10.2.6.130, max hop limit 1, neighbor local AS 65006." width="1346" height="340" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 17</span>Neighbor 10.2.6.129: remote AS 65005, source 10.2.6.130, max hop limit 1, neighbor local AS 65006.</figcaption>
+            </figure>
+          </div>
+
+          <ul>
+            <li><strong>Source address</strong> is the interface on the same VLAN as the router (10.2.6.2 for 10.2.6.1, 10.2.6.130 for 10.2.6.129). The router only accepts the session from the address it has configured.</li>
+            <li><strong>Max hop limit 1</strong> because each router is directly connected.</li>
+            <li><strong>Neighbor local AS 65006.</strong> The Tier-0 runs as AS 65001, but Frankfurt's routers are set up to peer with 65006. Overriding the local AS for just these two neighbors avoids changing the routers, and Palo Alto still sees 65001.</li>
+          </ul>
+
+          <p>All four sessions came up. Palo Alto peers with AS 65000, Frankfurt with AS 65005:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/18.png" alt="BGP neighbors: 10.1.6.1 and 10.1.6.129 (AS 65000), 10.2.6.1 and 10.2.6.129 (AS 65005), all Success." width="1348" height="150" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 18</span>BGP neighbors: 10.1.6.1 and 10.1.6.129 (AS 65000), 10.2.6.1 and 10.2.6.129 (AS 65005), all Success.</figcaption>
+          </figure>
+
+          <h3>Route redistribution for Frankfurt</h3>
+
+          <p>Redistribution is set per location. Palo Alto already had a rule; Frankfurt had none, so it wasn't advertising anything yet. On the same Tier-0, under <strong>Route Re-distribution</strong>, <strong>Set</strong> next to nsx-mgmt-b:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/19.png" alt="Tier-0 BGP: local AS 65001, inter-SR iBGP on, ECMP on, and Route Re-distribution with nsx-mgmt-b not set yet." width="1318" height="462" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 19</span>Tier-0 BGP: local AS 65001, inter-SR iBGP on, ECMP on, and Route Re-distribution with nsx-mgmt-b not set yet.</figcaption>
+          </figure>
+
+          <p>Inter-SR iBGP in that photo is what lets the Tier-0's service routers in both sites share routes with each other over the RTEP.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/20.png" alt="A new rule called route-redistribution-site-b." width="914" height="530" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 20</span>A new rule called route-redistribution-site-b.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/21.png" alt="Sources: Tier-0 connected interfaces and segments, plus Tier-1 connected interfaces and segments." width="810" height="608" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 21</span>Sources: Tier-0 connected interfaces and segments, plus Tier-1 connected interfaces and segments.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Prefix list</h3>
+
+          <p><strong>Routing &gt; IP Prefix Lists</strong> on the Tier-0, then a new list with two entries, both permit: <code>10.1.13.128/25</code> and <code>10.1.13.0/25</code>. Those are the web and DB subnets coming in Module 4.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/22.png" alt="Tier-0 Routing: IP Prefix Lists." width="986" height="448" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 22</span>Tier-0 Routing: IP Prefix Lists.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/23.png" alt="Workloads_IP _Prefix_list: 10.1.13.0/25 and 10.1.13.128/25, both Permit." width="1144" height="542" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 23</span>Workloads_IP _Prefix_list: 10.1.13.0/25 and 10.1.13.128/25, both Permit.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/24.png" alt="The new list next to the default one." width="1138" height="396" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 24</span>The new list next to the default one.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Route map with an AS path prepend</h3>
+
+          <p>Then <strong>Route Maps</strong>, and a new one called Route-Map-Site-B:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/25.png" alt="Tier-0 Routing: Route Maps." width="1196" height="160" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 25</span>Tier-0 Routing: Route Maps.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/26.png" alt="Route-Map-Site-B." width="1052" height="504" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 26</span>Route-Map-Site-B.</figcaption>
+            </figure>
+          </div>
+
+          <p>One match criterion: type IP Prefix, members set to the prefix list from before, AS path prepend <code>65006</code>, action Permit:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/27.png" alt="Match on the prefix list, prepend 65006, local preference 100, Permit." width="1218" height="366" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 27</span>Match on the prefix list, prepend 65006, local preference 100, Permit.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/28.png" alt="Route-Map-Site-B with one match criterion." width="1142" height="364" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 28</span>Route-Map-Site-B with one match criterion.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Apply it to the Frankfurt neighbors</h3>
+
+          <p>Back in BGP, <strong>BGP Neighbors &gt; Set</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/29.png" alt="BGP settings with the Set link under BGP Neighbors." width="1268" height="262" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 29</span>BGP settings with the Set link under BGP Neighbors.</figcaption>
+          </figure>
+
+          <p>Edited the route filter on 10.2.6.1 and set the IPv4 <strong>Out Filter</strong> to Route-Map-Site-B:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/30.png" alt="Neighbor 10.2.6.1: the route filter." width="1238" height="614" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 30</span>Neighbor 10.2.6.1: the route filter.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2705-02-vcf-l/31.png" alt="IPv4 route filter with one out filter." width="1140" height="564" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 31</span>IPv4 route filter with one out filter.</figcaption>
+            </figure>
+          </div>
+
+          <p>And the same for 10.2.6.129:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/32.png" alt="Neighbor 10.2.6.129 with its route filter set." width="1308" height="508" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 32</span>Neighbor 10.2.6.129 with its route filter set.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Why prepend only in Frankfurt</b>Both sites advertise the same workload subnets. With the prepend, the path through Frankfurt looks one AS longer, so the outside network sends return traffic to Palo Alto, the same site the traffic leaves from. Without it, replies could come back through Frankfurt, and any stateful firewall in the path would drop them because it never saw the outgoing packet. If Palo Alto goes down, its routes disappear and the longer Frankfurt path is the only one left. That switch is what Module 5 is meant to show.</div>
+
+          <h2>Module 4: Tenant infrastructure</h2>
+
+          <p>This needs the stretched Tier-0 and working BGP from Module 3. The goal is the bottom half of the diagram at the top: a stretched Tier-1 and two stretched segments for a web tier and a DB tier.</p>
+
+          <h3>Stretched Tier-1</h3>
+
+          <p><strong>Networking &gt; Tier-1 Gateways &gt; Add Tier-1 Gateway</strong> on the GM. mgmt-t1-stretched, <strong>Distributed Only</strong>, linked to mgmt-t0-stretched, advertising all connected segments:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/34.png" alt="mgmt-t1-stretched: Distributed Only, linked to mgmt-t0-stretched, All Connected Segments &amp; Service Ports on." width="1292" height="552" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 34</span>mgmt-t1-stretched: Distributed Only, linked to mgmt-t0-stretched, All Connected Segments &amp; Service Ports on.</figcaption>
+          </figure>
+
+          <p>Distributed Only means the Tier-1 has no service router and needs no edge. It routes in the hypervisor kernel on every host, in both sites. Nothing here needs NAT or a gateway firewall, so there was no reason to give it one.</p>
+
+          <h3>Stretched segments</h3>
+
+          <p>A global segment for the web workloads, on the Tier-1, gateway <code>10.1.13.129/25</code>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/35.png" alt="web-seg-stretched on mgmt-t1-stretched, 10.1.13.129/25, in both nsx-mgmt-a and nsx-mgmt-b." width="1272" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 35</span>web-seg-stretched on mgmt-t1-stretched, 10.1.13.129/25, in both nsx-mgmt-a and nsx-mgmt-b.</figcaption>
+          </figure>
+
+          <p>And one for the DB workloads, gateway <code>10.1.13.1/25</code>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/36.png" alt="DB-seg-stretched on mgmt-t1-stretched, 10.1.13.1/25." width="1312" height="168" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 36</span>DB-seg-stretched on mgmt-t1-stretched, 10.1.13.1/25.</figcaption>
+          </figure>
+
+          <p>Because they're created on the GM, both segments exist in both locations with the same subnet and gateway. A VM can run in either site, or move between them, and keep its IP.</p>
+
+          <h3>Attach the workloads</h3>
+
+          <p>In vc-mgmt-a, Edit Settings on each VM and pick the new network. app01-web-01a goes on web-seg-stretched:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/37.png" alt="app01-web-01a: web-seg-stretched, NSX port group ID /global-infra/segments/web-seg-stretched." width="1274" height="588" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 37</span>app01-web-01a: web-seg-stretched, NSX port group ID /global-infra/segments/web-seg-stretched.</figcaption>
+          </figure>
+
+          <p>And app01-db-01a on DB-seg-stretched:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/38.png" alt="app01-db-01a: DB-seg-stretched." width="1272" height="640" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 38</span>app01-db-01a: DB-seg-stretched.</figcaption>
+          </figure>
+
+          <p>The <code>/global-infra/</code> in the port group ID is a quick way to tell a Federation segment from a local one in vCenter.</p>
+
+          <h3>Check what Frankfurt advertises</h3>
+
+          <p>On the stretched Tier-0's BGP neighbors, the menu on 10.2.6.1 has <strong>Download Advertised Routes</strong>. The CSV shows both workload subnets going to 10.2.6.1 from 10.2.6.2, with AS path 65006:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/39.png" alt="Advertised routes to 10.2.6.1: 10.1.13.0/25 and 10.1.13.128/25, AS path 65006." width="1356" height="550" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 39</span>Advertised routes to 10.2.6.1: 10.1.13.0/25 and 10.1.13.128/25, AS path 65006.</figcaption>
+          </figure>
+
+          <p>That confirms three things: the Tier-1 segments got redistributed, the prefix list matches them, and Frankfurt's routers see the routes from AS 65006.</p>
+
+          <p>With everything working, web to DB traffic is routed by the Tier-1 on the host and never leaves Palo Alto. Traffic to the outside, like the lab console on 10.1.10.130, goes Tier-1 to Tier-0 and out through edge-mgmt-01a to the Palo Alto routers. Frankfurt carries nothing until Palo Alto fails.</p>
+
+          <h2>Module 5: Datacenter failover (not completed)</h2>
+
+          <p>Module 5 simulates losing Palo Alto and watches BGP move the traffic to Frankfurt. I couldn't run it. By the time I got there, both Palo Alto BGP sessions were down while Frankfurt's were still up:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/41.jpg" alt="BGP neighbors: 10.1.6.129 and 10.1.6.1 in Palo Alto Down, 10.2.6.1 and 10.2.6.129 in Frankfurt Success." width="1441" height="171" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 41</span>BGP neighbors: 10.1.6.129 and 10.1.6.1 in Palo Alto Down, 10.2.6.1 and 10.2.6.129 in Frankfurt Success.</figcaption>
+          </figure>
+
+          <p>Both sessions were up in Photo 18, and nothing changed on the Tier-0 side after that. The problem looks like it's on the Palo Alto upstream router, and the lab doesn't give access to it, so there was nothing to troubleshoot from NSX. I've done this lab a few times and hit the same thing every time.</p>
+
+          <div class="callout warning"><b>Seen this one?</b>If you hit the same thing and found a fix, send me a message on <a href="https://www.linkedin.com/in/danish-navarro-baloch-4a35253a2/" target="_blank" rel="noopener noreferrer">LinkedIn</a>.</div>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li>Copy the new site's <strong>API cert thumbprint</strong> before onboarding it, and check version compatibility before saving.</li>
+            <li><strong>RTEPs</strong> need their own routed VLAN and a WAN that carries the 1700-byte inter-location MTU.</li>
+            <li>A stretched Tier-0 in <strong>primary/secondary</strong> mode sends north-south traffic out of the primary site only. An <strong>AS path prepend</strong> on the secondary site keeps return traffic coming in the same way.</li>
+            <li><strong>Neighbor local AS</strong> lets one Tier-0 present a different AS to different peers.</li>
+            <li>Global segments on a <strong>Distributed Only</strong> Tier-1 give both sites the same subnets and gateways with no edge in the path.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2705-02-vcf-l/completion.jpg" alt="Completed November 10, 2026, in 138 minutes." width="670" height="719" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 10, 2026, in 138 minutes.</figcaption>
           </figure>
         </div>
         <!-- ===== ARTICLE CONTENT END ===== -->
@@ -62,7 +415,7 @@
 </main>
 
 <footer id="site-footer"></footer>
-<script src="../assets/posts.js?v=20261110c"></script>
-<script src="../assets/site.js?v=20261110c"></script>
+<script src="../assets/posts.js?v=20261110d"></script>
+<script src="../assets/site.js?v=20261110d"></script>
 </body>
 </html>

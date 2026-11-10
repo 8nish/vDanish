@@ -37,12 +37,17 @@ window.SITE = {
    status: "completed" or "in-progress" · date: YYYY-MM-DD · read: minutes · no: entry number within its own series */
 window.POSTS = [
   /* ---------- November ---------- */
-  { no: 9, type: 'lab', slug: 'vcf-9-1-advanced-networking-cross-vpc', code: 'HOL-2704-08-VCF-L',
+  { no: 9, type: 'lab', slug: 'advanced-networking-vcf-9-1', code: 'HOL-2705-02-VCF-L',
+    title: 'Advanced Networking in VMware Cloud Foundation 9.1',
+    excerpt: 'Onboarding Frankfurt into NSX Federation, RTEPs, a stretched Tier-0 with BGP and an AS path prepend, and stretched segments for a two-tier app.',
+    tags: ['nsx', 'vcf'], date: '2026-11-10', status: 'completed', read: 10 },
+
+  { no: 8, type: 'lab', slug: 'vcf-9-1-advanced-networking-cross-vpc', code: 'HOL-2704-08-VCF-L',
     title: 'VMware Cloud Foundation 9.1: Advanced Networking and Cross VPC Connectivity',
     excerpt: 'VPC networking without NSX Edge nodes: VNA clusters, automatic SNAT, VPCs from vCenter and VCF Automation, and controlling which VPCs can talk.',
     tags: ['nsx', 'vcf'], date: '2026-11-10', status: 'completed', read: 9 },
 
-  { no: 8, type: 'lab', slug: 'building-resilient-networks-nsx', code: 'HOL-2704-02-VCF-L',
+  { no: 7, type: 'lab', slug: 'building-resilient-networks-nsx', code: 'HOL-2704-02-VCF-L',
     title: 'Building Resilient Networks with VMware NSX',
     excerpt: 'Distributed and centralized transit gateways, a three-tier app on VPCs, and handing networking to tenants with projects, quotas and roles.',
     tags: ['nsx', 'vcf'], date: '2026-11-09', status: 'completed', read: 10 },
@@ -52,42 +57,37 @@ window.POSTS = [
     excerpt: 'Going back through the Avi workshop: packet walks, Controller failures, Service Engine sizing and the SE group HA modes.',
     tags: ['avi'], date: '2026-11-07', status: 'completed', read: 2 },
 
-  { no: 7, type: 'lab', slug: 'performance-benchmarking-monitoring-vcf-9-1', code: 'HOL-2704-04-VCF-L',
+  { no: 6, type: 'lab', slug: 'performance-benchmarking-monitoring-vcf-9-1', code: 'HOL-2704-04-VCF-L',
     title: 'Performance Benchmarking and Monitoring on VCF 9.1',
     excerpt: 'Reading cluster performance in VCF Operations, the real-time metrics view, the esxtop columns that matter and a first look at VMmark.',
     tags: ['vcf', 'vsphere'], date: '2026-11-04', status: 'completed', read: 4 },
 
-  { no: 6, type: 'lab', slug: 'deep-dive-compute-vcf-9-1', code: 'HOL-2706-02-VCF-L',
+  { no: 5, type: 'lab', slug: 'deep-dive-compute-vcf-9-1', code: 'HOL-2706-02-VCF-L',
     title: 'Deep Dive: Compute on VCF 9.1',
     excerpt: 'Licensing views and rightsizing in VCF Operations, cluster desired state and fixing drift, plus planning tools worth bookmarking.',
     tags: ['vcf', 'vsphere'], date: '2026-11-04', status: 'completed', read: 3 },
 
-  { no: 5, type: 'lab', slug: 'memory-tiering-vcf-9-1-spotlight', code: 'HOL-2703-01-VCF-L',
+  { no: 4, type: 'lab', slug: 'memory-tiering-vcf-9-1-spotlight', code: 'HOL-2703-01-VCF-L',
     title: 'Memory Tiering in VCF 9.1: Spotlight',
     excerpt: 'A focused look at memory tiering: the NVMe tier, per-VM advanced parameters and enabling it again from the CLI.',
     tags: ['vsphere', 'vcf'], date: '2026-11-03', status: 'completed', read: 3 },
 
-  { no: 4, type: 'lab', slug: 'whats-new-vsphere-compute-vcf-9-1', code: 'HOL-2706-01-VCF-L',
+  { no: 3, type: 'lab', slug: 'whats-new-vsphere-compute-vcf-9-1', code: 'HOL-2706-01-VCF-L',
     title: "What's New in vSphere: Compute in VCF 9.1",
     excerpt: 'Memory tiering, cluster-level configuration management, vLCM images and live patching without full maintenance mode.',
     tags: ['vsphere', 'vcf'], date: '2026-11-03', status: 'completed', read: 3 },
 
-  { no: 3, type: 'lab', slug: 'virtualization-101', code: 'HOL-2535-01-VCF-L',
+  { no: 2, type: 'lab', slug: 'virtualization-101', code: 'HOL-2535-01-VCF-L',
     title: 'Virtualization 101',
     excerpt: 'A broad vSphere refresher: templates, tags, HA and DRS, alarms with actions, switches, lockdown mode, SSO and datastores.',
     tags: ['vsphere'], date: '2026-11-01', status: 'completed', read: 3 },
 
   /* ---------- October ---------- */
-  { no: 2, type: 'lab', slug: 'vdefend-firewall-security-journey', code: 'HOL-2770-01-ANS-L',
+  { no: 1, type: 'lab', slug: 'vdefend-firewall-security-journey', code: 'HOL-2770-01-ANS-L',
     title: 'vDefend Firewall Security Journey: DFW 1-2-3-4',
     excerpt: 'Going from imported asset data to application ringfencing in four stages, inside the Security Services Platform UI.',
     tags: ['vdefend', 'nsx'], date: '2026-10-29', status: 'completed', read: 3 },
 
-
-  { no: 1, type: 'lab', slug: 'advanced-networking-vcf-9-1', code: 'HOL-2705-02-VCF-L',
-    title: 'Advanced Networking in VMware Cloud Foundation 9.1',
-    excerpt: 'Onboarding a second NSX Manager from the Global Manager, Tier-0 BGP with a route map, RTEPs on the edges and stretched segments.',
-    tags: ['nsx', 'vcf'], date: '2026-10-29', status: 'completed', read: 3 },
 
   { no: 19, type: 'study', slug: 'intrinsic-security-ids-ips-malware', code: '',
     title: 'Intrinsic Security: IDS/IPS, Malware Prevention and NAPP',
