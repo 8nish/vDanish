@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 840" width="1200" height="840" role="img" aria-labelledby="t d">
+  <title id="t">Lab topology: HOL-2704-08-VCF-L</title>
+  <desc id="d">A distributed VLAN connection feeds the default transit gateway, which runs distributed with a two-node VNA cluster for north-south services. Module 1 builds VPC-HOL (10.13.13.0/24) with a public subnet for web-01a and a private VPC subnet for web-02a, and SNAT to 10.1.8.140. Module 2 builds three VPCs with private transit gateway subnets: vpc-finance with web-02a and vpc-marketing with web-01a as Community VPCs, and vpc-shared with app-01a as a Promiscuous VPC.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/>
+    </pattern>
+    <linearGradient id="tgw" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <symbol id="arrows" viewBox="-20 -20 40 40">
+      <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0-15v30M-15 0h30"/>
+        <path d="M-5-10 0-15 5-10M-5 10 0 15 5 10M-10-5-15 0-10 5M10-5 15 0 10 5"/>
+      </g>
+    </symbol>
+    <symbol id="vm" viewBox="0 0 80 56">
+      <rect x="2" y="2" width="76" height="52" rx="10" fill="#0f1a2e" stroke="currentColor" stroke-width="3"/>
+      <text x="40" y="34" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="16" font-weight="700" fill="currentColor">VM</text>
+    </symbol>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="840" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="840" rx="18" fill="url(#grid)"/>
+  <text x="40" y="48" font-family="JetBrains Mono, Consolas, monospace" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2704-08-VCF-L · LAB TOPOLOGY</text>
+
+  <!-- legend -->
+  <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" fill="#c6d1e2">
+    <rect x="836" y="28" width="326" height="112" rx="12" fill="#0f1626" stroke="#2c3b58"/>
+    <text x="856" y="54" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="600" letter-spacing="1.5" fill="#7f8ea8">SUBNET TYPES</text>
+    <rect x="856" y="68" width="26" height="6" rx="3" fill="#34d399"/><text x="894" y="76"><tspan font-weight="700" fill="#eef3fb">Public</tspan>: reachable from outside</text>
+    <rect x="856" y="92" width="26" height="6" rx="3" fill="#a78bfa"/><text x="894" y="100"><tspan font-weight="700" fill="#eef3fb">Private - VPC</tspan>: own VPC only</text>
+    <rect x="856" y="116" width="26" height="6" rx="3" fill="#22d3ee"/><text x="894" y="124"><tspan font-weight="700" fill="#eef3fb">Private - TGW</tspan>: other VPCs via TGW</text>
+  </g>
+
+  <!-- external connection -->
+  <rect x="440" y="76" width="320" height="52" rx="12" fill="#141d31" stroke="#7f8ea8" stroke-width="2"/>
+  <text x="600" y="100" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#eef3fb">Distributed VLAN connection</text>
+  <text x="600" y="119" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#7f8ea8">external connection · no NSX Edge nodes</text>
+  <line x1="600" y1="128" x2="600" y2="196" stroke="#7f8ea8" stroke-width="3"/>
+
+  <!-- transit gateway -->
+  <circle cx="600" cy="240" r="44" fill="url(#tgw)"/>
+  <use href="#arrows" x="574" y="214" width="52" height="52" color="#041320"/>
+  <g font-family="Inter, Segoe UI, Arial, sans-serif">
+    <text x="664" y="228" font-size="18" font-weight="700" fill="#eef3fb">Default Transit Gateway</text>
+    <text x="664" y="250" font-size="14" fill="#c6d1e2">Connectivity: <tspan font-family="JetBrains Mono, Consolas, monospace" fill="#22d3ee">Distributed</tspan></text>
+    <text x="664" y="270" font-size="14" fill="#c6d1e2">TGW edge cluster: <tspan font-family="JetBrains Mono, Consolas, monospace" fill="#7f8ea8">not set</tspan></text>
+    <text x="536" y="228" text-anchor="end" font-size="15" font-weight="700" fill="#eef3fb">VNA cluster</text>
+    <text x="536" y="250" text-anchor="end" font-size="14" font-family="JetBrains Mono, Consolas, monospace" fill="#c6d1e2">vna-cluster-wld01-a</text>
+    <text x="536" y="270" text-anchor="end" font-size="14" fill="#c6d1e2">2 nodes · N-S services · outbound NAT</text>
+  </g>
+
+  <!-- bus from TGW to every VPC gateway -->
+  <g stroke="#7f8ea8" stroke-width="3" fill="none">
+    <path d="M600 284V330"/>
+    <path d="M260 330H994"/>
+    <path d="M260 330V418"/>
+    <path d="M570 330V428M782 330V428M994 330V428"/>
+  </g>
+
+  <!-- MODULE 1: VPC-HOL -->
+  <rect x="40" y="360" width="440" height="440" rx="16" fill="#0f1626" fill-opacity=".9" stroke="#3b82f6" stroke-width="2.5"/>
+  <text x="60" y="392" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="600" letter-spacing="1.5" fill="#7f8ea8">MODULE 1</text>
+  <text x="60" y="412" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#60a5fa">VPC-HOL</text>
+  <text x="460" y="402" text-anchor="end" font-family="JetBrains Mono, Consolas, monospace" font-size="14" fill="#c6d1e2">10.13.13.0/24</text>
+  <circle cx="260" cy="450" r="32" fill="#0f1a2e" stroke="#3b82f6" stroke-width="3"/>
+  <use href="#arrows" x="241" y="431" width="38" height="38" color="#60a5fa"/>
+  <rect x="304" y="437" width="156" height="26" rx="7" fill="#2dd4bf"/>
+  <text x="382" y="455" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="13" font-weight="700" fill="#041320">SNAT → 10.1.8.140</text>
+  <path d="M245 478 215 557M275 478 305 557" stroke="#3b82f6" stroke-width="3" fill="none"/>
+  <rect x="70" y="557" width="170" height="7" rx="3.5" fill="#34d399"/>
+  <rect x="280" y="557" width="170" height="7" rx="3.5" fill="#a78bfa"/>
+  <text x="70" y="545" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="600" fill="#eef3fb">VPC-HOL-PUBLIC</text>
+  <text x="450" y="545" text-anchor="end" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="14" font-weight="600" fill="#eef3fb">VPC-HOL-PRIVATE</text>
+  <line x1="155" y1="564" x2="155" y2="600" stroke="#34d399" stroke-width="3"/>
+  <line x1="365" y1="564" x2="365" y2="600" stroke="#a78bfa" stroke-width="3"/>
+  <use href="#vm" x="115" y="600" width="80" height="56" color="#34d399"/>
+  <use href="#vm" x="325" y="600" width="80" height="56" color="#a78bfa"/>
+  <text x="155" y="682" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="15" font-weight="600" fill="#eef3fb">web-01a</text>
+  <text x="365" y="682" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="15" font-weight="600" fill="#eef3fb">web-02a</text>
+  <text x="60" y="742" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" fill="#7f8ea8">+ a Services Subnet, created automatically</text>
+  <text x="60" y="764" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" fill="#7f8ea8">Default outbound NAT on the VNA cluster</text>
+
+  <!-- MODULE 2: three VPCs -->
+  <g font-family="Inter, Segoe UI, Arial, sans-serif">
+    <!-- vpc-finance -->
+    <rect x="530" y="410" width="196" height="360" rx="14" fill="#0f1626" fill-opacity=".9" stroke="#f59e0b" stroke-width="2"/>
+    <circle cx="570" cy="452" r="24" fill="#0f1a2e" stroke="#f59e0b" stroke-width="3"/>
+    <use href="#arrows" x="556" y="438" width="28" height="28" color="#fbbf24"/>
+    <text x="606" y="448" font-size="15" font-weight="700" fill="#fbbf24">vpc-finance</text>
+    <text x="606" y="466" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#c6d1e2">10.151.0.0/24</text>
+    <rect x="606" y="478" width="96" height="22" rx="6" fill="#f59e0b"/>
+    <text x="654" y="493" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="700" fill="#1c1200">Community</text>
+    <line x1="570" y1="476" x2="570" y2="607" stroke="#f59e0b" stroke-width="3"/>
+    <rect x="546" y="607" width="164" height="7" rx="3.5" fill="#22d3ee"/>
+    <text x="582" y="597" font-size="13" font-weight="600" fill="#eef3fb">subnet-h4zm</text>
+    <line x1="628" y1="614" x2="628" y2="640" stroke="#22d3ee" stroke-width="3"/>
+    <use href="#vm" x="588" y="640" width="80" height="50" color="#22d3ee"/>
+    <text x="628" y="714" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="14" font-weight="600" fill="#eef3fb">web-02a</text>
+    <text x="628" y="734" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#7f8ea8">172.16.204.3</text>
+
+    <!-- vpc-marketing -->
+    <rect x="742" y="410" width="196" height="360" rx="14" fill="#0f1626" fill-opacity=".9" stroke="#f59e0b" stroke-width="2"/>
+    <circle cx="782" cy="452" r="24" fill="#0f1a2e" stroke="#f59e0b" stroke-width="3"/>
+    <use href="#arrows" x="768" y="438" width="28" height="28" color="#fbbf24"/>
+    <text x="818" y="448" font-size="15" font-weight="700" fill="#fbbf24">vpc-marketing</text>
+    <text x="818" y="466" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#c6d1e2">10.152.0.0/24</text>
+    <rect x="818" y="478" width="96" height="22" rx="6" fill="#f59e0b"/>
+    <text x="866" y="493" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="700" fill="#1c1200">Community</text>
+    <line x1="782" y1="476" x2="782" y2="607" stroke="#f59e0b" stroke-width="3"/>
+    <rect x="758" y="607" width="164" height="7" rx="3.5" fill="#22d3ee"/>
+    <text x="794" y="597" font-size="13" font-weight="600" fill="#eef3fb">subnet-sfcr</text>
+    <line x1="840" y1="614" x2="840" y2="640" stroke="#22d3ee" stroke-width="3"/>
+    <use href="#vm" x="800" y="640" width="80" height="50" color="#22d3ee"/>
+    <text x="840" y="714" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="14" font-weight="600" fill="#eef3fb">web-01a</text>
+    <text x="840" y="734" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#7f8ea8">172.16.204.11</text>
+
+    <!-- vpc-shared -->
+    <rect x="954" y="410" width="196" height="360" rx="14" fill="#0f1626" fill-opacity=".9" stroke="#22c55e" stroke-width="2"/>
+    <circle cx="994" cy="452" r="24" fill="#0f1a2e" stroke="#22c55e" stroke-width="3"/>
+    <use href="#arrows" x="980" y="438" width="28" height="28" color="#4ade80"/>
+    <text x="1030" y="448" font-size="15" font-weight="700" fill="#4ade80">vpc-shared</text>
+    <text x="1030" y="466" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#c6d1e2">10.153.0.0/24</text>
+    <rect x="1030" y="478" width="108" height="22" rx="6" fill="#22c55e"/>
+    <text x="1084" y="493" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="700" fill="#03170a">Promiscuous</text>
+    <line x1="994" y1="476" x2="994" y2="607" stroke="#22c55e" stroke-width="3"/>
+    <rect x="970" y="607" width="164" height="7" rx="3.5" fill="#22d3ee"/>
+    <text x="1006" y="597" font-size="13" font-weight="600" fill="#eef3fb">subnet-pswr</text>
+    <line x1="1052" y1="614" x2="1052" y2="640" stroke="#22d3ee" stroke-width="3"/>
+    <use href="#vm" x="1012" y="640" width="80" height="50" color="#22d3ee"/>
+    <text x="1052" y="714" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="14" font-weight="600" fill="#eef3fb">app-01a</text>
+    <text x="1052" y="734" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" fill="#7f8ea8">172.16.204.19</text>
+  </g>
+  <text x="840" y="800" text-anchor="middle" font-family="JetBrains Mono, Consolas, monospace" font-size="12" font-weight="600" letter-spacing="1.5" fill="#7f8ea8">MODULE 2 · CROSS-VPC CONNECTIVITY</text>
+  <text x="840" y="820" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" fill="#7f8ea8">Finance and Marketing are Community VPCs; Shared is Promiscuous and reachable by both</text>
+</svg>

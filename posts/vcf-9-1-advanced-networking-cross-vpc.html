@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMware Cloud Foundation 9.1: Advanced Networking and Cross VPC Connectivity · vDanish</title>
+<meta name="description" content="VPC networking without NSX Edge nodes in VCF 9.1: VNA clusters, automatic SNAT, VPCs from vCenter and VCF Automation, and controlling which VPCs can talk through the transit gateway.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=20261110b">
+</head>
+<body data-page="post" data-root="../" data-slug="vcf-9-1-advanced-networking-cross-vpc">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>VCF 9.1 moves VPC networking onto the distributed path: routing, NAT, DHCP and security run on the hosts, without NSX Edge nodes. Module 1 builds VPCs from vCenter and from VCF Automation and adds services on top of them. Module 2 uses the transit gateway to decide which VPCs can talk to each other. Click any photo to see it full screen.</p>
+
+          <h2>Lab topology</h2>
+
+          <p>Both modules hang off the same distributed transit gateway. Module 1 builds <strong>VPC-HOL</strong> with a public and a private subnet; Module 2 builds three VPCs (Finance, Marketing and Shared) and moves the VMs into them.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/topology.svg" alt="Lab topology: the transit gateway and VNA cluster, VPC-HOL from Module 1, and the three Module 2 VPCs with their subnets, VMs and IPs." width="1200" height="840" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>Lab topology: the transit gateway and VNA cluster, VPC-HOL from Module 1, and the three Module 2 VPCs with their subnets, VMs and IPs.</figcaption>
+          </figure>
+
+          <h2>Module 1: Network services without NSX Edge nodes</h2>
+
+          <p>In VCF 9.1 a VPC gets north-south services such as NAT and DHCP without a Tier-0 gateway or an edge cluster. Routing happens on the hosts, and a small <strong>Virtual Network Appliance (VNA) cluster</strong> takes care of the stateful parts like NAT.</p>
+
+          <h3>Check the transit gateway</h3>
+
+          <p>Validated the transit gateway in vc-wld01:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/1.png" alt="Transit gateway overview: Distributed connectivity, status Success, no TGW edge cluster, one external connection and 3 connected VPCs." width="1106" height="479" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 1</span>Transit gateway overview: Distributed connectivity, status Success, no TGW edge cluster, one external connection and 3 connected VPCs.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/2.png" alt="The default VPC connectivity profile: VNA cluster vna-cluster-wld01-a, with N-S services and default outbound NAT both on." width="1258" height="240" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>The default VPC connectivity profile: VNA cluster vna-cluster-wld01-a, with N-S services and default outbound NAT both on.</figcaption>
+          </figure>
+
+          <p>No TGW edge cluster is set, so everything here runs distributed. The <strong>connectivity profile</strong> is what gives VPCs their services: it points at the VNA cluster and turns on N-S services and default outbound NAT for every VPC that uses it.</p>
+
+          <h3>Create a VPC from vCenter</h3>
+
+          <p>Created a VPC through vc-wld01:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/3.png" alt="Virtual Private Clouds &gt; Actions &gt; New VPC." width="440" height="598" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 3</span>Virtual Private Clouds &gt; Actions &gt; New VPC.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/4.png" alt="VPC-HOL with the private CIDR 10.13.13.0/24 and the default connectivity profile." width="752" height="584" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 4</span>VPC-HOL with the private CIDR 10.13.13.0/24 and the default connectivity profile.</figcaption>
+            </figure>
+          </div>
+
+          <p>Summary of VPCs:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/5.png" alt="VPC overview: 1 transit gateway, 4 VPCs, 13 subnets and 18 VMs." width="828" height="536" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>VPC overview: 1 transit gateway, 4 VPCs, 13 subnets and 18 VMs.</figcaption>
+          </figure>
+
+          <p>And the lab's visual summary of how the pieces connect:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/6.png" alt="Traffic leaves through the transit gateway onto the physical VLAN; the VNA cluster provides N-S services and default outbound NAT." width="542" height="568" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 6</span>Traffic leaves through the transit gateway onto the physical VLAN; the VNA cluster provides N-S services and default outbound NAT.</figcaption>
+          </figure>
+
+          <h3>Add subnets</h3>
+
+          <p>Created a new public subnet in the new VPC:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/7.png" alt="VPC-HOL &gt; Actions &gt; New Subnet." width="932" height="534" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 7</span>VPC-HOL &gt; Actions &gt; New Subnet.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/8.png" alt="VPC-HOL-PUBLIC: Public access mode, auto-allocated /29, DHCP server." width="1076" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 8</span>VPC-HOL-PUBLIC: Public access mode, auto-allocated /29, DHCP server.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then another subnet in the same VPC, this time <strong>Private - VPC</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/9.png" alt="New Subnet again on VPC-HOL." width="932" height="534" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 9</span>New Subnet again on VPC-HOL.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/10.png" alt="VPC-HOL-PRIVATE: Private - VPC access mode, auto-allocated /29, DHCP server." width="1224" height="688" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 10</span>VPC-HOL-PRIVATE: Private - VPC access mode, auto-allocated /29, DHCP server.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Connect the VMs</h3>
+
+          <p>Connected web-01a to the public subnet:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/11.png" alt="VPC-HOL-PUBLIC &gt; Connect VMs." width="696" height="552" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 11</span>VPC-HOL-PUBLIC &gt; Connect VMs.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/12.png" alt="Selecting web-01a." width="1118" height="386" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 12</span>Selecting web-01a.</figcaption>
+            </figure>
+          </div>
+
+          <p>And web-02a to the private VPC subnet:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/13.png" alt="VPC-HOL-PRIVATE &gt; Connect VMs." width="754" height="544" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 13</span>VPC-HOL-PRIVATE &gt; Connect VMs.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/14.png" alt="Selecting web-02a." width="1140" height="392" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 14</span>Selecting web-02a.</figcaption>
+            </figure>
+          </div>
+
+          <p>The VPC now has three subnets and two VMs. The third subnet is the <strong>Services Subnet</strong>, which is provisioned automatically and dedicated to the VPC's core services.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/15.png" alt="VPC-HOL summary: 3 subnets, 2 VMs and the private CIDR 10.13.13.0/24." width="1192" height="528" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 15</span>VPC-HOL summary: 3 subnets, 2 VMs and the private CIDR 10.13.13.0/24.</figcaption>
+          </figure>
+
+          <h3>Check the NAT rules</h3>
+
+          <p>To see the NAT rules, click the blue circle next to the VPC gateway in the topology view:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/16.png" alt="VPC-HOL topology: the blue circle on the VPC gateway opens its NAT rules." width="908" height="546" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 16</span>VPC-HOL topology: the blue circle on the VPC gateway opens its NAT rules.</figcaption>
+          </figure>
+
+          <p>Default outbound NAT created an <strong>SNAT</strong> rule by itself: traffic from 10.13.13.0/24 is translated to <code>10.1.8.140</code>, an address allocated directly from the External Connection IP block. That is what lets the private subnet reach the outside without its own external IP, and no edge node is involved.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/17.png" alt="The automatic SNAT rule: 10.13.13.0/24 translated to 10.1.8.140." width="1346" height="108" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 17</span>The automatic SNAT rule: 10.13.13.0/24 translated to 10.1.8.140.</figcaption>
+          </figure>
+
+          <h3>Create a VPC from VCF Automation</h3>
+
+          <p>A tenant would create VPCs from VCF Automation instead of vCenter. Logged in to the provider UI:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/18.png" alt="VCF Automation provider management login." width="430" height="582" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 18</span>VCF Automation provider management login.</figcaption>
+          </figure>
+
+          <p>Opened <strong>Organizations</strong>, then Acme East A:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/19.png" alt="Provider overview: 1 organization, 1 region, 1 supervisor." width="1116" height="250" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 19</span>Provider overview: 1 organization, 1 region, 1 supervisor.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/20.png" alt="The Acme East A organization." width="970" height="322" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 20</span>The Acme East A organization.</figcaption>
+            </figure>
+          </div>
+
+          <p>Network services for the Acme East A organization:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/21.png" alt="Acme East A networking: a distributed VLAN connection on VLAN 25, connected to the default transit gateway." width="1234" height="334" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 21</span>Acme East A networking: a distributed VLAN connection on VLAN 25, connected to the default transit gateway.</figcaption>
+          </figure>
+
+          <p>Checked the VNA cluster health:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/22.png" alt="vna-cluster-wld01-a: Healthy, 2 nodes, used by 1 organization." width="1272" height="194" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 22</span>vna-cluster-wld01-a: Healthy, 2 nodes, used by 1 organization.</figcaption>
+          </figure>
+
+          <p>Launched the Acme East A organization portal:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/23.png" alt="Launch Organization Portal." width="1070" height="186" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 23</span>Launch Organization Portal.</figcaption>
+          </figure>
+
+          <p>And created a VPC from the organization portal:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/24.png" alt="rvpc-automation-hol in us-east-a: private CIDR 172.16.22.0/24, load balancing enabled." width="1034" height="626" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 24</span>rvpc-automation-hol in us-east-a: private CIDR 172.16.22.0/24, load balancing enabled.</figcaption>
+          </figure>
+
+          <h3>Namespace, VM load balancer and a VKS cluster</h3>
+
+          <p>A <strong>namespace</strong> ties compute, storage and networking together for workloads. Putting it on the new VPC means anything deployed in it, VMs or Kubernetes clusters, uses that VPC's networking.</p>
+
+          <p>Created a new namespace:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/25.png" alt="The organization portal overview." width="778" height="580" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 25</span>The organization portal overview.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/26.png" alt="Namespaces &gt; New Namespace." width="574" height="512" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 26</span>Namespaces &gt; New Namespace.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/27.png" alt="namespace-hol: small namespace class, zone z-wld-a, on the shared VPC rvpc-automation-hol." width="772" height="610" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 27</span>namespace-hol: small namespace class, zone z-wld-a, on the shared VPC rvpc-automation-hol.</figcaption>
+          </figure>
+
+          <p>Edited the namespace and opened <strong>Network</strong> under Services:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/28.png" alt="Editing the namespace." width="392" height="558" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 28</span>Editing the namespace.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/29.png" alt="Services &gt; Network." width="1252" height="218" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 29</span>Services &gt; Network.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then <strong>VM Load Balancers</strong> > Create:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/30.png" alt="VM Load Balancers &gt; Create." width="1172" height="148" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 30</span>VM Load Balancers &gt; Create.</figcaption>
+          </figure>
+
+          <p>Settings: name <code>vm-lb-hol</code>, port name <code>ssh</code>, port 22, protocol TCP, target port 22. It forwards SSH to the VMs that match its selector.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/31.png" alt="vm-lb-hol: SSH on TCP 22." width="822" height="606" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 31</span>vm-lb-hol: SSH on TCP 22.</figcaption>
+          </figure>
+
+          <p>Then a VKS cluster in the same namespace, with a custom configuration:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/32.png" alt="Build &amp;amp; Deploy &gt; Kubernetes &gt; Create." width="376" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 32</span>Build &amp;amp; Deploy &gt; Kubernetes &gt; Create.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/33.png" alt="Custom configuration." width="1138" height="482" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 33</span>Custom configuration.</figcaption>
+            </figure>
+          </div>
+
+          <p>Review and confirm:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/34.png" alt="kubernetes-cluster-lj7r: builtin-generic-v3.7.0, one control plane node, best-effort-medium VM class." width="1234" height="434" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 34</span>kubernetes-cluster-lj7r: builtin-generic-v3.7.0, one control plane node, best-effort-medium VM class.</figcaption>
+          </figure>
+
+          <h2>Module 2: Control over cross-VPC communication</h2>
+
+          <p>The goal: two <strong>Community</strong> VPCs, Finance and Marketing, isolated from each other, and a Shared Services VPC with a <strong>Promiscuous</strong> policy that both can reach. The VPCs come from VCF Automation, and NSX applies the connectivity policies, with no firewall rules involved.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/35.png" alt="The Module 2 design: Finance and Marketing are Community VPCs, Shared Services is Promiscuous." width="890" height="656" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 35</span>The Module 2 design: Finance and Marketing are Community VPCs, Shared Services is Promiscuous.</figcaption>
+          </figure>
+
+          <p>Community and Promiscuous work like private VLANs: a Community VPC can reach the Promiscuous VPC but not another Community, and the Promiscuous VPC can reach everyone.</p>
+
+          <table>
+            <thead><tr><th>VPC</th><th>CIDR</th><th>Policy</th><th>VM</th></tr></thead>
+            <tbody>
+              <tr><td>vpc-finance</td><td>10.151.0.0/24</td><td>Community</td><td>web-02a</td></tr>
+              <tr><td>vpc-marketing</td><td>10.152.0.0/24</td><td>Community</td><td>web-01a</td></tr>
+              <tr><td>vpc-shared</td><td>10.153.0.0/24</td><td>Promiscuous</td><td>app-01a</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Create the VPCs</h3>
+
+          <p>Created the Finance VPC through the VCF Automation organization portal:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/36.png" alt="Manage &amp;amp; Govern &gt; Virtual Private Clouds &gt; New VPC." width="524" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 36</span>Manage &amp;amp; Govern &gt; Virtual Private Clouds &gt; New VPC.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/37.png" alt="vpc-finance: 10.151.0.0/24." width="684" height="606" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 37</span>vpc-finance: 10.151.0.0/24.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then the Marketing VPC, and the Shared VPC:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/38.png" alt="vpc-marketing: 10.152.0.0/24." width="694" height="604" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 38</span>vpc-marketing: 10.152.0.0/24.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/39.png" alt="vpc-shared: 10.153.0.0/24." width="682" height="606" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 39</span>vpc-shared: 10.153.0.0/24.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Add a Private - TGW subnet to each VPC</h3>
+
+          <p>Each VPC gets a <strong>Private - Transit Gateway</strong> subnet, the type that can reach other VPCs through the transit gateway. First the Finance VPC:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/40.png" alt="Networking &gt; Subnets &gt; New Subnet." width="616" height="548" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 40</span>Networking &gt; Subnets &gt; New Subnet.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/41.png" alt="Finance subnet: Private - Transit Gateway, /29, DHCP server." width="1212" height="941" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 41</span>Finance subnet: Private - Transit Gateway, /29, DHCP server.</figcaption>
+            </figure>
+          </div>
+
+          <p>One for the Marketing VPC, and the last one for the Shared VPC:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/42.png" alt="Marketing subnet: the same settings." width="1212" height="892" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 42</span>Marketing subnet: the same settings.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/43.png" alt="Shared subnet: the same settings." width="962" height="853" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 43</span>Shared subnet: the same settings.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Attach the workloads</h3>
+
+          <p>In vc-wld01, attached each VM to its VPC subnet through Edit Settings. First app-01a on the shared subnet:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/44.png" alt="app-01a &gt; Edit Settings." width="488" height="600" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 44</span>app-01a &gt; Edit Settings.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/45.png" alt="Network adapter 1 &gt; Browse." width="884" height="562" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 45</span>Network adapter 1 &gt; Browse.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/46.png" alt="subnet-pswr in vpc-shared." width="1146" height="370" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 46</span>subnet-pswr in vpc-shared.</figcaption>
+          </figure>
+
+          <p>Then web-01a on the Marketing subnet, and web-02a on the Finance subnet:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/47.png" alt="web-01a: subnet-sfcr in vpc-marketing." width="772" height="618" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 47</span>web-01a: subnet-sfcr in vpc-marketing.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2704-08-vcf-l/48.png" alt="web-02a: subnet-h4zm in vpc-finance." width="768" height="618" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 48</span>web-02a: subnet-h4zm in vpc-finance.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Test with Traceflow</h3>
+
+          <p>Traceflow injects a test packet and records every hop, so it shows what the network allows without logging in to the VMs.</p>
+
+          <p><strong>web-01a (Marketing) to web-02a (Finance):</strong></p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/49.png" alt="Traceflow from web-01a (172.16.204.11) to web-02a (172.16.204.3)." width="1340" height="648" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 49</span>Traceflow from web-01a (172.16.204.11) to web-02a (172.16.204.3).</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/50.png" alt="Result: Delivered, from esx-05a to esx-06a." width="1318" height="204" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 50</span>Result: Delivered, from esx-05a to esx-06a.</figcaption>
+          </figure>
+
+          <p><strong>web-01a (Marketing) to app-01a (Shared):</strong></p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/51.png" alt="Traceflow from web-01a to app-01a (172.16.204.19)." width="1262" height="592" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 51</span>Traceflow from web-01a to app-01a (172.16.204.19).</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/52.png" alt="Result: Delivered." width="1316" height="200" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 52</span>Result: Delivered.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Reading the results</b>Both traces were delivered, including Marketing to Finance. Private - TGW subnets on the same transit gateway can reach each other by default; the Community and Promiscuous connectivity policies are what stop Marketing and Finance talking while keeping Shared reachable. The connectivity profiles are where to experiment with that.</div>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li>VPCs in VCF 9.1 get NAT, DHCP and north-south services <strong>without NSX Edge nodes</strong>; a VNA cluster handles the stateful parts.</li>
+            <li><strong>Default outbound NAT</strong> creates the SNAT rule for you, using an address from the external connection's IP block.</li>
+            <li>The same VPC can be built from vCenter or from a <strong>VCF Automation</strong> organization, with namespaces, VM load balancers and VKS clusters on top.</li>
+            <li>Private - TGW subnets can reach each other across VPCs; <strong>connectivity policies</strong> narrow that down without firewall rules.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2704-08-vcf-l/completion.png" alt="Completed November 9 to 10, 2026, in 118 minutes." width="897" height="743" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 9 to 10, 2026, in 118 minutes.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js?v=20261110b"></script>
+<script src="../assets/site.js?v=20261110b"></script>
+</body>
+</html>

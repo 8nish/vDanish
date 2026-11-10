@@ -37,6 +37,11 @@ window.SITE = {
    status: "completed" or "in-progress" · date: YYYY-MM-DD · read: minutes · no: entry number within its own series */
 window.POSTS = [
   /* ---------- November ---------- */
+  { no: 10, type: 'lab', slug: 'vcf-9-1-advanced-networking-cross-vpc', code: 'HOL-2704-08-VCF-L',
+    title: 'VMware Cloud Foundation 9.1: Advanced Networking and Cross VPC Connectivity',
+    excerpt: 'VPC networking without NSX Edge nodes: VNA clusters, automatic SNAT, VPCs from vCenter and VCF Automation, and controlling which VPCs can talk.',
+    tags: ['nsx', 'vcf'], date: '2026-11-10', status: 'completed', read: 9 },
+
   { no: 9, type: 'lab', slug: 'building-resilient-networks-nsx', code: 'HOL-2704-02-VCF-L',
     title: 'Building Resilient Networks with VMware NSX',
     excerpt: 'Distributed and centralized transit gateways, a three-tier app on VPCs, and handing networking to tenants with projects, quotas and roles.',
