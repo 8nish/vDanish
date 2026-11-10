@@ -40,7 +40,7 @@ window.POSTS = [
   { no: 9, type: 'lab', slug: 'advanced-networking-vcf-9-1', code: 'HOL-2705-02-VCF-L',
     title: 'Advanced Networking in VMware Cloud Foundation 9.1',
     excerpt: 'Onboarding Frankfurt into NSX Federation, RTEPs, a stretched Tier-0 with BGP and an AS path prepend, and stretched segments for a two-tier app.',
-    tags: ['nsx', 'vcf'], date: '2026-11-10', status: 'completed', read: 10 },
+    tags: ['nsx', 'vcf'], date: '2026-11-10', status: 'completed', read: 6 },
 
   { no: 8, type: 'lab', slug: 'vcf-9-1-advanced-networking-cross-vpc', code: 'HOL-2704-08-VCF-L',
     title: 'VMware Cloud Foundation 9.1: Advanced Networking and Cross VPC Connectivity',
