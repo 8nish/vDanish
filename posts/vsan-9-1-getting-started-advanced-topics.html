@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMware vSAN 9.1: Getting Started and Advanced Topics · vDanish</title>
+<meta name="description" content="A first proper look at vSAN 9.1 from a networking person: Auto-RAID, scaling an ESA cluster, health and capacity, encryption, a stretched cluster, a storage cluster, file services and data protection.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=20261111a">
+</head>
+<body data-page="post" data-root="../" data-slug="vsan-9-1-getting-started-advanced-topics">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>vSAN isn't my area. Most of my time goes to NSX, vDefend and Avi, so this one was more of a learning lab for me. Seven modules across two sites: Auto-RAID and storage policies, monitoring, encryption, a stretched cluster, a storage cluster, file services and data protection. I ran out of time near the end of Module 7. Click any photo to see it full screen.</p>
+
+          <h2>Lab topology</h2>
+
+          <p>Modules 1 to 3 and 6 run in Site A, Modules 4 and 5 in Site B, and Module 7 uses both.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/topology.svg" alt="Site A: cluster-esa-01a and cluster-mgmt-01a with file services. Site B: the stretched cluster with its witness, and the storage cluster shared with a compute cluster." width="1200" height="800" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>Site A: cluster-esa-01a and cluster-mgmt-01a with file services. Site B: the stretched cluster with its witness, and the storage cluster shared with a compute cluster.</figcaption>
+          </figure>
+
+          <h2>Module 1: vSAN SPBM and availability</h2>
+
+          <h3>Check Auto-RAID</h3>
+
+          <p>First, check that Auto-RAID is on for cluster-esa-01a, under <strong>Configure &gt; vSAN &gt; Services</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/2.png" alt="cluster-esa-01a: vSAN ESA, Apply Auto-RAID to all objects enabled, failures to tolerate provided by Auto-RAID: 1." width="1086" height="620" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>cluster-esa-01a: vSAN ESA, Apply Auto-RAID to all objects enabled, failures to tolerate provided by Auto-RAID: 1.</figcaption>
+          </figure>
+
+          <p>Then the policy itself, in <strong>Policies and Profiles &gt; VM Storage Policies</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/3.png" alt="Menu &gt; Policies and Profiles." width="486" height="542" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 3</span>Menu &gt; Policies and Profiles.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/4.png" alt="vSAN ESA Auto RAID Policy: site disaster tolerance and failures to tolerate are both vSAN managed." width="908" height="630" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 4</span>vSAN ESA Auto RAID Policy: site disaster tolerance and failures to tolerate are both vSAN managed.</figcaption>
+            </figure>
+          </div>
+
+          <p>Both settings say <em>vSAN managed</em>. So instead of picking a RAID level yourself, vSAN picks it based on the cluster. As far as I can tell, that's the whole idea of Auto-RAID.</p>
+
+          <h3>Deploy a VM with the Auto-RAID policy</h3>
+
+          <p>Cloned core-a to a new VM, clone-vm-a, on cluster-esa-01a:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/5.png" alt="core-a &gt; Clone &gt; Clone to Virtual Machine." width="578" height="630" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 5</span>core-a &gt; Clone &gt; Clone to Virtual Machine.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/6.png" alt="Name: clone-vm-a, in dc-mgmt-a." width="1224" height="628" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 6</span>Name: clone-vm-a, in dc-mgmt-a.</figcaption>
+            </figure>
+          </div>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/7.png" alt="Compute resource: cluster-esa-01a." width="1130" height="444" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 7</span>Compute resource: cluster-esa-01a.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/8.png" alt="Storage: vsan-esa-01a with the vSAN ESA Auto RAID Policy." width="1220" height="488" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 8</span>Storage: vsan-esa-01a with the vSAN ESA Auto RAID Policy.</figcaption>
+            </figure>
+          </div>
+
+          <p>The clone finished in Recent Tasks:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/9.png" alt="Clone virtual machine: Completed." width="1148" height="176" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 9</span>Clone virtual machine: Completed.</figcaption>
+          </figure>
+
+          <p>And the VM's storage policy is the Auto-RAID one, compliant:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/10.png" alt="clone-vm-a: VM storage policy vSAN ESA Auto RAID Policy, Compliant." width="1348" height="560" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 10</span>clone-vm-a: VM storage policy vSAN ESA Auto RAID Policy, Compliant.</figcaption>
+          </figure>
+
+          <h3>Managed disk claim</h3>
+
+          <p>ESA doesn't use disk groups like the older architecture (OSA). All the disks go into one storage pool, and vSAN can claim new disks on its own. That's <strong>managed disk claim</strong>, and it's enabled here:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/11.png" alt="vSAN managed disk claim: Enabled." width="1088" height="620" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>vSAN managed disk claim: Enabled.</figcaption>
+          </figure>
+
+          <h3>Scale out</h3>
+
+          <p>The cluster has 5 hosts. esx-10a and esx-11a sit outside it, each with two unused 48 GB NVMe disks:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/12.png" alt="cluster-esa-01a: esx-05a to esx-09a." width="956" height="480" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 12</span>cluster-esa-01a: esx-05a to esx-09a.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/13.png" alt="esx-10a: two local 48 GB NVMe disks." width="1248" height="686" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 13</span>esx-10a: two local 48 GB NVMe disks.</figcaption>
+            </figure>
+          </div>
+
+          <p>Connected both hosts (the Connect option is cut off on the right) and moved them into cluster-esa-01a:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/14.png" alt="esx-10a &gt; Connection." width="388" height="622" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 14</span>esx-10a &gt; Connection.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/15.png" alt="Move esx-10a to cluster-esa-01a." width="1049" height="467" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 15</span>Move esx-10a to cluster-esa-01a.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/16.png" alt="Same for esx-11a." width="1040" height="471" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 16</span>Same for esx-11a.</figcaption>
+            </figure>
+          </div>
+
+          <p>7 hosts and 14 claimed disks. I didn't claim anything by hand, managed disk claim picked them up:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/17.png" alt="Disk Management: 7 hosts, 14 claimed disks, all healthy." width="1214" height="672" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 17</span>Disk Management: 7 hosts, 14 claimed disks, all healthy.</figcaption>
+          </figure>
+
+          <h3>Scale in</h3>
+
+          <p>Before taking a host out, the <strong>Data Migration Pre-check</strong> shows what happens if it goes into maintenance mode. For esx-11a, no objects are affected:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/18.png" alt="Pre-check for esx-11a with full data migration: the host can enter maintenance mode." width="1360" height="522" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 18</span>Pre-check for esx-11a with full data migration: the host can enter maintenance mode.</figcaption>
+          </figure>
+
+          <p>Maintenance mode with full data migration, then moved it out of the cluster to dc-mgmt-a:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/19.png" alt="Enter maintenance mode: full data migration." width="1098" height="568" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 19</span>Enter maintenance mode: full data migration.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/20.png" alt="esx-11a moved out of the cluster to dc-mgmt-a." width="576" height="556" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 20</span>esx-11a moved out of the cluster to dc-mgmt-a.</figcaption>
+          </figure>
+
+          <p>Later on, the Services page shows failures to tolerate from Auto-RAID went from 1 to 2 (Photo 29). My guess is Auto-RAID raised it because the cluster now has enough hosts for it.</p>
+
+          <h2>Module 2: Monitoring health, capacity and performance</h2>
+
+          <h3>vSAN Health</h3>
+
+          <p><strong>Cluster &gt; Monitor &gt; vSAN &gt; vSAN Health</strong>. A score of 96, and the findings below can be filtered by category:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/21.png" alt="Cluster health score 96 with the score trend and health findings." width="1360" height="500" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 21</span>Cluster health score 96 with the score trend and health findings.</figcaption>
+          </figure>
+
+          <p>To see a finding show up, disconnected esx-05a from vCenter:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/22.png" alt="esx-05a &gt; Connection &gt; Disconnect." width="544" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 22</span>esx-05a &gt; Connection &gt; Disconnect.</figcaption>
+          </figure>
+
+          <p>After a retest, <em>Hosts disconnected from VC</em> shows as unhealthy, with a score impact of -3:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/23.png" alt="Hosts disconnected from VC: unhealthy, score impact -3." width="1050" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 23</span>Hosts disconnected from VC: unhealthy, score impact -3.</figcaption>
+          </figure>
+
+          <p>Reconnected the host and retested. The finding is gone, and only the HCL database warning that was there before is left:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/24.png" alt="esx-05a &gt; Connection &gt; Connect." width="534" height="630" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 24</span>esx-05a &gt; Connection &gt; Connect.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/25.png" alt="Only vSAN HCL DB up-to-date is left as unhealthy." width="1248" height="692" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 25</span>Only vSAN HCL DB up-to-date is left as unhealthy.</figcaption>
+          </figure>
+
+          <h3>Capacity</h3>
+
+          <p>Capacity is under the same Monitor tab:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/26.png" alt="277.89 GB usable, 21.72 GB used (7.82%)." width="1302" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 26</span>277.89 GB usable, 21.72 GB used (7.82%).</figcaption>
+          </figure>
+
+          <p>The exact usage breakdown:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/27.png" alt="Used capacity by type: VMDK, namespace, swap, shared user data, system objects." width="1154" height="560" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 27</span>Used capacity by type: VMDK, namespace, swap, shared user data, system objects.</figcaption>
+          </figure>
+
+          <p>And space efficiency. The lab description calls this Global Deduplication, new in 9.1:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/28.png" alt="Data reduction 4.09:1 (deduplication 2.59:1, compression 2.41:1), saving 65.62 GB." width="1250" height="306" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 28</span>Data reduction 4.09:1 (deduplication 2.59:1, compression 2.41:1), saving 65.62 GB.</figcaption>
+          </figure>
+
+          <h3>Performance</h3>
+
+          <p>The performance service is enabled under Services:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/29.png" alt="Performance Service enabled and healthy. Above it, failures to tolerate from Auto-RAID now shows 2." width="1248" height="700" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 29</span>Performance Service enabled and healthy. Above it, failures to tolerate from Auto-RAID now shows 2.</figcaption>
+          </figure>
+
+          <p>Cluster performance. The time range can be changed, here it's real-time:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/30.png" alt="Top contributors: hosts sorted by write latency." width="1362" height="504" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 30</span>Top contributors: hosts sorted by write latency.</figcaption>
+          </figure>
+
+          <p>Host level, by clicking the host:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/31.png" alt="esx-06a: IOPS, throughput and latency." width="1360" height="508" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 31</span>esx-06a: IOPS, throughput and latency.</figcaption>
+          </figure>
+
+          <p>And VM level:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/32.png" alt="acct-app-01: VM performance for the last hour." width="1344" height="538" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 32</span>acct-app-01: VM performance for the last hour.</figcaption>
+          </figure>
+
+          <h3>vSAN in VCF Operations</h3>
+
+          <p>VCF Operations has its own storage overview:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/33.png" alt="VCF Operations &gt; Overview &gt; Storage: alerts, usage, health score and cluster types." width="1360" height="536" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 33</span>VCF Operations &gt; Overview &gt; Storage: alerts, usage, health score and cluster types.</figcaption>
+          </figure>
+
+          <p>And a set of vSAN dashboards. Searching for vSAN lists them, and the lab uses vSAN ESA Performance:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/34.png" alt="Dashboards filtered by vSAN." width="482" height="628" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 34</span>Dashboards filtered by vSAN.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/35.png" alt="vSAN ESA Performance: worst VM disk latency per cluster." width="762" height="622" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 35</span>vSAN ESA Performance: worst VM disk latency per cluster.</figcaption>
+            </figure>
+          </div>
+
+          <h2>Module 3: vSAN encryption and security</h2>
+
+          <p>Data-at-rest encryption was already on, using key provider nk1. This module turns on <strong>data-in-transit encryption</strong>, which encrypts vSAN traffic between the hosts:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/36.png" alt="Data Reduction and Encryption: data at rest enabled, data in transit disabled." width="1334" height="584" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 36</span>Data Reduction and Encryption: data at rest enabled, data in transit disabled.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/37.png" alt="Data-In-Transit encryption on, rekey interval 1 day." width="762" height="586" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 37</span>Data-In-Transit encryption on, rekey interval 1 day.</figcaption>
+          </figure>
+
+          <p>Then a new <strong>Native Key Provider</strong>, in vCenter under <strong>Configure &gt; Key Providers</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/38.png" alt="Add Native Key Provider: vSAN-Native-KP." width="1048" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 38</span>Add Native Key Provider: vSAN-Native-KP.</figcaption>
+          </figure>
+
+          <p>It stays <em>Not backed up</em> until you back it up:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/39.png" alt="vSAN-Native-KP: Not backed up." width="1140" height="306" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 39</span>vSAN-Native-KP: Not backed up.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/40.png" alt="Back up Native Key Provider. The warning recommends protecting it with a password." width="1150" height="338" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 40</span>Back up Native Key Provider. The warning recommends protecting it with a password.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/41.png" alt="Added, backed up, active." width="955" height="294" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 41</span>Added, backed up, active.</figcaption>
+          </figure>
+
+          <p>From what I understand, a native key provider keeps its keys in vCenter, so the backup is what saves you if vCenter is lost.</p>
+
+          <h2>Module 4: vSAN stretched cluster</h2>
+
+          <p>A stretched cluster spreads one vSAN cluster across two sites, with a witness host that only holds metadata:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/42.png" alt="Witness VM and two data hosts on one vSAN datastore." width="375" height="596" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 42</span>Witness VM and two data hosts on one vSAN datastore.</figcaption>
+          </figure>
+
+          <p>In Site B: <strong>cluster-mgmt-01b &gt; Configure &gt; vSAN &gt; Fault Domains &gt; Configure Stretched Cluster</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/43.png" alt="Fault Domains: single site, four standalone hosts." width="1358" height="534" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 43</span>Fault Domains: single site, four standalone hosts.</figcaption>
+          </figure>
+
+          <p>esx-01b and esx-02b in the preferred domain, esx-03b and esx-04b in the secondary:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/44.png" alt="Preferred: esx-01b and esx-02b. Secondary: esx-03b and esx-04b." width="1012" height="616" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 44</span>Preferred: esx-01b and esx-02b. Secondary: esx-03b and esx-04b.</figcaption>
+          </figure>
+
+          <p>The witness has to pass the compatibility checks. Here it's esx-11b:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/45.png" alt="Witness host esx-11b: compatibility checks succeeded." width="1038" height="614" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 45</span>Witness host esx-11b: compatibility checks succeeded.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/46.png" alt="Review." width="1150" height="482" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 46</span>Review.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/47.png" alt="Stretched cluster with the two fault domains and witness esx-11b." width="1258" height="354" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 47</span>Stretched cluster with the two fault domains and witness esx-11b.</figcaption>
+          </figure>
+
+          <p>If I understood it right, the witness is the tie-breaker. If the link between the two sites drops, it decides which side keeps the data online so both sides don't carry on separately.</p>
+
+          <h3>Site affinity</h3>
+
+          <p>Normally a stretched cluster keeps a copy of the data in both sites. Site affinity keeps a VM's data on one site only:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/48.png" alt="vSAN stretched cluster: replicated data between the two fault domains, witness traffic to a third site." width="896" height="570" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 48</span>vSAN stretched cluster: replicated data between the two fault domains, witness traffic to a third site.</figcaption>
+          </figure>
+
+          <p>Cloned the vSAN Stretched Default Policy into a new one with site locality on the primary site:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/49.png" alt="Name: Single Site Storage Policy." width="1222" height="618" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 49</span>Name: Single Site Storage Policy.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/50.png" alt="Site disaster tolerance: site locality, keep data on primary site." width="1224" height="614" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 50</span>Site disaster tolerance: site locality, keep data on primary site.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/51.png" alt="Review." width="1222" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 51</span>Review.</figcaption>
+          </figure>
+
+          <p>Useful, I think, for VMs that don't need to survive losing a site, since they don't use space on both. Then a new VM with that policy:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/52.png" alt="cluster-mgmt-01b &gt; New Virtual Machine." width="1304" height="594" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 52</span>cluster-mgmt-01b &gt; New Virtual Machine.</figcaption>
+          </figure>
+
+          <p>The storage step is the one that matters, everything else stays default:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/53.png" alt="VM storage policy: Single Site Storage Policy on vsan-mgmt-01b." width="1224" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 53</span>VM storage policy: Single Site Storage Policy on vsan-mgmt-01b.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/54.png" alt="Single Site VM: ready to complete." width="1224" height="620" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 54</span>Single Site VM: ready to complete.</figcaption>
+          </figure>
+
+          <h2>Module 5: vSAN storage cluster</h2>
+
+          <p>A vSAN storage cluster (it used to be called vSAN Max) splits things up: one cluster only provides storage, another only runs VMs and mounts that storage. Cloned core-b onto the compute cluster:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/55.png" alt="core-b &gt; Clone &gt; Clone to Virtual Machine." width="594" height="628" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 55</span>core-b &gt; Clone &gt; Clone to Virtual Machine.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/56.png" alt="clone-vm-b on cluster-vsan_compute-01b, datastore vsan_StorageCluster_DS." width="1222" height="618" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 56</span>clone-vm-b on cluster-vsan_compute-01b, datastore vsan_StorageCluster_DS.</figcaption>
+            </figure>
+          </div>
+
+          <p>So the VM runs on the compute hosts while its disks live on the storage cluster's hosts.</p>
+
+          <h2>Module 6: vSAN file services</h2>
+
+          <p>File Service is enabled on cluster-mgmt-01a:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/57.png" alt="File Service enabled: domain site-a.vcf.lab, no shares yet." width="1044" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 57</span>File Service enabled: domain site-a.vcf.lab, no shares yet.</figcaption>
+          </figure>
+
+          <p>Health under the Monitor tab, filtered by File Service:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/58.png" alt="Infrastructure, file server and share health: all healthy." width="1298" height="414" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 58</span>Infrastructure, file server and share health: all healthy.</figcaption>
+          </figure>
+
+          <p>Created a file share:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/59.png" alt="Configure &gt; vSAN &gt; File Shares &gt; Add." width="692" height="632" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 59</span>Configure &gt; vSAN &gt; File Shares &gt; Add.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/60.png" alt="VMSharesNFS: NFS 4.1 and NFS 3, 5 GB warning, 10 GB hard quota." width="1042" height="612" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 60</span>VMSharesNFS: NFS 4.1 and NFS 3, 5 GB warning, 10 GB hard quota.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2734-01-vcf-l/61.png" alt="Review: access allowed from any IP." width="1024" height="614" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 61</span>Review: access allowed from any IP.</figcaption>
+            </figure>
+          </div>
+
+          <p>Copied the NFS 4.1 path:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/62.png" alt="Copy Path &gt; NFS 4.1." width="812" height="602" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 62</span>Copy Path &gt; NFS 4.1.</figcaption>
+          </figure>
+
+          <p>Mounted it on the console:</p>
+
+          <pre data-lang="bash"><code>sudo mkdir /mnt/newfs
+sudo mount vsan-fs-01a.site-a.vcf.lab:/vsanfs/VMSharesNFS /mnt/newfs
+sudo mount | grep /mnt/newfs</code></pre>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/63.png" alt="Mounted as nfs4, version 4.1, from 10.1.2.133." width="856" height="626" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 63</span>Mounted as nfs4, version 4.1, from 10.1.2.133.</figcaption>
+          </figure>
+
+          <p>And wrote a file to it:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/64.png" alt="newfs.txt created and read back." width="1128" height="242" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 64</span>newfs.txt created and read back.</figcaption>
+          </figure>
+
+          <h2>Module 7: vSAN data protection</h2>
+
+          <p>vSAN Data Protection takes local snapshots to revert, clone or restore VMs. VMware Live Recovery adds recovery from the cloud:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/65.png" alt="Local protection with vSAN snapshots, and cloud protection with VMware Live Recovery." width="940" height="574" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 65</span>Local protection with vSAN snapshots, and cloud protection with VMware Live Recovery.</figcaption>
+          </figure>
+
+          <p>The summary in <strong>cluster-esa-01a &gt; Configure &gt; Protection and Recovery</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/66.png" alt="2 protection groups, 5 of 18 VMs protected." width="1358" height="550" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 66</span>2 protection groups, 5 of 18 VMs protected.</figcaption>
+          </figure>
+
+          <p>Created a protection group that picks VMs by name pattern instead of selecting them one by one:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/67.png" alt="Sales Apps PG: local protection, dynamic VM name patterns." width="988" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 67</span>Sales Apps PG: local protection, dynamic VM name patterns.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/68.png" alt="Pattern sales* matches sales-app-01, sales-db-01 and sales-web-01." width="988" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 68</span>Pattern sales* matches sales-app-01, sales-db-01 and sales-web-01.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/69.png" alt="Snapshot every 8 days, keep for 2 weeks." width="990" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 69</span>Snapshot every 8 days, keep for 2 weeks.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/70.png" alt="Review." width="978" height="614" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 70</span>Review.</figcaption>
+          </figure>
+
+          <p>Then a new VM called sales-lab. Since the group goes by name pattern, it should get picked up at the next snapshot without adding it by hand:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/71.png" alt="sales-lab on cluster-esa-01a." width="1220" height="620" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 71</span>sales-lab on cluster-esa-01a.</figcaption>
+          </figure>
+
+          <p>I ran out of time here. From what I saw, the rest of the module is checking the snapshots.</p>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li><strong>Auto-RAID</strong> picks the RAID level and failures to tolerate based on the cluster size.</li>
+            <li>ESA claims new disks by itself, so scaling out is mostly moving hosts in.</li>
+            <li>Run the <strong>data migration pre-check</strong> before taking a host out.</li>
+            <li>Back up a <strong>native key provider</strong> right after creating it.</li>
+            <li>A stretched cluster needs a <strong>witness</strong>. Site affinity keeps a VM's data on one site.</li>
+            <li>Protection groups with <strong>name patterns</strong> pick up new VMs automatically.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2734-01-vcf-l/completion.jpg" alt="Completed November 11, 2026, in 180 minutes." width="716" height="723" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 11, 2026, in 180 minutes.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js?v=20261111a"></script>
+<script src="../assets/site.js?v=20261111a"></script>
+</body>
+</html>

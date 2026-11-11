@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-labelledby="t d">
+  <title id="t">Lab topology: HOL-2734-01-VCF-L</title>
+  <desc id="d">Two sites paired with VMware Live Recovery. Site A (vc-mgmt-a) has cluster-esa-01a, a vSAN ESA cluster with Auto-RAID, hosts esx-05a to esx-09a plus esx-10a and esx-11a added in Module 1, encryption and a protection group; and cluster-mgmt-01a with hosts esx-01a to esx-04a running vSAN File Service with the VMSharesNFS share mounted from the console. Site B (vc-mgmt-b) has cluster-mgmt-01b turned into a stretched cluster with esx-01b and esx-02b preferred, esx-03b and esx-04b secondary and esx-11b as witness; and a vSAN storage cluster, cluster-vsan_storage-01b with esx-07b to esx-10b, whose datastore vsan_StorageCluster_DS is mounted by cluster-vsan_compute-01b with esx-05b and esx-06b.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/>
+    </pattern>
+  </defs>
+  <style>
+    .mono{font-family:JetBrains Mono,Consolas,monospace}
+    .sans{font-family:Inter,Segoe UI,Arial,sans-serif}
+    .card{fill:#0f1626;stroke:#2c3b58;stroke-width:2}
+    .chip{fill:#141d31;stroke:#3a4a68;stroke-width:1.5}
+    .chipt{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;fill:#eef3fb;text-anchor:middle}
+    .name{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:18px;font-weight:700}
+    .sub{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:13px;fill:#7f8ea8}
+    .txt{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:13px;fill:#c6d1e2}
+    .badge{fill:#1e2a44}
+    .badget{font-family:JetBrains Mono,Consolas,monospace;font-size:11px;font-weight:700;fill:#22d3ee;text-anchor:middle}
+    .ds{font-family:JetBrains Mono,Consolas,monospace;font-size:13px;font-weight:700;fill:#041320;text-anchor:middle}
+  </style>
+
+  <rect width="1200" height="800" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="800" rx="18" fill="url(#grid)"/>
+  <text x="40" y="52" class="mono" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2734-01-VCF-L · LAB TOPOLOGY</text>
+  <g>
+    <rect x="904" y="34" width="30" height="18" rx="5" class="badge"/><text x="919" y="47" class="badget">M1</text>
+    <text x="944" y="48" class="sub">= the lab module that uses it</text>
+  </g>
+
+  <!-- sites -->
+  <text x="310" y="118" text-anchor="middle" class="mono" font-size="13" font-weight="600" letter-spacing="1.2" fill="#7f8ea8">SITE A · vc-mgmt-a.site-a.vcf.lab</text>
+  <text x="890" y="118" text-anchor="middle" class="mono" font-size="13" font-weight="600" letter-spacing="1.2" fill="#7f8ea8">SITE B · vc-mgmt-b.site-b.vcf.lab</text>
+  <line x1="600" y1="132" x2="600" y2="782" stroke="#3a4a68" stroke-width="2" stroke-dasharray="10 8"/>
+  <rect x="510" y="98" width="180" height="28" rx="14" fill="#141d31" stroke="#a78bfa"/>
+  <text x="600" y="117" text-anchor="middle" class="mono" font-size="12" font-weight="600" fill="#c4b5fd">Live Recovery pair</text>
+
+  <!-- ===== SITE A: cluster-esa-01a ===== -->
+  <rect x="40" y="148" width="540" height="322" rx="16" class="card" stroke="#3b82f6"/>
+  <text x="60" y="180" class="name" fill="#60a5fa">cluster-esa-01a</text>
+  <text x="60" y="201" class="sub">vSAN ESA · HCI · Auto-RAID on</text>
+  <g>
+    <rect x="410" y="166" width="30" height="18" rx="5" class="badge"/><text x="425" y="179" class="badget">M1</text>
+    <rect x="444" y="166" width="30" height="18" rx="5" class="badge"/><text x="459" y="179" class="badget">M2</text>
+    <rect x="478" y="166" width="30" height="18" rx="5" class="badge"/><text x="493" y="179" class="badget">M3</text>
+    <rect x="512" y="166" width="30" height="18" rx="5" class="badge"/><text x="527" y="179" class="badget">M7</text>
+  </g>
+  <g>
+    <rect x="60" y="220" width="92" height="32" rx="8" class="chip"/><text x="106" y="241" class="chipt">esx-05a</text>
+    <rect x="162" y="220" width="92" height="32" rx="8" class="chip"/><text x="208" y="241" class="chipt">esx-06a</text>
+    <rect x="264" y="220" width="92" height="32" rx="8" class="chip"/><text x="310" y="241" class="chipt">esx-07a</text>
+    <rect x="366" y="220" width="92" height="32" rx="8" class="chip"/><text x="412" y="241" class="chipt">esx-08a</text>
+    <rect x="468" y="220" width="92" height="32" rx="8" class="chip"/><text x="514" y="241" class="chipt">esx-09a</text>
+    <rect x="60" y="262" width="92" height="32" rx="8" fill="#0c2a22" stroke="#34d399" stroke-width="1.5"/><text x="106" y="283" class="chipt">esx-10a</text>
+    <rect x="162" y="262" width="92" height="32" rx="8" fill="#0c2a22" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5 4"/><text x="208" y="283" class="chipt">esx-11a</text>
+    <text x="268" y="276" class="sub">added in M1, then esx-11a</text>
+    <text x="268" y="292" class="sub">taken out again (scale in)</text>
+  </g>
+  <text x="60" y="330" class="txt">Auto-RAID failures to tolerate: <tspan class="mono" fill="#eef3fb">1</tspan> with 5 hosts, <tspan class="mono" fill="#eef3fb">2</tspan> after scaling out</text>
+  <text x="60" y="354" class="txt">Encryption: data at rest + data in transit</text>
+  <text x="60" y="378" class="txt">Protection group: <tspan class="mono" fill="#eef3fb">Sales Apps PG</tspan> (VMs named <tspan class="mono" fill="#eef3fb">sales*</tspan>)</text>
+  <rect x="60" y="410" width="500" height="34" rx="9" fill="#60a5fa"/>
+  <text x="310" y="432" class="ds">datastore vsan-esa-01a</text>
+
+  <!-- ===== SITE A: cluster-mgmt-01a ===== -->
+  <rect x="40" y="498" width="540" height="276" rx="16" class="card" stroke="#2dd4bf"/>
+  <text x="60" y="530" class="name" fill="#5eead4">cluster-mgmt-01a</text>
+  <text x="60" y="551" class="sub">vSAN · management cluster</text>
+  <rect x="512" y="516" width="30" height="18" rx="5" class="badge"/><text x="527" y="529" class="badget">M6</text>
+  <g>
+    <rect x="60" y="568" width="92" height="32" rx="8" class="chip"/><text x="106" y="589" class="chipt">esx-01a</text>
+    <rect x="162" y="568" width="92" height="32" rx="8" class="chip"/><text x="208" y="589" class="chipt">esx-02a</text>
+    <rect x="264" y="568" width="92" height="32" rx="8" class="chip"/><text x="310" y="589" class="chipt">esx-03a</text>
+    <rect x="366" y="568" width="92" height="32" rx="8" class="chip"/><text x="412" y="589" class="chipt">esx-04a</text>
+  </g>
+  <rect x="60" y="618" width="500" height="80" rx="10" fill="#0b1f22" stroke="#2dd4bf" stroke-width="1.5"/>
+  <text x="78" y="644" class="sans" font-size="15" font-weight="700" fill="#eef3fb">vSAN File Service · <tspan class="mono" font-size="13" font-weight="600" fill="#5eead4">vsan-fs-01a</tspan></text>
+  <text x="78" y="666" class="txt">share <tspan class="mono" fill="#eef3fb">VMSharesNFS</tspan> · NFS 4.1 and 3</text>
+  <text x="78" y="686" class="txt">quota 5 GB warning / 10 GB hard</text>
+  <path d="M310 698V724" stroke="#2dd4bf" stroke-width="2.5"/>
+  <rect x="190" y="724" width="240" height="30" rx="8" class="chip"/>
+  <text x="310" y="744" class="chipt">console → /mnt/newfs</text>
+
+  <!-- ===== SITE B: stretched cluster ===== -->
+  <rect x="620" y="148" width="540" height="322" rx="16" class="card" stroke="#f59e0b"/>
+  <text x="640" y="180" class="name" fill="#fbbf24">cluster-mgmt-01b</text>
+  <text x="640" y="201" class="sub">vSAN stretched cluster</text>
+  <rect x="1112" y="166" width="30" height="18" rx="5" class="badge"/><text x="1127" y="179" class="badget">M4</text>
+
+  <rect x="800" y="214" width="180" height="32" rx="8" fill="#2a1f08" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="890" y="235" class="chipt">esx-11b · witness</text>
+  <path d="M840 246 760 272M940 246 1020 272" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+
+  <rect x="640" y="272" width="240" height="96" rx="12" fill="#141d31" stroke="#3a4a68"/>
+  <text x="656" y="296" class="sans" font-size="14" font-weight="700" fill="#eef3fb">Preferred</text>
+  <rect x="656" y="314" width="100" height="32" rx="8" class="chip"/><text x="706" y="335" class="chipt">esx-01b</text>
+  <rect x="766" y="314" width="100" height="32" rx="8" class="chip"/><text x="816" y="335" class="chipt">esx-02b</text>
+
+  <rect x="900" y="272" width="240" height="96" rx="12" fill="#141d31" stroke="#3a4a68"/>
+  <text x="916" y="296" class="sans" font-size="14" font-weight="700" fill="#eef3fb">Secondary</text>
+  <rect x="916" y="314" width="100" height="32" rx="8" class="chip"/><text x="966" y="335" class="chipt">esx-03b</text>
+  <rect x="1026" y="314" width="100" height="32" rx="8" class="chip"/><text x="1076" y="335" class="chipt">esx-04b</text>
+
+  <text x="640" y="394" class="txt"><tspan class="mono" fill="#eef3fb">Single Site Storage Policy</tspan>: keep data on the primary site</text>
+  <rect x="640" y="410" width="500" height="34" rx="9" fill="#fbbf24"/>
+  <text x="890" y="432" class="ds">datastore vsan-mgmt-01b</text>
+
+  <!-- ===== SITE B: storage cluster ===== -->
+  <rect x="620" y="498" width="540" height="276" rx="16" class="card" stroke="#a78bfa"/>
+  <text x="640" y="530" class="name" fill="#c4b5fd">vSAN storage cluster</text>
+  <text x="640" y="551" class="sub">compute and storage in separate clusters</text>
+  <rect x="1112" y="516" width="30" height="18" rx="5" class="badge"/><text x="1127" y="529" class="badget">M5</text>
+
+  <rect x="640" y="568" width="230" height="120" rx="12" fill="#141d31" stroke="#3a4a68"/>
+  <text x="655" y="590" class="mono" font-size="12" font-weight="700" fill="#eef3fb">cluster-vsan_compute-01b</text>
+  <rect x="655" y="604" width="96" height="32" rx="8" class="chip"/><text x="703" y="625" class="chipt">esx-05b</text>
+  <rect x="760" y="604" width="96" height="32" rx="8" class="chip"/><text x="808" y="625" class="chipt">esx-06b</text>
+  <text x="655" y="668" class="sub">runs clone-vm-b</text>
+
+  <rect x="900" y="568" width="240" height="120" rx="12" fill="#141d31" stroke="#3a4a68"/>
+  <text x="915" y="590" class="mono" font-size="12" font-weight="700" fill="#eef3fb">cluster-vsan_storage-01b</text>
+  <rect x="915" y="604" width="100" height="32" rx="8" class="chip"/><text x="965" y="625" class="chipt">esx-07b</text>
+  <rect x="1025" y="604" width="100" height="32" rx="8" class="chip"/><text x="1075" y="625" class="chipt">esx-08b</text>
+  <rect x="915" y="644" width="100" height="32" rx="8" class="chip"/><text x="965" y="665" class="chipt">esx-09b</text>
+  <rect x="1025" y="644" width="100" height="32" rx="8" class="chip"/><text x="1075" y="665" class="chipt">esx-10b</text>
+
+  <path d="M755 688V714M1020 688V714" stroke="#a78bfa" stroke-width="2.5"/>
+  <rect x="640" y="714" width="500" height="40" rx="9" fill="#a78bfa"/>
+  <text x="890" y="739" class="ds">vsan_StorageCluster_DS · shared by both</text>
+</svg>

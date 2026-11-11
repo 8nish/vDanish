@@ -37,6 +37,11 @@ window.SITE = {
    status: "completed" or "in-progress" · date: YYYY-MM-DD · read: minutes · no: entry number within its own series */
 window.POSTS = [
   /* ---------- November ---------- */
+  { no: 10, type: 'lab', slug: 'vsan-9-1-getting-started-advanced-topics', code: 'HOL-2734-01-VCF-L',
+    title: 'VMware vSAN 9.1: Getting Started and Advanced Topics',
+    excerpt: 'A networking person learning vSAN: Auto-RAID, scaling an ESA cluster, health and capacity, encryption, stretched and storage clusters, file services and data protection.',
+    tags: ['vsan', 'vcf'], date: '2026-11-11', status: 'completed', read: 8 },
+
   { no: 9, type: 'lab', slug: 'advanced-networking-vcf-9-1', code: 'HOL-2705-02-VCF-L',
     title: 'Advanced Networking in VMware Cloud Foundation 9.1',
     excerpt: 'Onboarding Frankfurt into NSX Federation, RTEPs, a stretched Tier-0 with BGP and an AS path prepend, and stretched segments for a two-tier app.',
