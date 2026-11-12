@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 850" width="1200" height="850" role="img" aria-labelledby="t d">
+  <title id="t">Lab topology: HOL-2770-03-ANS-L</title>
+  <desc id="d">The VCF management domain (vc-mgmt-a, cluster-mgmt-01a with eight hosts and DFW turned on) split into three zones: the VCF Fleet Management zone with VCF Operations, the collector, SDDC Manager, the license servers, fleet management services, VCF Automation and Operations for Networks; the management domain zone with vc-mgmt-a, nsx-mgmt-01a and the Security Services Platform; and the Workload Domain 01 zone with vc-wld01-a and nsx-wld01-01a. Outside sit the infrastructure services (DNS, NTP, DHCP, Active Directory, syslog) and the external zone (bastion jump host, tools, backup, SMTP, internet). Below, the DFW categories in order: Ethernet, Emergency, Infrastructure with 9 rules, Environment with 37 and Application with 35.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/></pattern>
+  </defs>
+  <style>
+    .mono{font-family:JetBrains Mono,Consolas,monospace}
+    .card{fill:#0f1626;stroke:#2c3b58;stroke-width:2}
+    .chip{fill:#141d31;stroke:#3a4a68;stroke-width:1.5}
+    .chipt{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;fill:#eef3fb;text-anchor:middle}
+    .name{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:18px;font-weight:700}
+    .zname{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:15px;font-weight:700}
+    .sub{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:13px;fill:#7f8ea8}
+    .badge{fill:#1e2a44}
+    .badget{font-family:JetBrains Mono,Consolas,monospace;font-size:11px;font-weight:700;fill:#22d3ee;text-anchor:middle}
+    .cat{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;font-weight:700;text-anchor:middle}
+  </style>
+  <rect width="1200" height="850" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="850" rx="18" fill="url(#grid)"/>
+  <text x="40" y="52" class="mono" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2770-03-ANS-L · LAB TOPOLOGY</text>
+<rect x="904" y="34" width="30" height="18" rx="5" class="badge"/><text x="919" y="47" class="badget">M1</text><text x="944" y="48" class="sub">= the lab module that uses it</text>
+<rect x="40" y="84" width="800" height="580" rx="16" class="card" stroke="#3b82f6"/>
+<text x="62" y="116" class="name" fill="#60a5fa">Management domain</text>
+<text x="62" y="137" class="sub">vc-mgmt-a · cluster-mgmt-01a · esx-01a to 04a, esx-14a to 17a · DFW turned on</text>
+<rect x="706" y="102" width="30" height="18" rx="5" class="badge"/><text x="721" y="115" class="badget">M1</text>
+<rect x="740" y="102" width="30" height="18" rx="5" class="badge"/><text x="755" y="115" class="badget">M2</text>
+<rect x="62" y="156" width="756" height="214" rx="14" fill="#0c1322" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="82" y="186" class="zname" fill="#22d3ee">VCF Fleet Management zone</text>
+<text x="82" y="206" class="sub">group SG_VCF_FLEET</text>
+<rect x="686" y="170" width="30" height="18" rx="5" class="badge"/><text x="701" y="183" class="badget">M2</text>
+<rect x="720" y="170" width="30" height="18" rx="5" class="badge"/><text x="735" y="183" class="badget">M3</text>
+<rect x="754" y="170" width="30" height="18" rx="5" class="badge"/><text x="769" y="183" class="badget">M4</text>
+<rect x="82" y="222" width="170" height="34" rx="8" class="chip"/><text x="167.0" y="243.0" class="chipt">ops-a (VCF Operations)</text>
+<rect x="266" y="222" width="170" height="34" rx="8" class="chip"/><text x="351.0" y="243.0" class="chipt">opscollector-01a</text>
+<rect x="450" y="222" width="170" height="34" rx="8" class="chip"/><text x="535.0" y="243.0" class="chipt">sddcmanager-a</text>
+<rect x="634" y="222" width="170" height="34" rx="8" class="chip"/><text x="719.0" y="243.0" class="chipt">Fleet Mgmt Services</text>
+<rect x="82" y="268" width="170" height="34" rx="8" class="chip"/><text x="167.0" y="289.0" class="chipt">VCF Automation</text>
+<rect x="266" y="268" width="170" height="34" rx="8" class="chip"/><text x="351.0" y="289.0" class="chipt">Ops for Networks</text>
+<rect x="450" y="268" width="170" height="34" rx="8" class="chip"/><text x="535.0" y="289.0" class="chipt">license-a</text>
+<rect x="634" y="268" width="170" height="34" rx="8" class="chip"/><text x="719.0" y="289.0" class="chipt">license-hub</text>
+<text x="82" y="350" class="sub">Most of these were in the DFW exclusion list until Module 2.</text>
+<rect x="62" y="388" width="368" height="256" rx="14" fill="#0c1322" stroke="#60a5fa" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="82" y="418" class="zname" fill="#60a5fa">Management domain zone</text>
+<text x="82" y="438" class="sub">group MD01</text>
+<rect x="326" y="402" width="30" height="18" rx="5" class="badge"/><text x="341" y="415" class="badget">M3</text>
+<rect x="360" y="402" width="30" height="18" rx="5" class="badge"/><text x="375" y="415" class="badget">M4</text>
+<rect x="82" y="452" width="328" height="34" rx="8" class="chip"/><text x="246.0" y="473.0" class="chipt">vc-mgmt-a</text>
+<rect x="82" y="496" width="328" height="34" rx="8" class="chip"/><text x="246.0" y="517.0" class="chipt">nsx-mgmt-01a</text>
+<rect x="82" y="540" width="328" height="34" rx="8" class="chip"/><text x="246.0" y="561.0" class="chipt">SSP · 3 controllers + 6 workers</text>
+<text x="82" y="610" class="sub">SSP VMs in resource pool RP_SSP_ssp</text>
+<rect x="450" y="388" width="368" height="256" rx="14" fill="#0c1322" stroke="#a78bfa" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="470" y="418" class="zname" fill="#a78bfa">Workload Domain 01 zone</text>
+<text x="470" y="438" class="sub">group WD01</text>
+<rect x="714" y="402" width="30" height="18" rx="5" class="badge"/><text x="729" y="415" class="badget">M3</text>
+<rect x="748" y="402" width="30" height="18" rx="5" class="badge"/><text x="763" y="415" class="badget">M4</text>
+<rect x="470" y="452" width="328" height="34" rx="8" class="chip"/><text x="634.0" y="473.0" class="chipt">vc-wld01-a</text>
+<rect x="470" y="496" width="328" height="34" rx="8" class="chip"/><text x="634.0" y="517.0" class="chipt">nsx-wld01-01a</text>
+<text x="470" y="568" class="sub">WD01&#8217;s vCenter and NSX Managers run here,</text>
+<text x="470" y="588" class="sub">its hosts and edges in Workload Domain 01.</text>
+<rect x="866" y="84" width="294" height="290" rx="16" class="card" stroke="#34d399"/>
+<text x="888" y="116" class="name" fill="#34d399">Infra services</text>
+<rect x="1110" y="102" width="30" height="18" rx="5" class="badge"/><text x="1125" y="115" class="badget">M2</text>
+<rect x="888" y="134" width="250" height="34" rx="8" class="chip"/><text x="1013.0" y="155.0" class="chipt">DNS</text>
+<rect x="888" y="180" width="250" height="34" rx="8" class="chip"/><text x="1013.0" y="201.0" class="chipt">NTP</text>
+<rect x="888" y="226" width="250" height="34" rx="8" class="chip"/><text x="1013.0" y="247.0" class="chipt">DHCP</text>
+<rect x="888" y="272" width="250" height="34" rx="8" class="chip"/><text x="1013.0" y="293.0" class="chipt">Active Directory</text>
+<rect x="888" y="318" width="250" height="34" rx="8" class="chip"/><text x="1013.0" y="339.0" class="chipt">Syslog / logs</text>
+<rect x="866" y="394" width="294" height="270" rx="16" class="card" stroke="#fbbf24"/>
+<text x="888" y="426" class="name" fill="#fbbf24">External zone</text>
+<rect x="1110" y="412" width="30" height="18" rx="5" class="badge"/><text x="1125" y="425" class="badget">M3</text>
+<rect x="888" y="442" width="250" height="32" rx="8" class="chip"/><text x="1013.0" y="462.0" class="chipt">Bastion jump host</text>
+<rect x="888" y="485" width="250" height="32" rx="8" class="chip"/><text x="1013.0" y="505.0" class="chipt">Tools</text>
+<rect x="888" y="528" width="250" height="32" rx="8" class="chip"/><text x="1013.0" y="548.0" class="chipt">Backup servers</text>
+<rect x="888" y="571" width="250" height="32" rx="8" class="chip"/><text x="1013.0" y="591.0" class="chipt">SMTP</text>
+<rect x="888" y="614" width="250" height="32" rx="8" class="chip"/><text x="1013.0" y="634.0" class="chipt">Internet (by FQDN)</text>
+<text x="40" y="712" class="mono" font-size="13" font-weight="600" letter-spacing="1.2" fill="#f59e0b">vDefend DFW · CATEGORIES, CHECKED LEFT TO RIGHT</text>
+<polygon points="40,730 242,730 258,758.0 242,786 40,786" fill="#141d31" stroke="#3a4a68" stroke-width="2"/>
+<text x="153.0" y="762.0" class="cat" fill="#7f8ea8">ETHERNET (1)</text>
+<polygon points="265,730 467,730 483,758.0 467,786 265,786 281,758.0" fill="#141d31" stroke="#3a4a68" stroke-width="2"/>
+<text x="378.0" y="762.0" class="cat" fill="#7f8ea8">EMERGENCY (0)</text>
+<polygon points="490,730 692,730 708,758.0 692,786 490,786 506,758.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="603.0" y="762.0" class="cat" fill="#fcd34d">INFRASTRUCTURE (9)</text>
+<rect x="588.0" y="796" width="30" height="18" rx="5" class="badge"/><text x="603.0" y="809" class="badget">M2</text>
+<polygon points="715,730 917,730 933,758.0 917,786 715,786 731,758.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="828.0" y="762.0" class="cat" fill="#fcd34d">ENVIRONMENT (37)</text>
+<rect x="813.0" y="796" width="30" height="18" rx="5" class="badge"/><text x="828.0" y="809" class="badget">M3</text>
+<polygon points="940,730 1142,730 1158,758.0 1142,786 940,786 956,758.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="1053.0" y="762.0" class="cat" fill="#fcd34d">APPLICATION (35)</text>
+<rect x="1038.0" y="796" width="30" height="18" rx="5" class="badge"/><text x="1053.0" y="809" class="badget">M4</text>
+<text x="40" y="830" class="sub">First matching rule wins. Infrastructure covers shared services, Environment the traffic between zones, Application the traffic inside them.</text>
+</svg>

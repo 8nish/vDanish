@@ -37,6 +37,11 @@ window.SITE = {
    status: "completed" or "in-progress" · date: YYYY-MM-DD · read: minutes · no: entry number within its own series */
 window.POSTS = [
   /* ---------- November ---------- */
+  { no: 11, type: 'lab', slug: 'secure-vcf-infrastructure-vdefend-firewall', code: 'HOL-2770-03-ANS-L',
+    title: 'Secure VCF Infrastructure with VMware vDefend Firewall',
+    excerpt: 'Locking down the VCF management domain with the DFW: clearing the exclusion list and enabling the Infrastructure, Environment and Application rules.',
+    tags: ['vdefend', 'nsx'], date: '2026-11-12', status: 'completed', read: 4 },
+
   { no: 10, type: 'lab', slug: 'vsan-9-1-getting-started-advanced-topics', code: 'HOL-2734-01-VCF-L',
     title: 'VMware vSAN 9.1: Getting Started and Advanced Topics',
     excerpt: 'A networking person learning vSAN: Auto-RAID, scaling an ESA cluster, health and capacity, encryption, stretched and storage clusters, file services and data protection.',

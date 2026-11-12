@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure VCF Infrastructure with VMware vDefend Firewall · vDanish</title>
+<meta name="description" content="Locking down the VCF management domain with the vDefend DFW: turning on DFW, clearing the exclusion list, and enabling the Infrastructure, Environment and Application rules.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=20261113a">
+</head>
+<body data-page="post" data-root="../" data-slug="secure-vcf-infrastructure-vdefend-firewall">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>Locking down the VCF management domain with the DFW, following the VMware Validated Solution. The rules were already there, just turned off. The work is enabling them one category at a time: Infrastructure, Environment, Application. Click any photo to see it full screen.</p>
+
+          <h2>Lab topology</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/topology.svg" alt="The management domain split into zones, the infra services and external zone outside it, and the DFW categories in order." width="1200" height="850" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>The management domain split into zones, the infra services and external zone outside it, and the DFW categories in order.</figcaption>
+          </figure>
+
+          <h2>Module 1: Secure VCF Infrastructure with VMware vDefend Firewall</h2>
+
+          <p>Mostly reading. In vc-mgmt-a, all the management VMs run on cluster-mgmt-01a, the SSP VMs too:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/2.png" alt="cluster-mgmt-01a with eight hosts, the SSP VMs in RP_SSP_ssp (3 controllers, 6 workers), license-a, license-hub and the NSX managers." width="482" height="988" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>cluster-mgmt-01a with eight hosts, the SSP VMs in RP_SSP_ssp (3 controllers, 6 workers), license-a, license-hub and the NSX managers.</figcaption>
+          </figure>
+
+          <h2>Module 2: Infrastructure rules</h2>
+
+          <p>In nsx-mgmt-01a: <strong>Security &gt; Distributed Firewall &gt; Category Specific Rules &gt; Infrastructure</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/3.png" alt="Infrastructure (9): Default Malicious IP Block and the VCF Fleet policy with 7 rules." width="1358" height="604" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 3</span>Infrastructure (9): Default Malicious IP Block and the VCF Fleet policy with 7 rules.</figcaption>
+          </figure>
+
+          <p>Six allow rules from SG_VCF_FLEET to DNS, NTP, DHCP, AD (both ways) and the log servers. The 7th, <strong>VCF Fleet Lockdown</strong>, drops those same services to anything else. So the fleet can only use the approved servers.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/4.png" alt="The 7 rules, all disabled. Lockdown drops DNS, NTP, DHCP and log traffic to Any." width="1450" height="516" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 4</span>The 7 rules, all disabled. Lockdown drops DNS, NTP, DHCP and log traffic to Any.</figcaption>
+          </figure>
+
+          <h3>Turn on DFW for the cluster</h3>
+
+          <p>Rules do nothing until DFW is on for the cluster. <strong>Settings &gt; General Firewall Settings</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/5.png" alt="Distributed Firewall Service On, and On for cluster-mgmt-01a. Identity Firewall stays off." width="544" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>Distributed Firewall Service On, and On for cluster-mgmt-01a. Identity Firewall stays off.</figcaption>
+          </figure>
+
+          <h3>Exclusion list</h3>
+
+          <p>VMs in the exclusion list skip the DFW completely. VCF adds every VM it deploys there by default, so it can't lock itself out before any rules exist. Now that the rules are ready, they come out:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-03-ans-l/6.png" alt="User Excluded Groups: VCF-Created-Virtual-Machines." width="1206" height="290" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 6</span>User Excluded Groups: VCF-Created-Virtual-Machines.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-03-ans-l/7.png" alt="Its 8 members: license-a, both NSX managers, ops-a, opscollector-01a, sddcmanager-a and both vCenters." width="890" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 7</span>Its 8 members: license-a, both NSX managers, ops-a, opscollector-01a, sddcmanager-a and both vCenters.</figcaption>
+            </figure>
+          </div>
+
+          <p>Remove the group from the list, not the VMs from the group. It's one change, easy to undo, and the VCF-managed group stays untouched:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-03-ans-l/8.png" alt="Manage Exclusion List with the group selected." width="880" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 8</span>Manage Exclusion List with the group selected.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-03-ans-l/9.png" alt="Group unselected, Total Selected 0, then Save." width="890" height="608" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 9</span>Group unselected, Total Selected 0, then Save.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Enable the rules</h3>
+
+          <p>Back in Category Specific Rules, enable the VCF Fleet rules and Publish. The Lockdown rule is still off in this screenshot, but it needs to be on too, otherwise nothing gets dropped:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/10.png" alt="Six rules on and Publish (6). Lockdown, at the bottom, still off here." width="1330" height="583" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 10</span>Six rules on and Publish (6). Lockdown, at the bottom, still off here.</figcaption>
+          </figure>
+
+          <p>Every rule has its own counters. They refresh every 15 minutes, so zeros right after publishing are normal:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/11.png" alt="Rule Statistics: hit, byte, packet and session counts, all 0 for now." width="688" height="778" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>Rule Statistics: hit, byte, packet and session counts, all 0 for now.</figcaption>
+          </figure>
+
+          <h2>Module 3: Environment rules</h2>
+
+          <p>The strategy splits the management domain into zones. Environment rules decide which zone can talk to which:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/12.png" alt="Zones: BASTION, TOOLS, VCF01_FLEET, MD01, SDDC and WD01, with the DFW between them." width="946" height="652" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 12</span>Zones: BASTION, TOOLS, VCF01_FLEET, MD01, SDDC and WD01, with the DFW between them.</figcaption>
+          </figure>
+
+          <p>Four policies:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/13.png" alt="Environment (37): VCF Fleet Environment, VCF Fleet Management, VCF Management Domain and VCF WLD W01." width="1146" height="564" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 13</span>Environment (37): VCF Fleet Environment, VCF Fleet Management, VCF Management Domain and VCF WLD W01.</figcaption>
+          </figure>
+
+          <p>VCF Fleet Environment covers access from outside: bastion and tools in, backups both ways, SMTP, and internet by FQDN:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/14.png" alt="BASTION JH and TOOLS to VCF Fleet, Any to VCF Automation (Jump to Application), backups, SMTP and internet access." width="1326" height="408" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 14</span>BASTION JH and TOOLS to VCF Fleet, Any to VCF Automation (Jump to Application), backups, SMTP and internet access.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Jump to Application</b>Any to VCF Automation doesn't allow the traffic. It skips the rest of the Environment category and sends it to Application, where more specific rules decide. VCF Automation is user-facing, so anyone gets past this level but still has to match an app rule.</div>
+
+          <p>Enabled all the rules in the four policies and published:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/15.png" alt="All four policies, Publish (37)." width="1328" height="336" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 15</span>All four policies, Publish (37).</figcaption>
+          </figure>
+
+          <h2>Module 4: Application rules</h2>
+
+          <p>The most specific level: traffic between the components themselves. Workload Domain 01 as an example:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/16.png" alt="WD01&#x27;s vCenter and NSX Managers in the management domain, talking to WD01&#x27;s edges and hosts through the DFW." width="940" height="652" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 16</span>WD01's vCenter and NSX Managers in the management domain, talking to WD01's edges and hosts through the DFW.</figcaption>
+          </figure>
+
+          <p>Three policies, plus the default Layer 3 section:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/17.png" alt="Application (35): VCF Operations (9), Management Domain (11), WLD W01 (12) and Default Layer3 Section (3)." width="1182" height="520" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 17</span>Application (35): VCF Operations (9), Management Domain (11), WLD W01 (12) and Default Layer3 Section (3).</figcaption>
+          </figure>
+
+          <p>VCF Operations has 9 rules for how the Ops components talk to each other, mostly HTTPS between the SG_FLEET groups:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/18.png" alt="FLEET OPS to FLEET, MSVC to FLEET OPS, Fleet Managers to VCF Automation over VCF_FM_Services, and more." width="1322" height="354" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 18</span>FLEET OPS to FLEET, MSVC to FLEET OPS, Fleet Managers to VCF Automation over VCF_FM_Services, and more.</figcaption>
+          </figure>
+
+          <p>Enabled the rules in all 3 policies and published:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/19.png" alt="Rules on, Publish (32)." width="1326" height="580" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 19</span>Rules on, Publish (32).</figcaption>
+          </figure>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li>Rules do nothing until <strong>DFW is on</strong> for the cluster.</li>
+            <li>VCF puts its own VMs in the <strong>exclusion list</strong>. Take the group out once the rules are ready.</li>
+            <li>A <strong>lockdown rule</strong> after the allows keeps infra services pointed at the approved servers only.</li>
+            <li><strong>Jump to Application</strong> hands traffic to more specific rules instead of allowing it.</li>
+            <li>Infrastructure, Environment, Application: broad to specific.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-03-ans-l/completion.jpg" alt="Completed November 12, 2026, in 68 minutes." width="715" height="747" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 12, 2026, in 68 minutes.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js?v=20261113a"></script>
+<script src="../assets/site.js?v=20261113a"></script>
+</body>
+</html>
