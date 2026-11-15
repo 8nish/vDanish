@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 920" width="1200" height="920" role="img" aria-labelledby="t d">
+  <title id="t">Lab topology: HOL-2770-01-ANS-L</title>
+  <desc id="d">One flat network with the SSP installer (ssp-i.site-a.vcf.lab), the Security Services Platform instance (ssp.site-a.vcf.lab, 3 controllers and 6 workers, with Metrics, Security Intelligence, Network Traffic Analysis and NDR), the NSX Manager nsx-wld01-a with the DFW, the transport nodes esx-05a to esx-07a, DNS and the proxy. Below, the datacenter assets imported from a CSV: shared services (DNS, NTP, LDAP), region nam with us-west prod (sharepoint, jira) and us-south dev (workday, sap, lotus domino, confluence), and region emea with fr-paris prod (peoplesoft) and uk-lon dev (servicenow). At the bottom the four DFW stages: assessment, infrastructure services, environments and applications.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/></pattern>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f87171"/></marker>
+  </defs>
+  <style>
+    .mono{font-family:JetBrains Mono,Consolas,monospace}
+    .card{fill:#0f1626;stroke-width:2}
+    .chip{fill:#141d31;stroke:#3a4a68;stroke-width:1.5}
+    .chiph{fill:#24163d;stroke:#a78bfa;stroke-width:1.5}
+    .chipt{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;fill:#eef3fb;text-anchor:middle}
+    .name{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:18px;font-weight:700}
+    .zname{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;font-weight:700}
+    .sub{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:13px;fill:#7f8ea8}
+    .sec{font-family:JetBrains Mono,Consolas,monospace;font-size:13px;font-weight:600;letter-spacing:1.2px;fill:#7f8ea8}
+    .badge{fill:#1e2a44}
+    .badget{font-family:JetBrains Mono,Consolas,monospace;font-size:11px;font-weight:700;fill:#22d3ee;text-anchor:middle}
+    .cat{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;font-weight:700;text-anchor:middle}
+  </style>
+  <rect width="1200" height="920" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="920" rx="18" fill="url(#grid)"/>
+  <text x="40" y="52" class="mono" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2770-01-ANS-L · LAB TOPOLOGY</text>
+<rect x="904" y="34" width="30" height="18" rx="5" class="badge"/><text x="919" y="47" class="badget">M1</text><text x="944" y="48" class="sub">= the lab module that uses it</text>
+<rect x="40" y="84" width="340" height="190" rx="16" class="card" stroke="#60a5fa"/>
+<text x="60" y="116" class="name" fill="#60a5fa">SSP Installer</text>
+<text x="60" y="137" class="sub">ssp-i.site-a.vcf.lab · 5.2.0</text>
+<rect x="330" y="100" width="30" height="18" rx="5" class="badge"/><text x="345" y="113" class="badget">M1</text>
+<rect x="60" y="154" width="300" height="30" rx="8" class="chip"/><text x="210.0" y="173.0" class="chipt">Instance management</text>
+<rect x="60" y="196" width="300" height="30" rx="8" class="chip"/><text x="210.0" y="215.0" class="chipt">Backup / restore · upgrade</text>
+<rect x="410" y="84" width="380" height="190" rx="16" class="card" stroke="#22d3ee"/>
+<text x="430" y="116" class="name" fill="#22d3ee">Security Services Platform</text>
+<text x="430" y="137" class="sub">ssp.site-a.vcf.lab · 3 controllers + 6 workers</text>
+<rect x="706" y="100" width="30" height="18" rx="5" class="badge"/><text x="721" y="113" class="badget">M1</text>
+<rect x="740" y="100" width="30" height="18" rx="5" class="badge"/><text x="755" y="113" class="badget">M3</text>
+<rect x="430" y="154" width="164" height="30" rx="8" class="chip"/><text x="512.0" y="173.0" class="chipt">Metrics</text>
+<rect x="606" y="154" width="164" height="30" rx="8" class="chip"/><text x="688.0" y="173.0" class="chipt">Security Intelligence</text>
+<rect x="430" y="196" width="164" height="30" rx="8" class="chip"/><text x="512.0" y="215.0" class="chipt">Traffic Analysis</text>
+<rect x="606" y="196" width="164" height="30" rx="8" class="chip"/><text x="688.0" y="215.0" class="chipt">NDR</text>
+<rect x="820" y="84" width="340" height="190" rx="16" class="card" stroke="#34d399"/>
+<text x="840" y="116" class="name" fill="#34d399">NSX Manager</text>
+<text x="840" y="137" class="sub">nsx-wld01-a · 10.1.1.25 · NSX 9.1</text>
+<rect x="1110" y="100" width="30" height="18" rx="5" class="badge"/><text x="1125" y="113" class="badget">M3</text>
+<rect x="840" y="154" width="300" height="30" rx="8" class="chip"/><text x="990.0" y="173.0" class="chipt">Distributed Firewall</text>
+<rect x="840" y="196" width="300" height="30" rx="8" class="chip"/><text x="990.0" y="215.0" class="chipt">Groups and tags from SSP</text>
+<line x1="40" y1="314" x2="1160" y2="314" stroke="#94a3b8" stroke-width="3"/>
+<text x="40" y="304" class="sec">SINGLE NETWORK</text>
+<line x1="210" y1="274" x2="210" y2="314" stroke="#94a3b8" stroke-width="2"/>
+<line x1="600" y1="274" x2="600" y2="314" stroke="#94a3b8" stroke-width="2"/>
+<line x1="990" y1="274" x2="990" y2="314" stroke="#94a3b8" stroke-width="2"/>
+<line x1="112.0" y1="314" x2="112.0" y2="334" stroke="#94a3b8" stroke-width="2"/>
+<rect x="60" y="334" width="104" height="30" rx="8" class="chip"/><text x="112.0" y="353.0" class="chipt">esx-05a</text>
+<line x1="232.0" y1="314" x2="232.0" y2="334" stroke="#94a3b8" stroke-width="2"/>
+<rect x="180" y="334" width="104" height="30" rx="8" class="chip"/><text x="232.0" y="353.0" class="chipt">esx-06a</text>
+<line x1="352.0" y1="314" x2="352.0" y2="334" stroke="#94a3b8" stroke-width="2"/>
+<rect x="300" y="334" width="104" height="30" rx="8" class="chip"/><text x="352.0" y="353.0" class="chipt">esx-07a</text>
+<line x1="932.0" y1="314" x2="932.0" y2="334" stroke="#94a3b8" stroke-width="2"/>
+<rect x="880" y="334" width="104" height="30" rx="8" class="chip"/><text x="932.0" y="353.0" class="chipt">DNS</text>
+<line x1="1070.0" y1="314" x2="1070.0" y2="334" stroke="#94a3b8" stroke-width="2"/>
+<rect x="1000" y="334" width="140" height="30" rx="8" class="chip"/><text x="1070.0" y="353.0" class="chipt">proxy :3128</text>
+<text x="420" y="354" class="sub">transport nodes (DFW runs here)</text>
+<text x="40" y="414" class="sec">DATACENTER ASSETS · IMPORTED FROM security-journey.csv</text>
+<rect x="500" y="401" width="30" height="18" rx="5" class="badge"/><text x="515" y="414" class="badget">M3</text>
+<rect x="40" y="428" width="1120" height="70" rx="16" class="card" stroke="#fbbf24"/>
+<text x="60" y="460" class="name" fill="#fbbf24">Shared services</text>
+<rect x="230" y="442" width="30" height="18" rx="5" class="badge"/><text x="245" y="455" class="badget">M5</text>
+<rect x="300" y="447" width="210" height="30" rx="8" class="chip"/><text x="405.0" y="466.0" class="chipt">DNS</text>
+<rect x="530" y="447" width="210" height="30" rx="8" class="chip"/><text x="635.0" y="466.0" class="chipt">NTP</text>
+<rect x="760" y="447" width="210" height="30" rx="8" class="chip"/><text x="865.0" y="466.0" class="chipt">LDAP / LDAPS</text>
+<rect x="40" y="514" width="760" height="262" rx="16" class="card" stroke="#a78bfa"/>
+<text x="60" y="546" class="name" fill="#a78bfa">region: nam</text>
+<rect x="60" y="562" width="340" height="176" rx="12" fill="#0c1322" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="76" y="586" class="zname" fill="#c4b5fd">us-west · prod</text>
+<rect x="76" y="596" width="308" height="28" rx="8" class="chip"/><text x="230.0" y="614.0" class="chipt">sharepoint</text>
+<rect x="76" y="632" width="308" height="28" rx="8" class="chip"/><text x="230.0" y="650.0" class="chipt">jira</text>
+<rect x="440" y="562" width="340" height="176" rx="12" fill="#0c1322" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="456" y="586" class="zname" fill="#c4b5fd">us-south · dev</text>
+<rect x="456" y="596" width="308" height="28" rx="8" class="chip"/><text x="610.0" y="614.0" class="chipt">workday</text>
+<rect x="456" y="632" width="308" height="28" rx="8" class="chip"/><text x="610.0" y="650.0" class="chipt">sap</text>
+<rect x="456" y="668" width="308" height="28" rx="8" class="chiph"/><text x="610.0" y="686.0" class="chipt">lotus domino  · ringfenced</text>
+<rect x="456" y="704" width="308" height="28" rx="8" class="chip"/><text x="610.0" y="722.0" class="chipt">confluence</text>
+<rect x="732" y="566" width="30" height="18" rx="5" class="badge"/><text x="747" y="579" class="badget">M7</text>
+<line x1="440" y1="660" x2="404" y2="660" stroke="#f87171" stroke-width="2.5" marker-end="url(#ar)"/>
+<text x="60" y="760" class="sub">us-south dev → us-west prod: environment pair, protection rule set to Drop</text>
+<rect x="560" y="747" width="30" height="18" rx="5" class="badge"/><text x="575" y="760" class="badget">M6</text>
+<rect x="820" y="514" width="340" height="262" rx="16" class="card" stroke="#a78bfa"/>
+<text x="840" y="546" class="name" fill="#a78bfa">region: emea</text>
+<rect x="840" y="562" width="300" height="92" rx="12" fill="#0c1322" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="856" y="586" class="zname" fill="#c4b5fd">fr-paris · prod</text>
+<rect x="856" y="596" width="268" height="28" rx="8" class="chip"/><text x="990.0" y="614.0" class="chipt">peoplesoft</text>
+<rect x="840" y="666" width="300" height="92" rx="12" fill="#0c1322" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="7 5"/>
+<text x="856" y="690" class="zname" fill="#c4b5fd">uk-lon · dev</text>
+<rect x="856" y="700" width="268" height="28" rx="8" class="chip"/><text x="990.0" y="718.0" class="chipt">servicenow</text>
+<text x="40" y="818" class="mono" font-size="13" font-weight="600" letter-spacing="1.2" fill="#f59e0b">DFW 1-2-3-4 · THE FOUR STAGES</text>
+<polygon points="40,832 298,832 314,857.0 298,882 40,882" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="181.0" y="861.0" class="cat" fill="#fcd34d">1 · ASSESSMENT</text>
+<rect x="166.0" y="890" width="30" height="18" rx="5" class="badge"/><text x="181.0" y="903" class="badget">M4</text>
+<polygon points="322,832 580,832 596,857.0 580,882 322,882 338,857.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="463.0" y="861.0" class="cat" fill="#fcd34d">2 · INFRA SERVICES</text>
+<rect x="448.0" y="890" width="30" height="18" rx="5" class="badge"/><text x="463.0" y="903" class="badget">M5</text>
+<polygon points="604,832 862,832 878,857.0 862,882 604,882 620,857.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="745.0" y="861.0" class="cat" fill="#fcd34d">3 · ENVIRONMENTS</text>
+<rect x="730.0" y="890" width="30" height="18" rx="5" class="badge"/><text x="745.0" y="903" class="badget">M6</text>
+<polygon points="886,832 1144,832 1160,857.0 1144,882 886,882 902,857.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="1027.0" y="861.0" class="cat" fill="#fcd34d">4 · APPLICATIONS</text>
+<rect x="1012.0" y="890" width="30" height="18" rx="5" class="badge"/><text x="1027.0" y="903" class="badget">M7</text>
+</svg>

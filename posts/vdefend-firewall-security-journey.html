@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>vDefend Firewall Security Journey: DFW 1-2-3-4 · vDanish</title>
-<meta name="description" content="From imported asset data to application ringfencing in four stages in the Security Services Platform UI.">
+<meta name="description" content="DFW 1-2-3-4 in the Security Services Platform: importing assets from a CSV, the security score and report, then shared services, environment and application segmentation.">
 <meta name="theme-color" content="#070b14">
 <link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css?v=20261113a">
+<link rel="stylesheet" href="../assets/style.css?v=20261115a">
 </head>
 <body data-page="post" data-root="../" data-slug="vdefend-firewall-security-journey">
 <script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
@@ -26,30 +26,568 @@
       <article>
         <!-- ===== ARTICLE CONTENT START ===== -->
         <div class="prose" id="postBody">
-          <p>This lab follows the vDefend DFW 1-2-3-4 approach in the Security Services Platform (SSP) UI: get visibility first, then segment from broad to fine.</p>
+          <p>Second run of this lab. My first write-up was short, so this one replaces it. DFW 1-2-3-4 is vDefend's way of rolling out microsegmentation in stages: assess, then shared services, then environments, then apps. Everything is driven from the Security Services Platform (SSP), which pushes the groups and rules into NSX. Click any photo to see it full screen.</p>
 
-          <h2>Getting the inventory in</h2>
+          <h2>Lab topology</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/topology.svg" alt="SSP, its installer and NSX on one network, the assets imported from the CSV, and the four stages with the module for each." width="1200" height="920" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>SSP, its installer and NSX on one network, the assets imported from the CSV, and the four stages with the module for each.</figcaption>
+          </figure>
+
+          <h2>Module 1: vDefend and SSP architecture</h2>
+
+          <p>Started in the SSP installer. It only handles lifecycle: deploying, backing up and upgrading the platform. One instance is deployed:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/2.png" alt="SSP Installer 5.2.0: 1 instance, 1 vCenter, 2 packages. ssp.site-a.vcf.lab at 10.1.0.11, Healthy, 3 controllers and 6 workers." width="1272" height="670" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>SSP Installer 5.2.0: 1 instance, 1 vCenter, 2 packages. ssp.site-a.vcf.lab at 10.1.0.11, Healthy, 3 controllers and 6 workers.</figcaption>
+          </figure>
+
+          <p>Clicking the FQDN in <strong>Instance Management</strong> opens the SSP itself:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/3.png" alt="Instance Management: the ssp instance, large form factor, Healthy." width="1358" height="250" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 3</span>Instance Management: the ssp instance, large form factor, Healthy.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/4.png" alt="The SSP home page: alarms, policy monitoring, and no security score yet." width="1360" height="572" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 4</span>The SSP home page: alarms, policy monitoring, and no security score yet.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Platform and features</h3>
+
+          <p><strong>System &gt; Platform &amp; Features</strong>. Metrics and Security Intelligence are already activated in this lab:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/5.png" alt="Metrics and Security Intelligence Up, Network Traffic Analysis Down, NDR Up." width="1360" height="582" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>Metrics and Security Intelligence Up, Network Traffic Analysis Down, NDR Up.</figcaption>
+          </figure>
+
+          <p>The NSX Manager onboarded to this SSP:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/6.png" alt="nsx-wld01-a: 10.1.1.25, VIP 10.1.1.24, NSX 9.1, connectivity Up." width="1322" height="332" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 6</span>nsx-wld01-a: 10.1.1.25, VIP 10.1.1.24, NSX 9.1, connectivity Up.</figcaption>
+          </figure>
+
+          <p>Server Configurations takes a proxy, a SIEM and syslog:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/7.png" alt="Proxy server proxy.site-a.vcf.lab on port 3128, Connected." width="1358" height="544" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 7</span>Proxy server proxy.site-a.vcf.lab on port 3128, Connected.</figcaption>
+          </figure>
+
+          <h3>Monitor and Plan</h3>
+
+          <p>Everything about security intelligence is under <strong>Monitor &amp; Plan</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/8.png" alt="Security Posture, no scores calculated yet." width="1360" height="460" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 8</span>Security Posture, no scores calculated yet.</figcaption>
+          </figure>
+
+          <p>Firewall Insights shows the top 5 rules and interfaces. Handy for seeing which rules actually get hit:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/9.png" alt="Top 5 rules, top 5 interfaces, interfaces dropping traffic and top transport nodes." width="1362" height="570" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 9</span>Top 5 rules, top 5 interfaces, interfaces dropping traffic and top transport nodes.</figcaption>
+          </figure>
+
+          <h2>Module 2: Security journey overview</h2>
+
+          <p>Four stages, each tighter than the last. Start broad (macro-segmentation) and work down to the app level (micro-segmentation):</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/10.png" alt="Stage 1 assessment (1 week), Stage 2 shared services (few days), Stage 3 environments (few weeks), Stage 4 apps (weeks to months)." width="1274" height="558" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 10</span>Stage 1 assessment (1 week), Stage 2 shared services (few days), Stage 3 environments (few weeks), Stage 4 apps (weeks to months).</figcaption>
+          </figure>
+
+          <p>Same idea for IDS/IPS, ATP 1-2-3:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/11.png" alt="Security assessment, shared services protection, zone-level protection." width="1194" height="690" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>Security assessment, shared services protection, zone-level protection.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Why stages</b>Going straight to app rules in a big datacenter means writing thousands of rules before anything is protected. Shared services and zones first cut most of the risk with a handful of rules.</div>
+
+          <h2>Module 3: Importing datacenter assets</h2>
+
+          <p>The datacenter being modelled: shared services on top, then region, zone, environment, application and tier:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/12.png" alt="Regions nam and emea, their zones, prod and dev environments, apps and tiers." width="1060" height="850" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 12</span>Regions nam and emea, their zones, prod and dev environments, apps and tiers.</figcaption>
+          </figure>
+
+          <p><strong>Monitor &amp; Plan &gt; Policy Planning</strong>, import the CSV. It lists every asset and where it sits in that hierarchy:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/13.png" alt="Policy Planning: five steps, Select an Assets File." width="1060" height="630" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 13</span>Policy Planning: five steps, Select an Assets File.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/14.png" alt="security-journey.csv from Downloads." width="1192" height="534" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 14</span>security-journey.csv from Downloads.</figcaption>
+            </figure>
+          </div>
+
+          <p>Map the CSV columns to the asset fields:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/15.png" alt="Asset type, asset id, name and IP, and the infrastructure service column." width="1324" height="520" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 15</span>Asset type, asset id, name and IP, and the infrastructure service column.</figcaption>
+          </figure>
+
+          <p>Then the hierarchy, region down to tier:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/16.png" alt="Region, Zone, Environment, Application and Tier, each mapped to a CSV column." width="1322" height="400" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 16</span>Region, Zone, Environment, Application and Tier, each mapped to a CSV column.</figcaption>
+          </figure>
+
+          <p>Preview, then <strong>Start Analysis</strong>. Takes a few minutes:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/17.png" alt="53 VMs, 2 infrastructure services, 5 infrastructure servers, regions nam and emea, zones uk-lon, us-west, us-south and fr-paris." width="1326" height="564" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 17</span>53 VMs, 2 infrastructure services, 5 infrastructure servers, regions nam and emea, zones uk-lon, us-west, us-south and fr-paris.</figcaption>
+          </figure>
+
+          <p>When it's done, each category can be reviewed and published one by one, or all at once:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/18.png" alt="2 infrastructure groups, 6 regions and zones, 4 environments, 8 applications, 8 detected servers, plus recommended DFW and IDS/IPS rules." width="1324" height="544" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 18</span>2 infrastructure groups, 6 regions and zones, 4 environments, 8 applications, 8 detected servers, plus recommended DFW and IDS/IPS rules.</figcaption>
+          </figure>
+
+          <h3>Check it in NSX</h3>
+
+          <p><strong>Inventory &gt; Groups</strong>, filtered on Created By: ssp_user:admin:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/19.png" alt="Groups created by SSP: emea, emea_fr-paris, emea_fr-paris_prod and so on." width="1404" height="520" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 19</span>Groups created by SSP: emea, emea_fr-paris, emea_fr-paris_prod and so on.</figcaption>
+          </figure>
+
+          <p>The groups are tag-based, and the tags come from the CSV. So new VMs only need the right tags to land in the right groups:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/20.png" alt="emea_fr-paris_prod_peoplesoft_postgres: 2 VMs." width="1042" height="614" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 20</span>emea_fr-paris_prod_peoplesoft_postgres: 2 VMs.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/21.png" alt="dzbfuz8344&#x27;s tags: node.js (application tier), dev, us-south, nam, lotus domino." width="1278" height="666" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 21</span>dzbfuz8344's tags: node.js (application tier), dev, us-south, nam, lotus domino.</figcaption>
+            </figure>
+          </div>
+
+          <h2>Module 4: Stage 1, assessment and report</h2>
+
+          <p>Calculate the score in <strong>Security Posture</strong>. Strict mode, so allowed traffic nobody identified counts against you:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/22.png" alt="Calculate Security Segmentation Score: Strict or Relaxed." width="1094" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 22</span>Calculate Security Segmentation Score: Strict or Relaxed.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/23.png" alt="Segmentation score 27, ATP score 69." width="1326" height="356" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 23</span>Segmentation score 27, ATP score 69.</figcaption>
+          </figure>
+
+          <div class="callout"><b>About my scores</b>These are higher than you'd get following the lab, because I'd published some rules early. My first run had 15 and 20.</div>
+
+          <p>The breakdown shows where the points are missing. Application protection at 0/45 is the biggest gap:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/24.png" alt="Segmentation: DFW in operation 5/5, infrastructure 8.6/15, environment 9.7/20, application 0/45." width="1320" height="564" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 24</span>Segmentation: DFW in operation 5/5, infrastructure 8.6/15, environment 9.7/20, application 0/45.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/25.png" alt="ATP: IDS/IPS in operation 0/5, vulnerable workloads 18/25, infrastructure 10.8/15, environment 10/10." width="1322" height="546" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 25</span>ATP: IDS/IPS in operation 0/5, vulnerable workloads 18/25, infrastructure 10.8/15, environment 10/10.</figcaption>
+            </figure>
+          </div>
+
+          <p>Generated the full report:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/26.png" alt="Generate Report for Full Details." width="1320" height="62" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 26</span>Generate Report for Full Details.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/27.png" alt="Strict mode, last 30 days." width="842" height="576" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 27</span>Strict mode, last 30 days.</figcaption>
+            </figure>
+          </div>
+
+          <p>Downloaded and opened it:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/28.png" alt="Report ready: segmentation 28, ATP 69." width="1324" height="220" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 28</span>Report ready: segmentation 28, ATP 69.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/29.png" alt="Executive summary with both scores and the breakdown." width="904" height="656" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 29</span>Executive summary with both scores and the breakdown.</figcaption>
+            </figure>
+          </div>
+
+          <p>The overview page is the one you'd show someone to justify the project:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/30.png" alt="83 at-risk workloads, 99 within blast radius, 895 of 1.14k flows unprotected by DFW, 50 of 55 VMs without DFW or IDS/IPS." width="1128" height="486" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 30</span>83 at-risk workloads, 99 within blast radius, 895 of 1.14k flows unprotected by DFW, 50 of 55 VMs without DFW or IDS/IPS.</figcaption>
+          </figure>
+
+          <h2>Module 5: Stage 2, shared services</h2>
+
+          <p>Workloads should only reach the approved DNS, NTP, LDAP and so on. Anything pretending to be one of those gets blocked. Every workload uses these services, so a few rules cover a lot:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/31.png" alt="DNS, NTP, AD/LDAP, DHCP and syslog, with rogue LDAP and NTP servers blocked." width="1242" height="662" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 31</span>DNS, NTP, AD/LDAP, DHCP and syslog, with rogue LDAP and NTP servers blocked.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/32.png" alt="Allowed to the real DNS, NTP and LDAP servers, blocked to the rogue ones." width="1222" height="394" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 32</span>Allowed to the real DNS, NTP and LDAP servers, blocked to the rogue ones.</figcaption>
+            </figure>
+          </div>
+
+          <p><strong>Policy Monitoring &gt; Infrastructure Services</strong> lists the services from the CSV. LDAP, LDAP-UDP and LDAPS have no rules yet:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/33.png" alt="LDAPS, LDAP-UDP and LDAP with no rules, NTP with an incomplete ruleset." width="1328" height="198" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 33</span>LDAPS, LDAP-UDP and LDAP with no rules, NTP with an incomplete ruleset.</figcaption>
+          </figure>
+
+          <p>SSP also found servers from the traffic that weren't in the CSV. Update the groups with them:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/34.png" alt="3 of 13 services available for update, Update Infrastructure Groups." width="850" height="530" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 34</span>3 of 13 services available for update, Update Infrastructure Groups.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/35.png" alt="Detected servers for LDAPS, LDAP-UDP and LDAP. Publish All to Global Infrastructure Groups." width="1332" height="406" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 35</span>Detected servers for LDAPS, LDAP-UDP and LDAP. Publish All to Global Infrastructure Groups.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/36.png" alt="oyoicr6976 added to SSP_infra_LDAP-UDP, LDAP and LDAPS." width="1326" height="314" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 36</span>oyoicr6976 added to SSP_infra_LDAP-UDP, LDAP and LDAPS.</figcaption>
+            </figure>
+          </div>
+
+          <h3>NTP first</h3>
+
+          <p><strong>Add &gt; Add Distributed Firewall Rule</strong> on NTP:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/37.png" alt="NTP: Incomplete Ruleset, Add Distributed Firewall Rule." width="1288" height="98" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 37</span>NTP: Incomplete Ruleset, Add Distributed Firewall Rule.</figcaption>
+          </figure>
+
+          <p>Publish without the lockdown rule first:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/38.png" alt="Security Rules | NTP: Add Missing Service-Specific Lockdown Rule." width="1048" height="476" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 38</span>Security Rules | NTP: Add Missing Service-Specific Lockdown Rule.</figcaption>
+          </figure>
+
+          <p>Then the recommended IDS/IPS rule:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/39.png" alt="SSP_NTP IDS/IPS rule, Detect Only." width="1332" height="268" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 39</span>SSP_NTP IDS/IPS rule, Detect Only.</figcaption>
+          </figure>
+
+          <div class="callout warning"><b>Greyed-out Publish</b>I'd already published these while playing around with the lab, so Publish is greyed out in my screenshots. If you follow the steps in order, it works.</div>
+
+          <p>Back on the DFW rules, set the lockdown to Yes and publish again. An allow on its own doesn't stop a VM from using some other NTP server. The lockdown rejects NTP to anything that isn't in the group:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/40.png" alt="SSP_NTP Allow and SSP_NTP_Lockdown Reject." width="1334" height="380" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 40</span>SSP_NTP Allow and SSP_NTP_Lockdown Reject.</figcaption>
+          </figure>
+
+          <h3>The rest of the services</h3>
+
+          <p><strong>Review &amp; Add Rules</strong> does all the others at once:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/41.png" alt="Review &amp; Add Rules." width="736" height="506" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 41</span>Review &amp; Add Rules.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/42.png" alt="Add Missing Distributed Firewall Rules: Add Rules." width="884" height="530" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 42</span>Add Missing Distributed Firewall Rules: Add Rules.</figcaption>
+            </figure>
+          </div>
+
+          <p>Turn on <strong>Add Lockdown Rule To All Services</strong> before applying:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/43.png" alt="LDAPS, LDAP-UDP, LDAP and DNS-UDP, each with an allow and a lockdown." width="1038" height="588" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 43</span>LDAPS, LDAP-UDP, LDAP and DNS-UDP, each with an allow and a lockdown.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/44.png" alt="Review before publishing." width="1330" height="550" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 44</span>Review before publishing.</figcaption>
+          </figure>
+
+          <p>Same steps on the IDS/IPS Rules tab. Then in NSX, <strong>Security &gt; Distributed Firewall &gt; Category Specific Rules &gt; Infrastructure</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/45.png" alt="SSP_Infra: allows for ICMP, DNS-UDP, LDAP, LDAP-UDP, LDAPS and NTP, and the lockdown rejects." width="1330" height="586" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 45</span>SSP_Infra: allows for ICMP, DNS-UDP, LDAP, LDAP-UDP, LDAPS and NTP, and the lockdown rejects.</figcaption>
+          </figure>
+
+          <p>Recalculated the scores. Normally they go up here:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/46.png" alt="Segmentation 27, ATP 69. Same as before for me, since I&#x27;d published early." width="1326" height="354" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 46</span>Segmentation 27, ATP 69. Same as before for me, since I'd published early.</figcaption>
+          </figure>
+
+          <h2>Module 6: Stage 3, environment segmentation</h2>
+
+          <p>Block traffic between environments by default and allow only the exceptions:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/47.png" alt="Prod, dev and DMZ separated, with controlled exceptions." width="1242" height="662" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 47</span>Prod, dev and DMZ separated, with controlled exceptions.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/48.png" alt="Inside each environment, Jump to Application. Between them, block, plus exceptions." width="808" height="620" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 48</span>Inside each environment, Jump to Application. Between them, block, plus exceptions.</figcaption>
+            </figure>
+          </div>
+
+          <p>In Policy Planning, <strong>Publish Distributed Firewall Policies &gt; Environment Rules</strong>, publish the defaults:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/49.png" alt="One policy per environment plus SSP_Env_Default, all Published." width="1360" height="526" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 49</span>One policy per environment plus SSP_Env_Default, all Published.</figcaption>
+          </figure>
+
+          <p>In NSX under Environment, the action is <strong>Jump to Application</strong>. Traffic inside an environment isn't allowed here. It moves on to the Application category and gets checked there:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/50.png" alt="Environment policies with Jump to Application rules." width="1328" height="590" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 50</span>Environment policies with Jump to Application rules.</figcaption>
+          </figure>
+
+          <h3>Environment pairs</h3>
+
+          <p><strong>Policy Monitoring &gt; Environments &gt; Environment Pair List</strong>. 12 pairs, none with a protection rule yet:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/51.png" alt="4 environments, 12 pairs, 12 without an inter-environment policy, 6 with traffic." width="1324" height="562" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 51</span>4 environments, 12 pairs, 12 without an inter-environment policy, 6 with traffic.</figcaption>
+          </figure>
+
+          <p>nam_us-south_dev to nam_us-west_prod has 8 unique flows. Clicking the 8 lists them:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/52.png" alt="8 unique flows hitting the default rule, Jump to Application." width="1326" height="564" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 52</span>8 unique flows hitting the default rule, Jump to Application.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/53.png" alt="All 8: ORACLE_TNS on TCP 1521 from dev to prod, Unprotected. Flows can be exported as CSV too." width="1326" height="568" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 53</span>All 8: ORACLE_TNS on TCP 1521 from dev to prod, Unprotected. Flows can be exported as CSV too.</figcaption>
+          </figure>
+
+          <p>Dev reaching a prod Oracle DB is exactly the kind of thing you want to see before blocking. Ran a recommendation from the pair's Actions:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/54.png" alt="Actions: Run Traffic-Based Recommendation." width="1324" height="552" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 54</span>Actions: Run Traffic-Based Recommendation.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/55.png" alt="Start Recommendation." width="1224" height="302" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 55</span>Start Recommendation.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/56.png" alt="nam_us-south_dev to nam_us-west_prod, Jump to Application, last 1 hour." width="1326" height="566" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 56</span>nam_us-south_dev to nam_us-west_prod, Jump to Application, last 1 hour.</figcaption>
+            </figure>
+          </div>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/57.png" alt="Exclude multicast and broadcast flows, Start Discovery." width="1324" height="560" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 57</span>Exclude multicast and broadcast flows, Start Discovery.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/58.png" alt="Discovery started." width="856" height="550" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 58</span>Discovery started.</figcaption>
+            </figure>
+          </div>
+
+          <p>Wait for <strong>Ready to Publish</strong>, then <strong>Review &amp; Publish</strong> from the three dots:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/59.png" alt="Ready to Publish, Review &amp; Publish." width="1322" height="228" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 59</span>Ready to Publish, Review &amp; Publish.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/60.png" alt="2 rules: Rule_1 for the observed flows and the pair&#x27;s protection rule. Proceed, then Publish." width="1324" height="546" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 60</span>2 rules: Rule_1 for the observed flows and the pair's protection rule. Proceed, then Publish.</figcaption>
+          </figure>
+
+          <p>Last step: change the pair's protection rule from Jump to Application to <strong>Drop</strong>. The observed flows still go on to the app rules, and everything else between dev and prod gets dropped:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/61.png" alt="The pair now has 1 policy and 2 rules, protection rule Jump to Application." width="1324" height="550" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 61</span>The pair now has 1 policy and 2 rules, protection rule Jump to Application.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/62.png" alt="Edit Protection Rule Action: Drop, Publish." width="1142" height="370" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 62</span>Edit Protection Rule Action: Drop, Publish.</figcaption>
+            </figure>
+          </div>
+
+          <p>Recalculated. Small jump for me because of the early publishing. Done in order, it's bigger:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/63.png" alt="Calculating." width="1322" height="274" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 63</span>Calculating.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/64.png" alt="Segmentation 28, ATP 69." width="1320" height="274" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 64</span>Segmentation 28, ATP 69.</figcaption>
+            </figure>
+          </div>
+
+          <h2>Module 7: Stage 4, application microsegmentation</h2>
+
+          <p>Map workloads to apps, then ringfence each app:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/65.png" alt="VMs tagged by application." width="906" height="608" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 65</span>VMs tagged by application.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/66.png" alt="Ringfenced apps, unauthorized lateral movement blocked." width="1242" height="670" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 66</span>Ringfenced apps, unauthorized lateral movement blocked.</figcaption>
+            </figure>
+          </div>
+
+          <p><strong>Inventory &gt; Applications</strong>, 8 apps, all regular:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/67.png" alt="Application criticality, type and flow prioritization for 8 apps." width="1360" height="338" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 67</span>Application criticality, type and flow prioritization for 8 apps.</figcaption>
+          </figure>
+
+          <p>Set sharepoint, jira, workday and sap to <strong>Critical</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/68.png" alt="Four apps selected, Edit Application Criticality." width="1326" height="436" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 68</span>Four apps selected, Edit Application Criticality.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/69.png" alt="Critical, Save." width="1050" height="416" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 69</span>Critical, Save.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/70.png" alt="4 critical with flow prioritization on, 4 regular." width="1324" height="300" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 70</span>4 critical with flow prioritization on, 4 regular.</figcaption>
+          </figure>
+
+          <h3>Protect an application</h3>
+
+          <p>Three directions per app: incoming, outgoing and inside the app:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/71.png" alt="Incoming and outgoing: allow or drop. Intra-application: allow." width="1160" height="468" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 71</span>Incoming and outgoing: allow or drop. Intra-application: allow.</figcaption>
+          </figure>
+
+          <p>For lotus domino, <strong>Run Traffic-Based Recommendation</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/72.png" alt="nam_us-south_dev_lotus domino: 144 unique flows, no policy applied." width="1320" height="254" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 72</span>nam_us-south_dev_lotus domino: 144 unique flows, no policy applied.</figcaption>
+          </figure>
+
+          <p>Strategy <strong>Ringfencing</strong>: traffic inside the app is allowed, and what goes in and out is watched so the rules come from real flows:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/73.png" alt="Application category, last 1 hour." width="1326" height="566" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 73</span>Application category, last 1 hour.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-01-ans-l/74.png" alt="Ringfencing selected." width="1326" height="562" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 74</span>Ringfencing selected.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/75.png" alt="Discovery started." width="892" height="572" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 75</span>Discovery started.</figcaption>
+          </figure>
+
+          <p>Ready to Publish, then Review &amp; Publish:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/76.png" alt="lotus domino Ready to Publish. The environment recommendation is already Published." width="1324" height="238" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 76</span>lotus domino Ready to Publish. The environment recommendation is already Published.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/77.png" alt="7 recommended rules, 1 group. Publish." width="1324" height="570" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 77</span>7 recommended rules, 1 group. Publish.</figcaption>
+          </figure>
+
+          <p>In NSX under Application, the new policy with ingress and egress rules per service:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-01-ans-l/78.png" alt="Policy_1: ingress for HTTPS and MySQL, egress for ORACLE_TNS, PostgreSQL and VMware-UpdateMgr, then allow_intra_rule and default_allow_rule." width="1330" height="602" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 78</span>Policy_1: ingress for HTTPS and MySQL, egress for ORACLE_TNS, PostgreSQL and VMware-UpdateMgr, then allow_intra_rule and default_allow_rule.</figcaption>
+          </figure>
+
+          <div class="callout"><b>One more step</b>The default rule is still Allow here. I changed it to Drop afterwards but forgot to take a screenshot. Do it, otherwise the ringfence doesn't block anything.</div>
+
+          <h2>Key takeaways</h2>
+
           <ul>
-            <li>Imported the data center assets into SSP from a CSV file.</li>
-            <li>Used them to build dynamic groups for workloads and static groups for infrastructure services.</li>
+            <li>SSP turns a CSV into NSX <strong>groups and tags</strong>, so the hierarchy is defined once.</li>
+            <li>Measure first. The <strong>score and report</strong> show where the gaps are.</li>
+            <li>An allow without a <strong>lockdown</strong> behind it doesn't restrict anything.</li>
+            <li>Recommendations come from real flows: review, publish, then flip the default to <strong>Drop</strong>.</li>
+            <li>Broad to narrow: shared services, environments, then apps.</li>
           </ul>
 
-          <h2>The four stages</h2>
-          <ol>
-            <li><strong>Report:</strong> generated a security segmentation report to see the current posture.</li>
-            <li><strong>Infrastructure services:</strong> segmented shared services such as NTP, DNS and LDAP.</li>
-            <li><strong>Environments:</strong> macro-segmentation between environments.</li>
-            <li><strong>Applications:</strong> micro-segmentation and ringfencing per application.</li>
-          </ol>
-
-          <div class="callout tip"><b>Worth knowing</b>NAPP is end of life. SSP is where these security features live now.</div>
           <h2>Lab completed</h2>
-          <!-- Screenshot: save it as assets/shots/vdefend-firewall-security-journey.png, then replace the
-               <div class="shot-ph">...</div> below with:
-               <img src="../assets/shots/vdefend-firewall-security-journey.png" alt="Lab completion screen for vDefend Firewall Security Journey: DFW 1-2-3-4"> -->
+
           <figure class="shot">
-            <div class="shot-ph"><b>Lab completion screenshot</b><small>coming soon</small></div>
-            <figcaption>Completion screen for vDefend Firewall Security Journey: DFW 1-2-3-4.</figcaption>
+            <img src="../assets/shots/hol-2770-01-ans-l/completion.jpg" alt="Completed November 15, 2026, in 180 minutes." width="714" height="519" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 15, 2026, in 180 minutes.</figcaption>
           </figure>
         </div>
         <!-- ===== ARTICLE CONTENT END ===== -->
@@ -64,7 +602,7 @@
 </main>
 
 <footer id="site-footer"></footer>
-<script src="../assets/posts.js?v=20261113a"></script>
-<script src="../assets/site.js?v=20261113a"></script>
+<script src="../assets/posts.js?v=20261115a"></script>
+<script src="../assets/site.js?v=20261115a"></script>
 </body>
 </html>
