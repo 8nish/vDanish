@@ -37,6 +37,11 @@ window.SITE = {
    status: "completed" or "in-progress" · date: YYYY-MM-DD · read: minutes · no: entry number within its own series */
 window.POSTS = [
   /* ---------- November ---------- */
+  { no: 12, type: 'lab', slug: 'vdefend-firewall-advanced-threat-prevention', code: 'HOL-2770-02-ANS-L',
+    title: 'VMware vDefend Firewall with Advanced Threat Prevention',
+    excerpt: 'Turning on IDS/IPS in NSX, going from detect to prevent, virtual patching a CVE, then Network Traffic Analysis and an NDR campaign in the Security Services Platform.',
+    tags: ['vdefend', 'nsx'], date: '2026-11-16', status: 'completed', read: 6 },
+
   { no: 11, type: 'lab', slug: 'vdefend-firewall-security-journey', code: 'HOL-2770-01-ANS-L',
     title: 'vDefend Firewall Security Journey: DFW 1-2-3-4',
     excerpt: 'Importing assets into the Security Services Platform, scoring the datacenter, then locking down shared services, environments and one app with ringfencing.',

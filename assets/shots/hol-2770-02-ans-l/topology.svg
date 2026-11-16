@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1000" width="1200" height="1000" role="img" aria-labelledby="t d">
+  <title id="t">Lab topology: HOL-2770-02-ANS-L</title>
+  <desc id="d">Management: the SSP installer (ssp-i.site-a.vcf.lab), the Security Services Platform instance (ssp.site-a.vcf.lab, with Security Intelligence, Network Traffic Analysis, NDR and Metrics) and the NSX Manager nsx-wld01-a, paired one to one with the SSP. Workload domain: Tier-0 t0-wld01-a with two Tier-1 gateways. t1-dmz01-a has web-seg-a (10.1.13.129/25) with the VMs idps-01 (10.1.13.140) and idps-02 (10.1.13.141). t1-wld-a has app-seg-a (10.1.14.129/25) and db-seg-a (10.1.14.1/25) with idps-03 (10.1.14.10). IDS/IPS inspects at every VM and on both Tier-1 gateways. Attack 1 is command and control and exfiltration between idps-01 and idps-02 on the same segment. Attack 2 is lateral movement from idps-01 to idps-03 across both Tier-1s. VMFlowGen deploys the demo VMs and replays the attacks. At the bottom, the steps of the lab: detect only, detect and prevent, virtual patch, NTA detectors and the NDR campaign.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/></pattern>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#f87171"/></marker>
+  </defs>
+  <style>
+    .mono{font-family:JetBrains Mono,Consolas,monospace}
+    .card{fill:#0f1626;stroke-width:2}
+    .chip{fill:#141d31;stroke:#3a4a68;stroke-width:1.5}
+    .chiph{fill:#24163d;stroke:#a78bfa;stroke-width:1.5}
+    .chipt{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;fill:#eef3fb;text-anchor:middle}
+    .name{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:18px;font-weight:700}
+    .sub{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:13px;fill:#7f8ea8}
+    .lbl{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:13px;fill:#fca5a5}
+    .sec{font-family:JetBrains Mono,Consolas,monospace;font-size:13px;font-weight:600;letter-spacing:1.2px;fill:#7f8ea8}
+    .seg{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;fill:#93c5fd}
+    .badge{fill:#1e2a44}
+    .badget{font-family:JetBrains Mono,Consolas,monospace;font-size:11px;font-weight:700;fill:#22d3ee;text-anchor:middle}
+    .cat{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;font-weight:700;text-anchor:middle}
+    .ips{fill:#2a1e0a;stroke:#f59e0b;stroke-width:1.5}
+    .ipst{font-family:JetBrains Mono,Consolas,monospace;font-size:10.5px;font-weight:700;fill:#fcd34d;text-anchor:middle}
+    .rt{fill:#101a2e;stroke:#94a3b8;stroke-width:2}
+    .rtn{font-family:JetBrains Mono,Consolas,monospace;font-size:13px;font-weight:700;fill:#eef3fb}
+    .rts{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:11.5px;fill:#7f8ea8}
+    .vmn{font-family:JetBrains Mono,Consolas,monospace;font-size:14px;font-weight:700;fill:#eef3fb}
+    .vms{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;fill:#7f8ea8}
+    .numt{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;font-weight:700;fill:#0a1120;text-anchor:middle}
+    .wire{stroke:#94a3b8;stroke-width:2;fill:none}
+    .segl{stroke:#60a5fa;stroke-width:3;fill:none}
+    .atk{stroke:#f87171;stroke-width:2.5;fill:none}
+  </style>
+  <rect width="1200" height="1000" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="1000" rx="18" fill="url(#grid)"/>
+  <text x="40" y="52" class="mono" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2770-02-ANS-L · LAB TOPOLOGY</text>
+<rect x="904" y="34" width="30" height="18" rx="5" class="badge"/><text x="919" y="47" class="badget">M1</text><text x="944" y="48" class="sub">= the lab module that uses it</text>
+<rect x="40" y="84" width="340" height="170" rx="16" class="card" stroke="#60a5fa"/>
+<text x="60" y="116" class="name" fill="#60a5fa">SSP Installer</text>
+<text x="60" y="137" class="sub">ssp-i.site-a.vcf.lab · 5.2.0</text>
+<rect x="330" y="100" width="30" height="18" rx="5" class="badge"/><text x="345" y="113" class="badget">M1</text>
+<rect x="60" y="154" width="300" height="30" rx="8" class="chip"/><text x="210.0" y="173.0" class="chipt">Deploy · backup · upgrade</text>
+<rect x="60" y="196" width="300" height="30" rx="8" class="chip"/><text x="210.0" y="215.0" class="chipt">Up to 5 SSP instances</text>
+<rect x="400" y="84" width="410" height="170" rx="16" class="card" stroke="#22d3ee"/>
+<text x="420" y="116" class="name" fill="#22d3ee">Security Services Platform</text>
+<text x="420" y="137" class="sub">ssp.site-a.vcf.lab · 3 controllers + 6 workers</text>
+<rect x="696" y="100" width="30" height="18" rx="5" class="badge"/><text x="711" y="113" class="badget">M1</text>
+<rect x="730" y="100" width="30" height="18" rx="5" class="badge"/><text x="745" y="113" class="badget">M3</text>
+<rect x="764" y="100" width="30" height="18" rx="5" class="badge"/><text x="779" y="113" class="badget">M4</text>
+<rect x="420" y="154" width="180" height="30" rx="8" class="chip"/><text x="510.0" y="173.0" class="chipt">Security Intelligence</text>
+<rect x="610" y="154" width="180" height="30" rx="8" class="chip"/><text x="700.0" y="173.0" class="chipt">Traffic Analysis (NTA)</text>
+<rect x="420" y="196" width="180" height="30" rx="8" class="chip"/><text x="510.0" y="215.0" class="chipt">NDR</text>
+<rect x="610" y="196" width="180" height="30" rx="8" class="chip"/><text x="700.0" y="215.0" class="chipt">Metrics</text>
+<rect x="830" y="84" width="330" height="170" rx="16" class="card" stroke="#34d399"/>
+<text x="850" y="116" class="name" fill="#34d399">NSX Manager</text>
+<text x="850" y="137" class="sub">nsx-wld01-a · 10.1.1.25 · NSX 9.1</text>
+<rect x="1110" y="100" width="30" height="18" rx="5" class="badge"/><text x="1125" y="113" class="badget">M2</text>
+<rect x="850" y="154" width="290" height="30" rx="8" class="chip"/><text x="995.0" y="173.0" class="chipt">IDS/IPS profiles and rules</text>
+<rect x="850" y="196" width="290" height="30" rx="8" class="chip"/><text x="995.0" y="215.0" class="chipt">Signature bundle · auto update</text>
+<line x1="810" y1="169" x2="830" y2="169" stroke="#94a3b8" stroke-width="2"/>
+<text x="820" y="276" class="sub" text-anchor="middle">one SSP instance pairs with one NSX Manager</text>
+<text x="40" y="318" class="sec">WORKLOAD DOMAIN · cluster-wld01-01a</text>
+<rect x="392" y="305" width="30" height="18" rx="5" class="badge"/><text x="407" y="318" class="badget">M2</text>
+<rect x="944" y="304" width="38" height="20" rx="10" class="ips"/><text x="963" y="318" class="ipst">IPS</text>
+<text x="990" y="319" class="sub">= IDS/IPS inspects here</text>
+<rect x="470" y="338" width="260" height="30" rx="8" class="chip"/><text x="600.0" y="357.0" class="chipt">Threat Intelligence cloud</text>
+<line x1="600" y1="368" x2="600" y2="404" class="wire" stroke-dasharray="5 4"/>
+<text x="612" y="391" class="sub">signature updates</text>
+<rect x="505" y="404" width="190" height="46" rx="23" class="rt"/>
+<text x="527" y="424" class="rtn">t0-wld01-a</text><text x="527" y="440" class="rts">Tier-0</text>
+<rect x="205" y="404" width="210" height="46" rx="23" class="rt"/>
+<text x="227" y="424" class="rtn">t1-dmz01-a</text><text x="227" y="440" class="rts">Tier-1</text>
+<rect x="365" y="417" width="38" height="20" rx="10" class="ips"/><text x="384" y="431" class="ipst">IPS</text>
+<rect x="785" y="404" width="210" height="46" rx="23" class="rt"/>
+<text x="807" y="424" class="rtn">t1-wld-a</text><text x="807" y="440" class="rts">Tier-1</text>
+<rect x="945" y="417" width="38" height="20" rx="10" class="ips"/><text x="964" y="431" class="ipst">IPS</text>
+<line x1="415" y1="427" x2="505" y2="427" class="wire"/><line x1="695" y1="427" x2="785" y2="427" class="wire"/>
+<line x1="310" y1="450" x2="310" y2="492" class="wire"/>
+<line x1="60" y1="492" x2="560" y2="492" class="segl"/>
+<text x="60" y="482" class="seg">web-seg-a · 10.1.13.129/25</text>
+<line x1="160" y1="492" x2="160" y2="516" class="wire"/><line x1="450" y1="492" x2="450" y2="516" class="wire"/>
+<rect x="70" y="516" width="180" height="62" rx="10" class="chip"/>
+<text x="86" y="542" class="vmn">idps-01</text><text x="86" y="562" class="vms">10.1.13.140</text>
+<rect x="198" y="526" width="38" height="20" rx="10" class="ips"/><text x="217" y="540" class="ipst">IPS</text>
+<rect x="360" y="516" width="180" height="62" rx="10" class="chip"/>
+<text x="376" y="542" class="vmn">idps-02</text><text x="376" y="562" class="vms">10.1.13.141</text>
+<rect x="488" y="526" width="38" height="20" rx="10" class="ips"/><text x="507" y="540" class="ipst">IPS</text>
+<line x1="256" y1="547" x2="354" y2="547" class="atk" marker-start="url(#ar)" marker-end="url(#ar)"/>
+<circle cx="305" cy="529" r="11" fill="#f87171"/><text x="305" y="533.5" class="numt">1</text>
+<line x1="890" y1="450" x2="890" y2="552" class="wire"/>
+<line x1="890" y1="492" x2="1140" y2="492" class="segl"/>
+<text x="1140" y="482" class="seg" text-anchor="end">app-seg-a · 10.1.14.129/25</text>
+<line x1="890" y1="552" x2="1140" y2="552" class="segl"/>
+<text x="1140" y="542" class="seg" text-anchor="end">db-seg-a · 10.1.14.1/25</text>
+<line x1="1030" y1="552" x2="1030" y2="576" class="wire"/>
+<rect x="940" y="576" width="180" height="62" rx="10" class="chip"/>
+<text x="956" y="602" class="vmn">idps-03</text><text x="956" y="622" class="vms">10.1.14.10</text>
+<rect x="1068" y="586" width="38" height="20" rx="10" class="ips"/><text x="1087" y="600" class="ipst">IPS</text>
+<path d="M110 578 V668 H1030 V644" class="atk" marker-end="url(#ar)"/>
+<circle cx="132" cy="612" r="11" fill="#f87171"/><text x="132" y="616.5" class="numt">1</text>
+<text x="152" y="617" class="lbl">C2 on TCP/80 and exfiltration on TCP/53, inside web-seg-a: only the distributed IDS/IPS sees it</text>
+<circle cx="132" cy="650" r="11" fill="#f87171"/><text x="132" y="654.5" class="numt">2</text>
+<text x="152" y="655" class="lbl">lateral movement on TCP/3389 through both Tier-1s: the gateway IDS/IPS sees it as well</text>
+<rect x="40" y="704" width="540" height="150" rx="16" class="card" stroke="#fbbf24"/>
+<text x="60" y="736" class="name" fill="#fbbf24">VMFlowGen</text>
+<text x="60" y="757" class="sub">deploys the demo VMs and replays the attacks</text>
+<rect x="496" y="720" width="30" height="18" rx="5" class="badge"/><text x="511" y="733" class="badget">M2</text>
+<rect x="530" y="720" width="30" height="18" rx="5" class="badge"/><text x="545" y="733" class="badget">M4</text>
+<rect x="60" y="770" width="245" height="30" rx="8" class="chip"/><text x="182.5" y="789.0" class="chipt">idpsdemo · 3 VMs · 6 threats</text>
+<rect x="315" y="770" width="245" height="30" rx="8" class="chip"/><text x="437.5" y="789.0" class="chipt">atp-demo · 9 VMs · 290 threats</text>
+<rect x="60" y="808" width="500" height="30" rx="8" class="chip"/><text x="310.0" y="827.0" class="chipt">VM tag malice (scope vmflowgen) → NSX group atp-demo</text>
+<rect x="600" y="704" width="560" height="150" rx="16" class="card" stroke="#a78bfa"/>
+<text x="620" y="736" class="name" fill="#a78bfa">atp-demo attack</text>
+<text x="620" y="757" class="sub">the chain NDR turns into one campaign</text>
+<rect x="1110" y="720" width="30" height="18" rx="5" class="badge"/><text x="1125" y="733" class="badget">M4</text>
+<rect x="620" y="770" width="255" height="30" rx="8" class="chip"/><text x="747.5" y="789.0" class="chipt">attacker → confluence :8090</text>
+<rect x="885" y="770" width="255" height="30" rx="8" class="chip"/><text x="1012.5" y="789.0" class="chipt">PE EXE download · C2</text>
+<rect x="620" y="808" width="255" height="30" rx="8" class="chip"/><text x="747.5" y="827.0" class="chipt">SMB2 .exe create · lateral</text>
+<rect x="885" y="808" width="255" height="30" rx="8" class="chiph"/><text x="1012.5" y="827.0" class="chipt">NDR: 1 campaign</text>
+<text x="40" y="892" class="mono" font-size="13" font-weight="600" letter-spacing="1.2" fill="#f59e0b">ADVANCED THREAT PREVENTION · WHAT THE LAB BUILDS UP</text>
+<polygon points="40.0,906 242.0,906 258.0,929.0 242.0,952 40.0,952" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="153.0" y="933.0" class="cat" fill="#fcd34d">1 · DETECT ONLY</text>
+<rect x="138.0" y="960" width="30" height="18" rx="5" class="badge"/><text x="153.0" y="973" class="badget">M2</text>
+<polygon points="265.5,906 467.5,906 483.5,929.0 467.5,952 265.5,952 281.5,929.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="378.5" y="933.0" class="cat" fill="#fcd34d">2 · DETECT &amp; PREVENT</text>
+<rect x="363.5" y="960" width="30" height="18" rx="5" class="badge"/><text x="378.5" y="973" class="badget">M2</text>
+<polygon points="491.0,906 693.0,906 709.0,929.0 693.0,952 491.0,952 507.0,929.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="604.0" y="933.0" class="cat" fill="#fcd34d">3 · VIRTUAL PATCH</text>
+<rect x="589.0" y="960" width="30" height="18" rx="5" class="badge"/><text x="604.0" y="973" class="badget">M2</text>
+<polygon points="716.5,906 918.5,906 934.5,929.0 918.5,952 716.5,952 732.5,929.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="829.5" y="933.0" class="cat" fill="#fcd34d">4 · NTA DETECTORS</text>
+<rect x="814.5" y="960" width="30" height="18" rx="5" class="badge"/><text x="829.5" y="973" class="badget">M3</text>
+<polygon points="942.0,906 1144.0,906 1160.0,929.0 1144.0,952 942.0,952 958.0,929.0" fill="#2a1e0a" stroke="#f59e0b" stroke-width="2"/>
+<text x="1055.0" y="933.0" class="cat" fill="#fcd34d">5 · NDR CAMPAIGN</text>
+<rect x="1040.0" y="960" width="30" height="18" rx="5" class="badge"/><text x="1055.0" y="973" class="badget">M4</text>
+</svg>

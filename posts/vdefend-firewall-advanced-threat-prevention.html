@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMware vDefend Firewall with Advanced Threat Prevention · vDanish</title>
+<meta name="description" content="IDS/IPS in NSX from detect only to prevent, virtual patching CVE-2024-29059, then Network Traffic Analysis detectors and an NDR campaign in the Security Services Platform.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=20261116a">
+</head>
+<body data-page="post" data-root="../" data-slug="vdefend-firewall-advanced-threat-prevention">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>Third vDefend lab in a row. The last two were about firewall rules. This one is about attacks hiding inside traffic the firewall allows: IDS/IPS in NSX, then Network Traffic Analysis (NTA) and Network Detection &amp; Response (NDR) in the Security Services Platform (SSP). Click any photo to see it full screen.</p>
+
+          <h2>Lab topology</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/topology.svg" alt="SSP and NSX on top, the three demo VMs behind two Tier-1s with the IDS/IPS inspection points, the two attacks, and the module for each part." width="1200" height="1000" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>SSP and NSX on top, the three demo VMs behind two Tier-1s with the IDS/IPS inspection points, the two attacks, and the module for each part.</figcaption>
+          </figure>
+
+          <h2>Module 1: SSP 5.2 overview</h2>
+
+          <p>Where everything sits. The two firewalls at the bottom, Advanced Threat Prevention and Security Intelligence on top of them:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/1.png" alt="Distributed and Gateway Firewall, then ATP (IDS/IPS, sandbox, NTA, NDR), then Security Intelligence." width="962" height="582" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 1</span>Distributed and Gateway Firewall, then ATP (IDS/IPS, sandbox, NTA, NDR), then Security Intelligence.</figcaption>
+          </figure>
+
+          <p>The SSP installer only handles lifecycle. In 5.2 one installer can hold up to 5 SSP instances. This lab has one:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/3.png" alt="SSP Installer 5.2.0: 1 instance, 1 vCenter, 2 packages. ssp.site-a.vcf.lab at 10.1.0.11, Healthy, 3 controllers and 6 workers." width="1274" height="662" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 3</span>SSP Installer 5.2.0: 1 instance, 1 vCenter, 2 packages. ssp.site-a.vcf.lab at 10.1.0.11, Healthy, 3 controllers and 6 workers.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/4.png" alt="Instance Management: the ssp instance, large form factor, Healthy." width="1360" height="298" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 4</span>Instance Management: the ssp instance, large form factor, Healthy.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/5.png" alt="The SSP home page: alarms, policy monitoring, no security score yet." width="1358" height="576" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 5</span>The SSP home page: alarms, policy monitoring, no security score yet.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Platform and features</h3>
+
+          <p><strong>System &gt; Platform &amp; Features</strong>. Scroll down a bit to see all the tiles:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/6.png" alt="5 features activated, 4 pending activation." width="1360" height="576" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 6</span>5 features activated, 4 pending activation.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/7.png" alt="Metrics, Security Intelligence, Rule Analysis and NDR Up. NTA is there too, showing Down." width="1324" height="438" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 7</span>Metrics, Security Intelligence, Rule Analysis and NDR Up. NTA is there too, showing Down.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Not what the manual says</b>The manual says only Security Intelligence is activated. When I did it, NTA and NDR were already activated as well.</div>
+
+          <p>The NSX Manager onboarded to this SSP. In 5.2 it's strictly one SSP instance to one NSX Manager:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/8.png" alt="nsx-wld01-a: 10.1.1.25, VIP 10.1.1.24, NSX 9.1, connectivity Up." width="1362" height="410" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 8</span>nsx-wld01-a: 10.1.1.25, VIP 10.1.1.24, NSX 9.1, connectivity Up.</figcaption>
+          </figure>
+
+          <p>Server Configurations takes a proxy, a SIEM and syslog:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/9.png" alt="Proxy server proxy.site-a.vcf.lab on port 3128, Connected." width="1360" height="572" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 9</span>Proxy server proxy.site-a.vcf.lab on port 3128, Connected.</figcaption>
+          </figure>
+
+          <h3>Monitor and Plan</h3>
+
+          <p>Everything about security intelligence is under <strong>Monitor &amp; Plan</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/10.png" alt="Security Posture, no scores calculated yet." width="1360" height="568" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 10</span>Security Posture, no scores calculated yet.</figcaption>
+          </figure>
+
+          <p>Firewall Insights has widgets like the top 5 rules and top 5 interfaces:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/11.png" alt="Top 5 rules, top 5 interfaces, interfaces dropping traffic and top transport nodes." width="1360" height="564" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>Top 5 rules, top 5 interfaces, interfaces dropping traffic and top transport nodes.</figcaption>
+          </figure>
+
+          <h2>Module 2: IDS/IPS</h2>
+
+          <p>Three tools in this module:</p>
+
+          <ul>
+            <li><strong>VMFlowGen</strong>: deploys small VMs and generates traffic and attacks between them.</li>
+            <li><strong>NSX Manager</strong>: where IDS/IPS is turned on, and where the profiles, rules and events live.</li>
+            <li><strong>VCF Operations for Logs</strong>: central log collection for vSphere, NSX and the rest.</li>
+          </ul>
+
+          <h3>Deploy the demo VMs</h3>
+
+          <p>In VMFlowGen, <strong>Topologies &gt; idpsdemo</strong>. A blue icon in the top left of the tile means it's not deployed yet:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/13.png" alt="idpsdemo: 3 VMs, 6 flows, 6 threats." width="1362" height="580" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 13</span>idpsdemo: 3 VMs, 6 flows, 6 threats.</figcaption>
+          </figure>
+
+          <p><strong>Apply</strong> deploys it. Takes a few minutes, with a progress bar in the top left of the canvas:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/14.png" alt="idps-01 and idps-02 on web-seg-a, idps-03 on db-seg-a. Apply." width="1360" height="602" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 14</span>idps-01 and idps-02 on web-seg-a, idps-03 on db-seg-a. Apply.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/15.png" alt="Applying VM idps-01 config, 33%." width="1056" height="434" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 15</span>Applying VM idps-01 config, 33%.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Turn on IDS/IPS</h3>
+
+          <p>In the workload NSX Manager, <strong>Security &gt; IDS/IPS &amp; Malware Prevention &gt; Settings</strong>. Activate cluster-wld01-01a. That starts the engine on the hosts, so traffic gets inspected at each VM:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/16.png" alt="Both clusters Off for east-west traffic." width="1358" height="596" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 16</span>Both clusters Off for east-west traffic.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/17.png" alt="Activate for cluster-wld01-01a: Yes." width="1018" height="346" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 17</span>Activate for cluster-wld01-01a: Yes.</figcaption>
+            </figure>
+          </div>
+
+          <p>Further down, the gateways. Turn it on for t1-dmz01-a and t1-wld-a, for traffic that crosses a Tier-1:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/18.png" alt="Activate Gateways for North-South Traffic: all three Off." width="1318" height="310" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 18</span>Activate Gateways for North-South Traffic: all three Off.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/19.png" alt="t1-dmz01-a: Yes." width="1018" height="340" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 19</span>t1-dmz01-a: Yes.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/20.png" alt="t1-wld-a: Yes." width="1018" height="346" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 20</span>t1-wld-a: Yes.</figcaption>
+            </figure>
+          </div>
+
+          <p>On the IDS/IPS tab, enable syslog so the events also go to an external log server:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/21.png" alt="Syslog Settings, still on Don&#x27;t Send here." width="1324" height="258" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 21</span>Syslog Settings, still on Don't Send here.</figcaption>
+          </figure>
+
+          <p><strong>Signature Management</strong>, auto update on, so new signatures keep coming in:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/22.png" alt="Auto Update On, update successful, bundle IDPSSignatures.4065." width="1320" height="420" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 22</span>Auto Update On, update successful, bundle IDPSSignatures.4065.</figcaption>
+          </figure>
+
+          <h3>Profile and rules</h3>
+
+          <p>A profile decides which signatures are used. Made a custom one with every severity included:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/23.png" alt="ips-demo-profile-vdanish: 20106 system signatures, Critical to Suspicious." width="1322" height="586" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 23</span>ips-demo-profile-vdanish: 20106 system signatures, Critical to Suspicious.</figcaption>
+          </figure>
+
+          <p>Scroll down, turn on <strong>Packet Capture</strong> and save. Every hit then keeps a PCAP as evidence:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/24.png" alt="Packet Capture On: 10000 bytes, 5 packets." width="1316" height="398" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 24</span>Packet Capture On: 10000 bytes, 5 packets.</figcaption>
+          </figure>
+
+          <p>A distributed policy with one rule: the custom profile, applied to the idps-demo group. Publish:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/25.png" alt="idps-demo-vdanish under Threat Rules: Any to Any, applied to idps-demo, Detect Only." width="1320" height="340" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 25</span>idps-demo-vdanish under Threat Rules: Any to Any, applied to idps-demo, Detect Only.</figcaption>
+          </figure>
+
+          <p>Then a gateway policy. Source and destination idps-demo, same profile, applied to the two Tier-1s:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/26.png" alt="Gateway rule idps-demo-vdanish on t1-wld-a and t1-dmz01-a, Detect Only." width="1324" height="420" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 26</span>Gateway rule idps-demo-vdanish on t1-wld-a and t1-dmz01-a, Detect Only.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/27.png" alt="Applied To: t1-dmz01-a and t1-wld-a." width="788" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 27</span>Applied To: t1-dmz01-a and t1-wld-a.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Why Detect Only first</b>A signature that misfires in prevent mode drops real traffic. Watch what gets hit first, then switch.</div>
+
+          <h3>Attack, detect only</h3>
+
+          <p>The dashboard before the attack, <strong>Security &gt; IDS/IPS</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/28.png" alt="No intrusions detected." width="1280" height="600" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 28</span>No intrusions detected.</figcaption>
+          </figure>
+
+          <p>Back in VMFlowGen, open idpsdemo, <strong>Attack</strong>, then <strong>Start</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/29.png" alt="Topologies: idpsdemo." width="1296" height="630" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 29</span>Topologies: idpsdemo.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/30.png" alt="Attack." width="1088" height="258" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 30</span>Attack.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/31.png" alt="The campaign: C2 from idps-01 to idps-02 on TCP/80, exfiltration back on TCP/53, lateral movement to idps-03 on TCP/3389." width="510" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 31</span>The campaign: C2 from idps-01 to idps-02 on TCP/80, exfiltration back on TCP/53, lateral movement to idps-03 on TCP/3389.</figcaption>
+          </figure>
+
+          <p>Refresh the dashboard and the events are there:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/32.png" alt="6 attempts, 3 unique intrusions: 2 high, 1 suspicious." width="1920" height="1080" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 32</span>6 attempts, 3 unique intrusions: 2 high, 1 suspicious.</figcaption>
+          </figure>
+
+          <p>More come in after another refresh, including a critical one. Expanding it shows the signature, attacker, target and where it was seen:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/33.png" alt="ET MALWARE Cobalt Strike Exfiltration, impact score 70, between 10.1.13.140 and 10.1.14.10 through t1-wld-a." width="1316" height="576" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 33</span>ET MALWARE Cobalt Strike Exfiltration, impact score 70, between 10.1.13.140 and 10.1.14.10 through t1-wld-a.</figcaption>
+          </figure>
+
+          <p><strong>View Full Event History</strong>. Seen twice, once by the gateway and once at the VM, both Alert only. The PCAP from the custom profile can be exported here:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/34.png" alt="Gateway t1-wld-a and Distributed idps-03, action Alert, PCAP Export." width="1354" height="576" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 34</span>Gateway t1-wld-a and Distributed idps-03, action Alert, PCAP Export.</figcaption>
+          </figure>
+
+          <h3>Switch to prevent</h3>
+
+          <p>Change the rule's mode from Detect Only to <strong>Detect &amp; Prevent</strong> and publish:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/35.png" alt="Mode: Detect Only, Detect &amp; Prevent or Exempt." width="1358" height="164" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 35</span>Mode: Detect Only, Detect &amp; Prevent or Exempt.</figcaption>
+          </figure>
+
+          <p>Run the attack again. This time a flow fails:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/36.png" alt="idps-01 to idps-02 on TCP/80: connection reset by peer." width="502" height="626" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 36</span>idps-01 to idps-02 on TCP/80: connection reset by peer.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/37.png" alt="Same signature, new entry with action Reject. The earlier two were Alert." width="1352" height="574" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 37</span>Same signature, new entry with action Reject. The earlier two were Alert.</figcaption>
+          </figure>
+
+          <h3>Virtual patching</h3>
+
+          <p>A CVE is out and the servers can't be patched yet, so the exploit gets blocked on the network instead. New profile <strong>CVE-2024-29059-VP</strong>, then <strong>Select</strong> next to CVEs:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/38.png" alt="New profile CVE-2024-29059-VP." width="1286" height="638" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 38</span>New profile CVE-2024-29059-VP.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/39.png" alt="Search 2024-29059, tick it, Save." width="652" height="578" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 39</span>Search 2024-29059, tick it, Save.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/40.png" alt="2 signatures for the .NET Remoting ObjRef leak, CVSS 7.5, action Reject." width="910" height="634" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 40</span>2 signatures for the .NET Remoting ObjRef leak, CVSS 7.5, action Reject.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then a policy under <strong>Emergency Threat Rules</strong>, the category ahead of the normal Threat Rules. Destination idps-demo, service HTTP, the new profile, Detect &amp; Prevent:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/41.png" alt="VP-CVE-2024-29059: Any to idps-demo on HTTP, Detect &amp; Prevent." width="1320" height="294" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 41</span>VP-CVE-2024-29059: Any to idps-demo on HTTP, Detect &amp; Prevent.</figcaption>
+          </figure>
+
+          <p>Attack again, then the event history:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/42.png" alt="Third run of the campaign." width="510" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 42</span>Third run of the campaign.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/43.png" alt="The newest hit lands on VP-CVE-2024-29059 with the new profile, action Reject." width="1354" height="574" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 43</span>The newest hit lands on VP-CVE-2024-29059 with the new profile, action Reject.</figcaption>
+          </figure>
+
+          <h2>Module 3: Network Traffic Analysis</h2>
+
+          <p>IDS/IPS matches known signatures. NTA looks at how traffic behaves, so it can flag things that don't match any signature. It's set up in the SSP: <strong>System &gt; Platform &amp; Features</strong>, <strong>Detector Activation</strong> on the NTA tile:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/44.png" alt="Network Traffic Analysis tile, Detector Activation." width="1314" height="482" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 44</span>Network Traffic Analysis tile, Detector Activation.</figcaption>
+          </figure>
+
+          <p>Each detector maps to MITRE ATT&amp;CK tactics and does nothing until it's activated. Here they were all pre-enabled:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/45.png" alt="Data Upload/Download, Destination IP Profiler, DNS Tunneling, Domain Generation Algorithm: Activated." width="1324" height="554" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 45</span>Data Upload/Download, Destination IP Profiler, DNS Tunneling, Domain Generation Algorithm: Activated.</figcaption>
+          </figure>
+
+          <h2>Module 4: Network Detection &amp; Response</h2>
+
+          <p>NDR takes the separate IDS/IPS and NTA events and groups the related ones into a campaign. One story to investigate instead of a list of alerts.</p>
+
+          <p>In VMFlowGen, open <strong>atp-demo</strong> and <strong>Apply</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/46.png" alt="atp-demo: 9 VMs, 290 flows, 290 threats." width="958" height="566" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 46</span>atp-demo: 9 VMs, 290 flows, 290 threats.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-02-ans-l/47.png" alt="Apply. A few minutes again." width="1036" height="240" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 47</span>Apply. A few minutes again.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then in the SSP, check that NDR is up:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/48.png" alt="Network Detection &amp; Response: Up." width="676" height="602" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 48</span>Network Detection &amp; Response: Up.</figcaption>
+          </figure>
+
+          <p>IDS/IPS has to cover the new VMs, otherwise NDR has nothing to work with. In NSX, a new group:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/49.png" alt="Inventory &gt; Groups: atp-demo." width="1244" height="354" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 49</span>Inventory &gt; Groups: atp-demo.</figcaption>
+          </figure>
+
+          <p>The demo VMs carry the tag malice, so one criterion catches them all:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/50.png" alt="Virtual Machine, tag equals malice, scope vmflowgen." width="1350" height="316" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 50</span>Virtual Machine, tag equals malice, scope vmflowgen.</figcaption>
+          </figure>
+
+          <p>A distributed rule applied to that group, and a gateway rule on t1-wld-a. Both reuse the earlier profile and stay on <strong>Detect Only</strong>, so the attack runs all the way through and NDR gets the whole chain:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/51.png" alt="idps-atp-01: Any to Any, applied to atp-demo, Detect Only." width="1318" height="116" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 51</span>idps-atp-01: Any to Any, applied to atp-demo, Detect Only.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/52.png" alt="atp-demo-gw: source atp-demo, applied to t1-wld-a, Detect Only. Publish." width="1320" height="422" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 52</span>atp-demo-gw: source atp-demo, applied to t1-wld-a, Detect Only. Publish.</figcaption>
+          </figure>
+
+          <p>Start the attack on atp-demo:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/53.png" alt="The attacker hitting confluence_server on TCP/8090, over and over." width="1360" height="596" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 53</span>The attacker hitting confluence_server on TCP/8090, over and over.</figcaption>
+          </figure>
+
+          <p>Then <strong>Network Detection &amp; Response</strong> in the SSP:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/54.png" alt="One campaign, Infection followed by lateral movement: 4 detections, 2 threats, 2 workloads, 2 MITRE tactics." width="1322" height="580" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 54</span>One campaign, Infection followed by lateral movement: 4 detections, 2 threats, 2 workloads, 2 MITRE tactics.</figcaption>
+          </figure>
+
+          <p>The detections follow the attack: an EXE download flagged as command and control, then an .exe written over SMB2 flagged as lateral movement.</p>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li>IDS/IPS inspects in two places: at each VM (<strong>distributed</strong>) and on the Tier-1s (<strong>gateway</strong>). The same attack can show up in both.</li>
+            <li>Start in <strong>Detect Only</strong>, read the events, then move to Detect &amp; Prevent.</li>
+            <li>A custom profile with <strong>packet capture</strong> leaves a PCAP for every hit.</li>
+            <li><strong>Virtual patching</strong>: a small profile for one CVE, in prevent mode, under Emergency Threat Rules.</li>
+            <li>IDS/IPS finds known attacks, NTA finds odd behaviour, and <strong>NDR</strong> ties both into one campaign.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-02-ans-l/completion.jpg" alt="Completed November 16, 2026, in 180 minutes." width="803" height="747" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 16, 2026, in 180 minutes.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js?v=20261116a"></script>
+<script src="../assets/site.js?v=20261116a"></script>
+</body>
+</html>
