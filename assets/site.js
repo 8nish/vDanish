@@ -362,7 +362,7 @@
       im.classList.add('zoomable');
       im.tabIndex = 0;
       im.setAttribute('role', 'button');
-      im.setAttribute('aria-label', 'View full screen: ' + (im.alt || 'photo'));
+      im.setAttribute('aria-label', 'Enlarge: ' + (im.alt || 'photo'));
       im.addEventListener('click', function () { open(i); });
       im.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(i); } });
     });
