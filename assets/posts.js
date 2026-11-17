@@ -37,6 +37,11 @@ window.SITE = {
    status: "completed" or "in-progress" · date: YYYY-MM-DD · read: minutes · no: entry number within its own series */
 window.POSTS = [
   /* ---------- November ---------- */
+  { no: 13, type: 'lab', slug: 'vdefend-firewall-technology-deep-dive', code: 'HOL-2770-05-ANS-L',
+    title: 'VMware vDefend Firewall Technology Deep Dive',
+    excerpt: 'Locking down a 3-tier app with the distributed firewall, a Layer 7 rule for MySQL, GeoIP blocking on the gateway firewall, rule analysis and the AI Assistant for Firewall.',
+    tags: ['vdefend', 'nsx'], date: '2026-11-17', status: 'completed', read: 7 },
+
   { no: 12, type: 'lab', slug: 'vdefend-firewall-advanced-threat-prevention', code: 'HOL-2770-02-ANS-L',
     title: 'VMware vDefend Firewall with Advanced Threat Prevention',
     excerpt: 'Turning on IDS/IPS in NSX, going from detect to prevent, virtual patching a CVE, then Network Traffic Analysis and an NDR campaign in the Security Services Platform.',

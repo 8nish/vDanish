@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMware vDefend Firewall Technology Deep Dive · vDanish</title>
+<meta name="description" content="Securing a 3-tier app with the NSX distributed firewall, a Layer 7 MySQL rule, GeoIP blocking on the gateway firewall, rule analysis and the AI Assistant for Firewall.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=20261117a">
+</head>
+<body data-page="post" data-root="../" data-slug="vdefend-firewall-technology-deep-dive">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>Fourth vDefend lab in a row, and this one is about the firewall itself: the distributed firewall on a 3-tier app, a Layer 7 rule, the gateway firewall with GeoIP, rule analysis, and the AI Assistant for Firewall. Click any photo to see it full screen.</p>
+
+          <h2>Lab topology</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/topology.svg" alt="The clients come in through the Tier-0, the 3-tier app sits behind the two Tier-1s, and the modules that use each part." width="1200" height="600" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>The clients come in through the Tier-0, the 3-tier app sits behind the two Tier-1s, and the modules that use each part.</figcaption>
+          </figure>
+
+          <h2>Module 1: SSP 5.2 overview</h2>
+
+          <p>This module is the same as in the <a href="vdefend-firewall-advanced-threat-prevention">last lab</a>, so the photos here are from that run.</p>
+
+          <p>Where everything sits. The two firewalls at the bottom, Advanced Threat Prevention and Security Intelligence on top of them:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/1.png" alt="Distributed and Gateway Firewall, then ATP (IDS/IPS, sandbox, NTA, NDR), then Security Intelligence." width="962" height="582" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 1</span>Distributed and Gateway Firewall, then ATP (IDS/IPS, sandbox, NTA, NDR), then Security Intelligence.</figcaption>
+          </figure>
+
+          <p>The SSP installer only handles lifecycle. In 5.2 one installer can hold up to 5 SSP instances. This lab has one:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/2.png" alt="SSP Installer 5.2.0: 1 instance, 1 vCenter, 2 packages. ssp.site-a.vcf.lab at 10.1.0.11, Healthy, 3 controllers and 6 workers." width="1274" height="662" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>SSP Installer 5.2.0: 1 instance, 1 vCenter, 2 packages. ssp.site-a.vcf.lab at 10.1.0.11, Healthy, 3 controllers and 6 workers.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/3.png" alt="Instance Management: the ssp instance, large form factor, Healthy." width="1360" height="298" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 3</span>Instance Management: the ssp instance, large form factor, Healthy.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/4.png" alt="The SSP home page: alarms, policy monitoring, no security score yet." width="1358" height="576" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 4</span>The SSP home page: alarms, policy monitoring, no security score yet.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Platform and features</h3>
+
+          <p><strong>System &gt; Platform &amp; Features</strong>. Scroll down a bit to see all the tiles:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/5.png" alt="5 features activated, 4 pending activation." width="1360" height="576" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>5 features activated, 4 pending activation.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/6.png" alt="Metrics, Security Intelligence, Rule Analysis and NDR Up. NTA is there too, showing Down." width="1324" height="438" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 6</span>Metrics, Security Intelligence, Rule Analysis and NDR Up. NTA is there too, showing Down.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Not what the manual says</b>The manual says only Security Intelligence is activated. When I did it, NTA and NDR were already activated as well.</div>
+
+          <p>The NSX Manager onboarded to this SSP. In 5.2 it's strictly one SSP instance to one NSX Manager:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/7.png" alt="nsx-wld01-a: 10.1.1.25, VIP 10.1.1.24, NSX 9.1, connectivity Up." width="1362" height="410" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 7</span>nsx-wld01-a: 10.1.1.25, VIP 10.1.1.24, NSX 9.1, connectivity Up.</figcaption>
+          </figure>
+
+          <p>Server Configurations takes a proxy, a SIEM and syslog:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/8.png" alt="Proxy server proxy.site-a.vcf.lab on port 3128, Connected." width="1360" height="572" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 8</span>Proxy server proxy.site-a.vcf.lab on port 3128, Connected.</figcaption>
+          </figure>
+
+          <h3>Monitor and Plan</h3>
+
+          <p>Everything about security intelligence is under <strong>Monitor &amp; Plan</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/9.png" alt="Security Posture, no scores calculated yet." width="1360" height="568" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 9</span>Security Posture, no scores calculated yet.</figcaption>
+          </figure>
+
+          <p>Firewall Insights has widgets like the top 5 rules and top 5 interfaces:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/10.png" alt="Top 5 rules, top 5 interfaces, interfaces dropping traffic and top transport nodes." width="1360" height="564" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 10</span>Top 5 rules, top 5 interfaces, interfaces dropping traffic and top transport nodes.</figcaption>
+          </figure>
+
+          <h2>Module 2: Securing a 3-tier app with the DFW</h2>
+
+          <p>The app is 3 web VMs, 2 app VMs running Tomcat and 1 MySQL database. Clients hit web on 443, web talks to app on 8080, app talks to db on 3306. There's no real front end. VMFlowGen makes the traffic and I watch it in Security Intelligence. VCF Operations for Logs is in the lab too.</p>
+
+          <h3>Deploy the app</h3>
+
+          <p>In VMFlowGen, <strong>Topologies &gt; vdefendfirewalldemo</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/11.png" alt="vdefendfirewalldemo: 10 VMs, 83 flows." width="1326" height="530" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>vdefendfirewalldemo: 10 VMs, 83 flows.</figcaption>
+          </figure>
+
+          <p>Open it and <strong>Apply</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/12.png" alt="Web in blue, app in orange, db in purple, the outside clients on the left. Apply." width="1320" height="710" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 12</span>Web in blue, app in orange, db in purple, the outside clients on the left. Apply.</figcaption>
+          </figure>
+
+          <h3>What's there already</h3>
+
+          <p>In NSX, <strong>Security &gt; Distributed Firewall &gt; Category Specific Rules</strong>. The lab comes with a 3 Tier App policy, and the default Layer 3 rule at the bottom:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/13.png" alt="3 Tier App, RA, then the Default Layer3 Section." width="740" height="604" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 13</span>3 Tier App, RA, then the Default Layer3 Section.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/14.png" alt="Block Web to Web, All to Web on HTTPS, Web to App on HTTP-8080, Block All. All four switched off." width="1330" height="220" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 14</span>Block Web to Web, All to Web on HTTPS, Web to App on HTTP-8080, Block All. All four switched off.</figcaption>
+          </figure>
+
+          <p>Clicking web-group shows who's in it and why:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/15.png" alt="Click web-group in the first rule." width="1078" height="242" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 15</span>Click web-group in the first rule.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/16.png" alt="Effective members: web01a, web02a, web03a." width="390" height="590" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 16</span>Effective members: web01a, web02a, web03a.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/17.png" alt="Membership: VM with tag web-seg-a, scope tier." width="1194" height="456" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 17</span>Membership: VM with tag web-seg-a, scope tier.</figcaption>
+            </figure>
+          </div>
+
+          <h3>What Security Intelligence sees</h3>
+
+          <p>In the SSP, <strong>Monitor &amp; Plan &gt; Security Explorer</strong>, filter on app-group, db-group and web-group:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/18.png" alt="Security Explorer, All Groups." width="914" height="570" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 18</span>Security Explorer, All Groups.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/19.png" alt="app-group, db-group and web-group. Apply." width="448" height="606" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 19</span>app-group, db-group and web-group. Apply.</figcaption>
+            </figure>
+          </div>
+
+          <p>Everything is red. Right click the line between web-group and db-group, <strong>Flow Details</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/20.png" alt="web-group to db-group, Flow Details." width="1030" height="584" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 20</span>web-group to db-group, Flow Details.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/21.png" alt="web01a to db01a on TCP 3389, Unprotected. It only hit the Default Layer3 Rule, Allow." width="1306" height="512" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 21</span>web01a to db01a on TCP 3389, Unprotected. It only hit the Default Layer3 Rule, Allow.</figcaption>
+          </figure>
+
+          <p>Web should never talk straight to the database, and here it does. Unprotected means no rule was written for the flow, it just fell through to the default allow.</p>
+
+          <p>The same works on a group itself. Right click web-group for its members and its flows:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/22.png" alt="web-group, Members." width="1126" height="616" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 22</span>web-group, Members.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/23.png" alt="web01a, web02a, web03a." width="930" height="552" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 23</span>web01a, web02a, web03a.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/24.png" alt="web-group, Flow Details." width="982" height="576" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 24</span>web-group, Flow Details.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/25.png" alt="Every web-group flow Unprotected." width="1306" height="512" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 25</span>Every web-group flow Unprotected.</figcaption>
+          </figure>
+
+          <h3>Tag, group, rules</h3>
+
+          <p>One tag on all six VMs, one group from that tag, then the rules. In NSX, <strong>Inventory &gt; Tags</strong>, a new tag 3-tier-app with scope application:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/26.png" alt="Tag 3-tier-app, scope application, then Select Virtual Machines." width="1322" height="396" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 26</span>Tag 3-tier-app, scope application, then Select Virtual Machines.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/27.png" alt="app01a, app02a, db01a, web01a, web02a, web03a. 6 selected." width="784" height="614" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 27</span>app01a, app02a, db01a, web01a, web02a, web03a. 6 selected.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/28.png" alt="Save." width="1248" height="106" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 28</span>Save.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then <strong>Inventory &gt; Groups</strong>, a group for the whole app:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/29.png" alt="New group 3-tier-app-group, Set members." width="1256" height="384" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 29</span>New group 3-tier-app-group, Set members.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/30.png" alt="Virtual Machine, Tag equals 3-tier-app, scope application." width="1360" height="282" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 30</span>Virtual Machine, Tag equals 3-tier-app, scope application.</figcaption>
+          </figure>
+
+          <div class="callout tip"><b>If you do this lab</b>Type the tag exactly: 3-tier-app, scope application. The group matches on it, and the rules depend on the group.</div>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/31.png" alt="1 criteria. Save." width="1164" height="250" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 31</span>1 criteria. Save.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/32.png" alt="6 members, the whole app." width="434" height="586" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 32</span>6 members, the whole app.</figcaption>
+            </figure>
+          </div>
+
+          <p>Back in the DFW, a new rule above Block All:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/33.png" alt="Add Rule on Block All." width="562" height="638" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 33</span>Add Rule on Block All.</figcaption>
+          </figure>
+
+          <p>App to Db allows MySQL from app-group to db-group. Block All gets <strong>Applied To</strong> 3-tier-app-group, so it only lands on these six VMs and not on every VM the DFW covers:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/34.png" alt="App to Db: app-group to db-group on MySQL, Allow. Block All applied to 3-tier-app-group, Drop." width="1296" height="268" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 34</span>App to Db: app-group to db-group on MySQL, Allow. Block All applied to 3-tier-app-group, Drop.</figcaption>
+          </figure>
+
+          <p>The rules were off from the start, which is why everything fell through to the default rule. Switch them all on (green) and <strong>Publish</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/35.png" alt="All five toggles on, then Publish." width="378" height="566" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 35</span>All five toggles on, then Publish.</figcaption>
+          </figure>
+
+          <h3>Check the flows</h3>
+
+          <p>Back in Security Explorer. Security Intelligence needs at least 5 minutes before allowed flows update, so refresh a few times. A blocked flow shows up already, where before it was unprotected:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/36.png" alt="3-tier-app-group and app-group: 1 blocked each way, 0 unprotected." width="906" height="594" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 36</span>3-tier-app-group and app-group: 1 blocked each way, 0 unprotected.</figcaption>
+          </figure>
+
+          <h2>Module 3: Layer 7 rule for MySQL</h2>
+
+          <p>App to Db allows the MySQL service, which is just TCP 3306. Anything on 3306 gets through, MySQL or not. A Layer 7 context profile looks at the payload instead, so only real MySQL matches.</p>
+
+          <p>To test it, change one of the app to db flows in VMFlowGen. app02a to db01a first:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/37.png" alt="app02a to db01a on TCP 3306, payload APPID - MySQL." width="748" height="636" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 37</span>app02a to db01a on TCP 3306, payload APPID - MySQL.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/38.png" alt="The payload list. Changed it to APPID - ORACLE." width="680" height="528" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 38</span>The payload list. Changed it to APPID - ORACLE.</figcaption>
+          </figure>
+
+          <p>app01a to db01a stays as it is:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/39.png" alt="app01a to db01a, TCP 3306, still APPID - MySQL." width="740" height="634" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 39</span>app01a to db01a, TCP 3306, still APPID - MySQL.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/40.png" alt="Apply." width="1034" height="174" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 40</span>Apply.</figcaption>
+          </figure>
+
+          <p>While that applies, back to Security Explorer from Module 2. The red is gone:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/41.png" alt="All groups blue now." width="820" height="580" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 41</span>All groups blue now.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/42.png" alt="3-tier-app-group flows: Blocked, none Unprotected." width="1306" height="516" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 42</span>3-tier-app-group flows: Blocked, none Unprotected.</figcaption>
+          </figure>
+
+          <p>Then in NSX, add the preconfigured MYSQL context profile to App to Db and publish:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/43.png" alt="App to Db with the MYSQL context profile. Publish." width="1332" height="464" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 43</span>App to Db with the MYSQL context profile. Publish.</figcaption>
+          </figure>
+
+          <p>app02a now sends Oracle on 3306, which doesn't match the profile, so it should turn Blocked. app01a didn't change, so it stays Allowed. This one takes a while to show:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/44.png" alt="app01a and app02a to db01a, both still Allowed when I checked." width="1302" height="122" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 44</span>app01a and app02a to db01a, both still Allowed when I checked.</figcaption>
+          </figure>
+
+          <h2>Module 4: Gateway Firewall</h2>
+
+          <p>The gateway firewall sits on the Tier-0 and sees the traffic coming in from outside. On t0-wld01-a there's nothing yet but the default rule:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/45.png" alt="Gateway Specific Rules on t0-wld01-a: only default_rule, Allow." width="1366" height="376" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 45</span>Gateway Specific Rules on t0-wld01-a: only default_rule, Allow.</figcaption>
+          </figure>
+
+          <p><strong>Settings &gt; GeoIP</strong>. The bundle that maps IP addresses to countries, on auto update:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/46.png" alt="GeoIP auto update On, Success." width="728" height="604" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 46</span>GeoIP auto update On, Success.</figcaption>
+          </figure>
+
+          <p><strong>Security Overview &gt; GeoIP Monitoring</strong>. Two countries already have hits, Iran and North Korea:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/47.png" alt="GeoIP traffic map for t0-wld01-a." width="1368" height="398" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 47</span>GeoIP traffic map for t0-wld01-a.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/48.png" alt="Iran: 7,732 hits, 7,731 incoming." width="662" height="514" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 48</span>Iran: 7,732 hits, 7,731 incoming.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/49.png" alt="North Korea: 5,148 hits, all incoming." width="662" height="508" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 49</span>North Korea: 5,148 hits, all incoming.</figcaption>
+            </figure>
+          </div>
+
+          <p>Nobody using this app should be connecting from there. A GeoIP policy on t0-wld01-a with one drop rule per country:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/50.png" alt="GeoIP Policy: Block North Korea and Block Iran, source each country&#x27;s GeoIP group, Drop. Publish." width="1334" height="364" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 50</span>GeoIP Policy: Block North Korea and Block Iran, source each country's GeoIP group, Drop. Publish.</figcaption>
+          </figure>
+
+          <p>Back in GeoIP Monitoring:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/51.png" alt="Iran and North Korea under top blocked countries." width="1366" height="616" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 51</span>Iran and North Korea under top blocked countries.</figcaption>
+          </figure>
+
+          <h2>Module 5: Rule analysis</h2>
+
+          <p>Rule analysis checks the DFW rules for ones that overlap, contradict each other or never get hit. Shadowed, for example, means a rule higher up already catches the same traffic. It runs weekly by default, and the lab already had a report:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/52.png" alt="9 cases: duplication, redundancy, consolidation, contradiction, shadowing and irrelevance. View Full Report." width="1362" height="534" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 52</span>9 cases: duplication, redundancy, consolidation, contradiction, shadowing and irrelevance. View Full Report.</figcaption>
+          </figure>
+
+          <p>It says Obsolete. The manual says to ignore that, the policy it checked is a static demo one.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/53.png" alt="The full report. Download Report." width="1366" height="400" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 53</span>The full report. Download Report.</figcaption>
+          </figure>
+
+          <h2>Module 6: AI Assistant for Firewall</h2>
+
+          <p>In the SSP, <strong>System &gt; Platform &amp; Features</strong>, <strong>Activate</strong> on the Firewall tile under AI Assistants:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/54.png" alt="AI Assistants, Firewall, Activate." width="1350" height="632" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 54</span>AI Assistants, Firewall, Activate.</figcaption>
+          </figure>
+
+          <p>Run the prechecks, then Activate. Takes 2 to 3 minutes:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/55.png" alt="Internet connectivity and cluster capacity, Completed." width="1116" height="564" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 55</span>Internet connectivity and cluster capacity, Completed.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/56.png" alt="Activation in progress, 30%." width="962" height="568" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 56</span>Activation in progress, 30%.</figcaption>
+            </figure>
+          </div>
+
+          <p>Continue to setup, defaults all the way:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/57.png" alt="Broadcom account, us-east1. Next." width="1920" height="1080" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 57</span>Broadcom account, us-east1. Next.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/58.png" alt="Bundle management: Auto Update from vTIS. Set Up." width="956" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 58</span>Bundle management: Auto Update from vTIS. Set Up.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then it downloads its bundle. The manual says about 7 minutes. Mine sat there for around 15 and never finished:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/59.png" alt="In Progress. Service Up and license valid, but the bundle import never finished and the LLM status stayed Unknown." width="710" height="536" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 59</span>In Progress. Service Up and license valid, but the bundle import never finished and the LLM status stayed Unknown.</figcaption>
+          </figure>
+
+          <p>The assistant icon is in the top right of the navigation bar. Mine only gave this:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/60.png" alt="AI Assistant for Firewall is not operational." width="958" height="454" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 60</span>AI Assistant for Firewall is not operational.</figcaption>
+          </figure>
+
+          <p>So these three are from the lab manual. You ask it for a distributed firewall health check:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/61.png" alt="From the lab manual: perform a distributed firewall health check." width="284" height="660" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 61</span>From the lab manual: perform a distributed firewall health check.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/62.png" alt="From the lab manual: infrastructure health GREEN." width="348" height="632" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 62</span>From the lab manual: infrastructure health GREEN.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2770-05-ans-l/63.png" alt="From the lab manual: configuration health RED. 9 anomalies, 4 never-hit rules, 8 rules applied to ANY." width="310" height="648" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 63</span>From the lab manual: configuration health RED. 9 anomalies, 4 never-hit rules, 8 rules applied to ANY.</figcaption>
+            </figure>
+          </div>
+
+          <p>The RED reasons are the same things as Module 5 and the Applied To field in Module 2.</p>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li><strong>Unprotected</strong> in Security Intelligence means the flow only hit the default rule. Nothing written for it.</li>
+            <li>Tag, then group, then rule. One tag on six VMs covered the whole app.</li>
+            <li><strong>Applied To</strong> keeps a rule on the VMs it's for instead of every VM in the DFW.</li>
+            <li>A <strong>Layer 7 context profile</strong> checks what's actually in the traffic, so the right port alone isn't enough.</li>
+            <li><strong>GeoIP</strong> on the gateway firewall drops whole countries at the Tier-0.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2770-05-ans-l/completion.jpg" alt="Completed November 17, 2026, in 147 minutes." width="803" height="745" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 17, 2026, in 147 minutes.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js?v=20261117a"></script>
+<script src="../assets/site.js?v=20261117a"></script>
+</body>
+</html>
