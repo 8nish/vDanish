@@ -37,6 +37,11 @@ window.SITE = {
    status: "completed" or "in-progress" · date: YYYY-MM-DD · read: minutes · no: entry number within its own series */
 window.POSTS = [
   /* ---------- November ---------- */
+  { no: 14, type: 'lab', slug: 'getting-started-with-avi-for-vcf', code: 'HOL-2740-02-ANS-L',
+    title: 'Getting Started with Avi for VCF',
+    excerpt: 'Avi Load Balancer in VCF 9.1: the controller, Service Engines and SE groups, then a Layer 4 and a Layer 7 load balancer deployed from VCF Automation.',
+    tags: ['avi', 'vcf'], date: '2026-11-18', status: 'completed', read: 8 },
+
   { no: 13, type: 'lab', slug: 'vdefend-firewall-technology-deep-dive', code: 'HOL-2770-05-ANS-L',
     title: 'VMware vDefend Firewall Technology Deep Dive',
     excerpt: 'Locking down a 3-tier app with the distributed firewall, a Layer 7 rule for MySQL, GeoIP blocking on the gateway firewall, rule analysis and the AI Assistant for Firewall.',

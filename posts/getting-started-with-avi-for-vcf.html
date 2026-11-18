@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started with Avi for VCF · vDanish</title>
+<meta name="description" content="Avi Load Balancer in VCF 9.1: how it ties into VCF Operations and VCF Automation, the controller, Service Engines and SE groups, then a Layer 4 and a Layer 7 load balancer deployed from VCF Automation.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=20261118a">
+</head>
+<body data-page="post" data-root="../" data-slug="getting-started-with-avi-for-vcf">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>First Avi lab in the HOL LOG. I have <a href="avi-architecture-notes">study notes on Avi</a> from before, this is the first time doing it hands-on. The lab goes from how Avi is tied into VCF Operations and VCF Automation, to the controller and Service Engines, to putting a VM and a web app behind a load balancer from VCF Automation. Click any photo to enlarge it.</p>
+
+          <h2>Lab topology</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/topology.svg" alt="VCF Operations, VCF Automation and the Avi Controller on top. In wld01-a the Service Engines hold the VIPs and send the traffic to the VMs." width="1200" height="572" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>VCF Operations, VCF Automation and the Avi Controller on top. In wld01-a the Service Engines hold the VIPs and send the traffic to the VMs.</figcaption>
+          </figure>
+
+          <h2>Module 1: Deploying the controller through VCF Operations</h2>
+
+          <p>This module is just a video. The controller gets deployed from VCF Operations, and VCF sets up the cloud connector, the registration with the Supervisor and the service accounts by itself:</p>
+
+          <figure class="shot">
+            <div class="shot-video"><iframe src="https://www.youtube-nocookie.com/embed/Sif2MkPs_dg" title="Demo: How to Deploy Avi Controller on VMware Cloud Foundation" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+            <figcaption><span class="shot-no">Video</span>Demo: How to Deploy Avi Controller on VMware Cloud Foundation, from the VMware Avi Load Balancer channel.</figcaption>
+          </figure>
+
+          <p>In the lab it's already installed, in both the management and the workload domain. <strong>Build &gt; Lifecycle &gt; wld01-a</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/1.png" alt="wld01-a, Component Versions, Manage Components." width="1178" height="412" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 1</span>wld01-a, Component Versions, Manage Components.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/2.png" alt="Avi Load Balancer shows Uninstall, so it&#x27;s already there." width="1276" height="458" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 2</span>Avi Load Balancer shows Uninstall, so it's already there.</figcaption>
+            </figure>
+          </div>
+
+          <h2>Module 2: Avi in VCF</h2>
+
+          <h3>1:1 or 1:N</h3>
+
+          <p>Avi controllers line up with NSX Managers. Two ways to do it:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/3.png" alt="1:1: every workload domain has its own NSX Manager and its own Avi controller cluster." width="686" height="646" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 3</span>1:1: every workload domain has its own NSX Manager and its own Avi controller cluster.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/4.png" alt="1:N: several workload domains share one NSX Manager and one Avi controller, which manages all their SE groups." width="678" height="648" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 4</span>1:N: several workload domains share one NSX Manager and one Avi controller, which manages all their SE groups.</figcaption>
+            </figure>
+          </div>
+
+          <h3>In VCF Operations</h3>
+
+          <p><strong>Operate &gt; Inventory</strong>, wld01-a. The blue text are links to each component:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/5.png" alt="wld01-a: vCenter, NSX, and Avi 32.1.1 at alb-a.site-a.vcf.lab." width="1176" height="538" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>wld01-a: vCenter, NSX, and Avi 32.1.1 at alb-a.site-a.vcf.lab.</figcaption>
+          </figure>
+
+          <p><strong>Administration &gt; Integrations</strong>. Management packs are plugins for VCF Operations, and Avi has two. Both already collecting:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/6.png" alt="Avi Load Balancer: controller A and B, for lifecycle, passwords and certificates. VMware Avi Load Balancer: the observability pack, for health, metrics and dashboards." width="938" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 6</span>Avi Load Balancer: controller A and B, for lifecycle, passwords and certificates. VMware Avi Load Balancer: the observability pack, for health, metrics and dashboards.</figcaption>
+          </figure>
+
+          <p>Add shows all the account types. Out of scope for this lab:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/7.png" alt="Account types, Avi Load Balancer among them." width="1358" height="382" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 7</span>Account types, Avi Load Balancer among them.</figcaption>
+          </figure>
+
+          <p><strong>Manage &gt; Certificates</strong>, filtered on Avi Load Balancer. Only looking, the lab says not to click Renew:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/8.png" alt="Certificates for mgmt-a: 20 active." width="1366" height="480" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 8</span>Certificates for mgmt-a: 20 active.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/9.png" alt="alb-b.site-a.vcf.lab: TLS certificate until Jun 8, 2028, root certificate until May 29, 2036." width="1278" height="698" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 9</span>alb-b.site-a.vcf.lab: TLS certificate until Jun 8, 2028, root certificate until May 29, 2036.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then <strong>Inventory</strong>, the Avi virtual services:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/10.png" alt="Inventory &gt; VMware Avi Load Balancer &gt; Virtual Service." width="606" height="780" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 10</span>Inventory &gt; VMware Avi Load Balancer &gt; Virtual Service.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/11.png" alt="demo_vs metrics: request packets, requests per second and connections per second." width="1330" height="620" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>demo_vs metrics: request packets, requests per second and connections per second.</figcaption>
+          </figure>
+
+          <p>The same VS in the dashboards:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/12.png" alt="Virtual Services Configuration Overview: demo_vs with its service ports 80 and 443, and its profiles." width="1368" height="586" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 12</span>Virtual Services Configuration Overview: demo_vs with its service ports 80 and 443, and its profiles.</figcaption>
+          </figure>
+
+          <h3>In VCF Automation</h3>
+
+          <p>In VCF Automation Provider Management, a new org to see how Avi gets set up for a tenant. <strong>Organizations &gt; Create Organization</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/13.png" alt="Organizations: Acme-East-A is already there. Create Organization." width="848" height="562" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 13</span>Organizations: Acme-East-A is already there. Create Organization.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/14.png" alt="Name: hol_vdanish." width="1180" height="534" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 14</span>Name: hol_vdanish.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/15.png" alt="Region us-east-1, sharing the whole capacity." width="1288" height="528" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 15</span>Region us-east-1, sharing the whole capacity.</figcaption>
+            </figure>
+          </div>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/16.png" alt="Networking: Centralized Connection, us-east-1-centralized." width="552" height="616" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 16</span>Networking: Centralized Connection, us-east-1-centralized.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/17.png" alt="First user holuser_vdanish, Organization Administrator." width="1180" height="468" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 17</span>First user holuser_vdanish, Organization Administrator.</figcaption>
+            </figure>
+          </div>
+
+          <p>Then Avi load balancing on the new org:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/18.png" alt="hol_vdanish &gt; Load Balancing &gt; Set Up Avi Load Balancing." width="1280" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 18</span>hol_vdanish &gt; Load Balancing &gt; Set Up Avi Load Balancing.</figcaption>
+          </figure>
+
+          <p>Organization Managed gives the org its own SE groups. Provider Managed shares them across orgs. The quota is in service units, which is just licenses:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/19.png" alt="Organization Managed, quota 50 service units." width="896" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 19</span>Organization Managed, quota 50 service units.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/20.png" alt="Summary: us-east-1, Organization Managed, 50. Create." width="1050" height="520" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 20</span>Summary: us-east-1, Organization Managed, 50. Create.</figcaption>
+          </figure>
+
+          <p><strong>Connections &gt; Avi Load Balancer</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/21.png" alt="alb-a.site-a.vcf.lab in us-east-1 and alb-b.site-a.vcf.lab, both Normal, 32.1.1." width="1356" height="572" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 21</span>alb-a.site-a.vcf.lab in us-east-1 and alb-b.site-a.vcf.lab, both Normal, 32.1.1.</figcaption>
+          </figure>
+
+          <p>A tenant can only use Avi when the status is Normal and the controller status is Placement Ready. Open Controller links to the controller itself:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/22.png" alt="alb-a: Normal, Placement Ready, 32.1.1." width="1188" height="598" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 22</span>alb-a: Normal, Placement Ready, 32.1.1.</figcaption>
+          </figure>
+
+          <p>Service Engine Groups is empty. Only provider mode SE groups show here, and the ones in this lab are all in org mode:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/23.png" alt="No Service Engine Groups found." width="1304" height="470" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 23</span>No Service Engine Groups found.</figcaption>
+          </figure>
+
+          <p>To see one, launch the org portal of Acme-East-A:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/24.png" alt="Acme-East-A, Launch Organization Portal." width="1284" height="438" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 24</span>Acme-East-A, Launch Organization Portal.</figcaption>
+          </figure>
+
+          <p><strong>Manage &amp; Govern &gt; Avi Load Balancer &gt; Service Engine Group</strong>, Edit:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/25.png" alt="us-east-seg-ha in us-east-1, Ready." width="701" height="622" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 25</span>us-east-seg-ha in us-east-1, Ready.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/26.png" alt="us-east-seg-ha: zone z-wld-a, N + M (buffer), up to 50 virtual services per SE, 1 vCPU, 15 GB disk and 2 GB memory per SE." width="942" height="630" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 26</span>us-east-seg-ha: zone z-wld-a, N + M (buffer), up to 50 virtual services per SE, 1 vCPU, 15 GB disk and 2 GB memory per SE.</figcaption>
+          </figure>
+
+          <h2>Module 3: Avi architecture</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/27.png" alt="The platform: one controller on top, Service Engines on bare metal, VMs, containers and public cloud." width="1160" height="540" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 27</span>The platform: one controller on top, Service Engines on bare metal, VMs, containers and public cloud.</figcaption>
+          </figure>
+
+          <p>The <strong>Service Engine</strong> does the actual load balancing. The client connects to the virtual service on the SE, the SE picks a server from the pool, sends the request there and returns the response:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/28.png" alt="Client to virtual service (IP, port, profiles) to pool (servers, algorithm, health monitor, persistence), all on the Service Engine." width="1160" height="264" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 28</span>Client to virtual service (IP, port, profiles) to pool (servers, algorithm, health monitor, persistence), all on the Service Engine.</figcaption>
+          </figure>
+
+          <p>The <strong>controller</strong> is the brain. Usually a 3-node cluster behind one management IP. It creates and configures the SEs, sends them commands and collects their health, stats and logs:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/29.png" alt="The controller in the control plane, the Service Engines in the data plane." width="686" height="644" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 29</span>The controller in the control plane, the Service Engines in the data plane.</figcaption>
+          </figure>
+
+          <h3>The cloud connector</h3>
+
+          <p>In the Avi controller for region A, <strong>Infrastructure &gt; Clouds</strong>. The cloud is how the controller talks to NSX and vCenter, so it can place SEs by itself:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/30.png" alt="Cloud-nsx-wld01-a: Ready, SE image 32.1.1 Complete." width="1342" height="300" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 30</span>Cloud-nsx-wld01-a: Ready, SE image 32.1.1 Complete.</figcaption>
+          </figure>
+
+          <p>Edit it to see the config:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/31.png" alt="Edit." width="604" height="490" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 31</span>Edit.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/32.png" alt="SE management on the VLAN segment ans-mgmt, VPC mode on, data on the overlay segment wld01-avi-data behind wld01-a-t1." width="1214" height="600" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 32</span>SE management on the VLAN segment ans-mgmt, VPC mode on, data on the overlay segment wld01-avi-data behind wld01-a-t1.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/33.png" alt="One vCenter, vc-wld01-a.site-a.vcf.lab." width="1220" height="246" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 33</span>One vCenter, vc-wld01-a.site-a.vcf.lab.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/34.png" alt="vc-wld01-a: cloud Cloud-nsx-wld01-a, content library avi-wld01-contentlib." width="898" height="636" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 34</span>vc-wld01-a: cloud Cloud-nsx-wld01-a, content library avi-wld01-contentlib.</figcaption>
+            </figure>
+          </div>
+
+          <p>With an IPAM and a DNS profile, Avi hands out the VIPs and answers DNS for them itself:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/35.png" alt="IPAM/DNS: avi_ipam and avi_dns." width="1220" height="570" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 35</span>IPAM/DNS: avi_ipam and avi_dns.</figcaption>
+          </figure>
+
+          <h2>Module 4: Service Engine Groups</h2>
+
+          <p>An SE group is a template for SEs: how many, how big, how they fail over and where they go. <strong>Infrastructure &gt; Cloud Resources &gt; Service Engine Group</strong>, on Cloud-nsx-wld01-a:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/36.png" alt="Default-Group: 2 SEs, 8 virtual services, N + M (buffer)." width="1368" height="292" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 36</span>Default-Group: 2 SEs, 8 virtual services, N + M (buffer).</figcaption>
+          </figure>
+
+          <p>Create a new one:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/37.png" alt="Test-SG on Cloud-nsx-wld01-a." width="1220" height="680" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 37</span>Test-SG on Cloud-nsx-wld01-a.</figcaption>
+          </figure>
+
+          <p>N + M keeps a spare SE as a buffer for failover. Compact fills the SEs that are already up before making new ones:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/38.png" alt="N + M (buffer): up to 10 SEs, 1 buffer, 10 virtual services per SE, Compact, 1 to 4 SEs per virtual service." width="948" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 38</span>N + M (buffer): up to 10 SEs, 1 buffer, 10 virtual services per SE, Compact, 1 to 4 SEs per virtual service.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/39.png" alt="SE name prefix Avi, unused SEs deleted after 120 minutes, 1 vCPU, 2 GB memory, 15 GB disk." width="1222" height="676" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 39</span>SE name prefix Avi, unused SEs deleted after 120 minutes, 1 vCPU, 2 GB memory, 15 GB disk.</figcaption>
+          </figure>
+
+          <p>Scope is where the SEs get deployed. vCenter, then Add:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/40.png" alt="Scope: vCenter. Add." width="1220" height="618" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 40</span>Scope: vCenter. Add.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/41.png" alt="vc-wld01-a.site-a.vcf.lab, any host or cluster, any datastore. Save." width="898" height="638" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 41</span>vc-wld01-a.site-a.vcf.lab, any host or cluster, any datastore. Save.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/42.png" alt="Test-SG next to Default-Group, 0 SEs so far." width="1366" height="352" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 42</span>Test-SG next to Default-Group, 0 SEs so far.</figcaption>
+          </figure>
+
+          <h2>Module 5: VCF Automation All Apps</h2>
+
+          <p>The All Apps org is self-service for VMs and containers, with vSphere Supervisor underneath. AKO (the Avi Kubernetes Operator) does the load balancing part. You ask for a Kubernetes load balancer or gateway and Avi builds it, without ever opening the Avi UI.</p>
+
+          <h3>Layer 4: a VM with a load balancer</h3>
+
+          <p>In the Acme-East-A org portal, <strong>Build &amp; Deploy &gt; Services &gt; acme-east-prod-wrp4h &gt; Virtual Machine</strong>, Create VM:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/43.png" alt="Virtual Machine Service: the VMs in the namespace so far. Create VM." width="696" height="616" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 43</span>Virtual Machine Service: the VMs in the namespace so far. Create VM.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/44.png" alt="Deploy from OVF." width="1258" height="592" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 44</span>Deploy from OVF.</figcaption>
+          </figure>
+
+          <p>The name and image get written into the Kubernetes YAML on the right as you go:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/45.png" alt="hol-vm, Ubuntu 24.04. The YAML picks up the name and imageName." width="1338" height="538" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 45</span>hol-vm, Ubuntu 24.04. The YAML picks up the name and imageName.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/46.png" alt="VM class best-effort-xsmall: 2 vCPUs, 2 GiB." width="1248" height="582" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 46</span>VM class best-effort-xsmall: 2 vCPUs, 2 GiB.</figcaption>
+          </figure>
+
+          <p>Under Load Balancer, <strong>Add &gt; New</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/47.png" alt="Load Balancer: Add &gt; New." width="1246" height="456" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 47</span>Load Balancer: Add &gt; New.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/48.png" alt="hol-l4-vs: port 22, TCP, target 22. Add." width="724" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 48</span>hol-l4-vs: port 22, TCP, target 22. Add.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/49.png" alt="The port is in the list. Save." width="746" height="604" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 49</span>The port is in the list. Save.</figcaption>
+            </figure>
+          </div>
+
+          <p>Guest customization with cloud-init, and a user to log in with:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/50.png" alt="Cloud-init, Create New User." width="1248" height="566" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 50</span>Cloud-init, Create New User.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/51.png" alt="holuser, default sudo enabled." width="994" height="566" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 51</span>holuser, default sudo enabled.</figcaption>
+            </figure>
+          </div>
+
+          <p>The YAML before deploying. The hol-l4-vs label is how the load balancer finds the VM:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/52.png" alt="VirtualMachine hol-vm in acme-east-prod-wrp4h, label hol-l4-vs: vm-lb-selector, class best-effort-xsmall, cloud-init user holuser." width="504" height="574" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 52</span>VirtualMachine hol-vm in acme-east-prod-wrp4h, label hol-l4-vs: vm-lb-selector, class best-effort-xsmall, cloud-init user holuser.</figcaption>
+          </figure>
+
+          <p>Ready in a few seconds:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/53.png" alt="hol-vm: Ready, powered on, z-wld-a." width="1334" height="440" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 53</span>hol-vm: Ready, powered on, z-wld-a.</figcaption>
+          </figure>
+
+          <p><strong>Network &gt; Services</strong>, the IPs:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/54.png" alt="hol-l4-vs: Load Balancer, external IP 10.1.9.5. The two workload clusters have 10.1.9.4 and 10.1.9.3." width="1262" height="594" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 54</span>hol-l4-vs: Load Balancer, external IP 10.1.9.5. The two workload clusters have 10.1.9.4 and 10.1.9.3.</figcaption>
+          </figure>
+
+          <p>And in the Avi controller, the virtual service it made:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/55.png" alt="hol-l4-vs on 10.1.9.5, service port 22." width="1366" height="336" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 55</span>hol-l4-vs on 10.1.9.5, service port 22.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/56.png" alt="Its pool, the name ends in hol-l4-vs-TCP-22: the protocol and port." width="1240" height="476" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 56</span>Its pool, the name ends in hol-l4-vs-TCP-22: the protocol and port.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/57.png" alt="The pool&#x27;s server: 172.30.0.2 on port 22." width="1210" height="386" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 57</span>The pool's server: 172.30.0.2 on port 22.</figcaption>
+          </figure>
+
+          <h3>Where it all sits</h3>
+
+          <p>In NSX for the Acme-East-A project, <strong>Networking &gt; Network Topology</strong>. Find the 172.30.0.1/27 subnet and click its VM icon:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/58.png" alt="The default-us-east-1 VPC and its subnets. 1 VM on 172.30.0.1/27." width="1332" height="648" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 58</span>The default-us-east-1 VPC and its subnets. 1 VM on 172.30.0.1/27.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/59.png" alt="hol-vm on that subnet, Running. View Details." width="1360" height="174" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 59</span>hol-vm on that subnet, Running. View Details.</figcaption>
+          </figure>
+
+          <p>hol-vm got 172.30.0.2, the same IP as the server in the pool (photo 57). So the SE sends connections for 10.1.9.5 on port 22 to that address:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/60.png" alt="hol-vm&#x27;s interface: 172.30.0.2." width="924" height="614" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 60</span>hol-vm's interface: 172.30.0.2.</figcaption>
+          </figure>
+
+          <p>The SEs themselves are on the Services Subnet:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/61.png" alt="Services Subnet, 100.64.32.1/24, 2 VMs." width="538" height="520" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 61</span>Services Subnet, 100.64.32.1/24, 2 VMs.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/62.png" alt="vcf_Avi-se-btovp and vcf_Avi-se-tkoqr, the same SEs as in the Avi cloud." width="1148" height="340" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 62</span>vcf_Avi-se-btovp and vcf_Avi-se-tkoqr, the same SEs as in the Avi cloud.</figcaption>
+            </figure>
+          </div>
+
+          <p>The VIPs come from the external IP block in the VPC profile. <strong>VPCs &gt; Profiles</strong>, ipspace-wld-a:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/63.png" alt="Default VPC connectivity profile, external IP block ipspace-wld-a." width="906" height="620" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 63</span>Default VPC connectivity profile, external IP block ipspace-wld-a.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/64.png" alt="10.150.6.0/23 and 10.1.9.1-10.1.9.126. The 10.1.9.x VIPs are from this one." width="1192" height="600" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 64</span>10.150.6.0/23 and 10.1.9.1-10.1.9.126. The 10.1.9.x VIPs are from this one.</figcaption>
+          </figure>
+
+          <h3>Layer 7: two web servers behind a gateway</h3>
+
+          <p>Two web servers first, from the catalog. <strong>Build &amp; Deploy &gt; Catalog</strong>, HOL Two Webservers, Request:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/65.png" alt="Catalog: HOL L4 Passthrough, two HOL L7 Fullstack items and HOL Two Webservers." width="1258" height="504" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 65</span>Catalog: HOL L4 Passthrough, two HOL L7 Fullstack items and HOL Two Webservers.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/66.png" alt="Deployment hol-webservers in acme-east-prod-wrp4h. Submit." width="502" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 66</span>Deployment hol-webservers in acme-east-prod-wrp4h. Submit.</figcaption>
+          </figure>
+
+          <p>It moves to the instances page by itself:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/67.png" alt="hol-webservers deployed." width="1366" height="316" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 67</span>hol-webservers deployed.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/68.png" alt="hol-webservers-vm1 on 172.30.0.3 and vm2 on 172.30.0.4." width="1228" height="296" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 68</span>hol-webservers-vm1 on 172.30.0.3 and vm2 on 172.30.0.4.</figcaption>
+          </figure>
+
+          <p>For Layer 7 the load balancer is built from Kubernetes Gateway API pieces, one by one. <strong>Avi Load Balancer &gt; Application Service</strong>. First the load balancer, which is a Gateway:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/69.png" alt="Load Balancer: Create a Load Balancer. It makes a Kubernetes Gateway." width="1284" height="614" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 69</span>Load Balancer: Create a Load Balancer. It makes a Kubernetes Gateway.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/70.png" alt="hol-l7-gateway, public IP, listener hol-l7-listener on HTTP 80 for site-a.vcf.lab. The YAML is a Gateway with gatewayClassName avi-lb." width="1336" height="560" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 70</span>hol-l7-gateway, public IP, listener hol-l7-listener on HTTP 80 for site-a.vcf.lab. The YAML is a Gateway with gatewayClassName avi-lb.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/71.png" alt="hol-l7-gateway: Ready, 1 listener, 10.1.9.6." width="1336" height="278" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 71</span>hol-l7-gateway: Ready, 1 listener, 10.1.9.6.</figcaption>
+          </figure>
+
+          <p>Then the pool, a Kubernetes service that picks the two web servers:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/72.png" alt="Pools: Create a Pool." width="1242" height="548" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 72</span>Pools: Create a Pool.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/73.png" alt="hol-l7-pool on port 80 with hol-webservers-vm1 and vm2." width="1338" height="578" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 73</span>hol-l7-pool on port 80 with hol-webservers-vm1 and vm2.</figcaption>
+          </figure>
+
+          <p>A custom resource is for extra settings like health monitors and the load balancing algorithm. This one sets round robin:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/74.png" alt="Custom Resources: Create Custom Resource." width="1218" height="598" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 74</span>Custom Resources: Create Custom Resource.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/75.png" alt="hol-lb-round-robin, a RouteBackendExtension: lbAlgorithm LB_ALGORITHM_ROUND_ROBIN." width="1256" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 75</span>hol-lb-round-robin, a RouteBackendExtension: lbAlgorithm LB_ALGORITHM_ROUND_ROBIN.</figcaption>
+          </figure>
+
+          <p>And the virtual service, an HTTPRoute that ties the gateway, the pool and the round robin together:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/76.png" alt="Virtual Service: Create a Virtual Service." width="1242" height="570" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 76</span>Virtual Service: Create a Virtual Service.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/77.png" alt="hol-l7-vs on hol-l7-gateway, hostname hol-l7-vs.site-a.vcf.lab, backend hol-l7-pool on 80, hol-lb-round-robin." width="1336" height="462" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 77</span>hol-l7-vs on hol-l7-gateway, hostname hol-l7-vs.site-a.vcf.lab, backend hol-l7-pool on 80, hol-lb-round-robin.</figcaption>
+          </figure>
+
+          <p>In Avi:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/78.png" alt="A fourth virtual service, the hol-l7-gateway one on 10.1.9.6." width="1142" height="642" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 78</span>A fourth virtual service, the hol-l7-gateway one on 10.1.9.6.</figcaption>
+          </figure>
+
+          <h3>Blueprints</h3>
+
+          <p>Catalog items come from blueprints. <strong>Content Hub &gt; Blueprint Design &gt; New From &gt; Blank canvas</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/79.png" alt="Blueprint Design, New From, Blank canvas." width="538" height="546" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 79</span>Blueprint Design, New From, Blank canvas.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/80.png" alt="hol-blueprint in default-project." width="1122" height="616" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 80</span>hol-blueprint in default-project.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/81.png" alt="The resource types: VPC pieces like NAT rules and gateway firewall policies, and workloads like VMs, secrets and Kubernetes clusters." width="278" height="604" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 81</span>The resource types: VPC pieces like NAT rules and gateway firewall policies, and workloads like VMs, secrets and Kubernetes clusters.</figcaption>
+          </figure>
+
+          <p>Dragging them in writes the YAML. Only an example, so I closed it without deploying:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/82.png" alt="A Supervisor resource and a VM on the canvas, the YAML on the right." width="1366" height="472" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 82</span>A Supervisor resource and a VM on the canvas, the YAML on the right.</figcaption>
+          </figure>
+
+          <p>Then an existing one, HOL L7 Fullstack (dynamic cert-manager cert):</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/83.png" alt="Blueprints. HOL L7 Fullstack (dynamic cert-manager cert) at the bottom." width="696" height="554" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 83</span>Blueprints. HOL L7 Fullstack (dynamic cert-manager cert) at the bottom.</figcaption>
+          </figure>
+
+          <p>I wasn't sure what I was looking at here at first. The blueprint has the whole app in it: the VMs, a Gateway, an HTTPRoute and a Certificate. The certificate is done by cert-manager in the Supervisor. It gets a signed cert from the CA and puts it in a secret on the gateway, AKO pushes that to the Avi virtual service, and cert-manager renews it before it expires:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/84.png" alt="The canvas: Certificate, Gateway, HTTPRoute, the VMs and a user secret. The Certificate part of the YAML highlighted." width="1366" height="518" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 84</span>The canvas: Certificate, Gateway, HTTPRoute, the VMs and a user secret. The Certificate part of the YAML highlighted.</figcaption>
+          </figure>
+
+          <p>Deploy it from the catalog:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/85.png" alt="HOL L7 Fullstack (dynamic cert-manager cert), Request." width="476" height="530" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 85</span>HOL L7 Fullstack (dynamic cert-manager cert), Request.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-02-ans-l/86.png" alt="Deployment hol-l7-full-stack. Submit." width="496" height="620" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 86</span>Deployment hol-l7-full-stack. Submit.</figcaption>
+            </figure>
+          </div>
+
+          <p>Back in Avi, after a while, two new virtual services. The one with an IP and FQDN is the parent, it holds the VIP and the port. The one without is the child, it holds the route to the servers:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/87.png" alt="The two new ones: the parent on 10.1.9.7, 443 (SSL), and a child with no address." width="1298" height="454" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 87</span>The two new ones: the parent on 10.1.9.7, 443 (SSL), and a child with no address.</figcaption>
+          </figure>
+
+          <p>The parent has the FQDN:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/88.png" alt="Parent: 10.1.9.7 on 443 (SSL), hol-l7-full-stack-web.lb.site-a.vcf.lab, on SE vcf_Avi-se-tkoqr." width="1162" height="564" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 88</span>Parent: 10.1.9.7 on 443 (SSL), hol-l7-full-stack-web.lb.site-a.vcf.lab, on SE vcf_Avi-se-tkoqr.</figcaption>
+          </figure>
+
+          <p>Pasted in a new tab:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/89.png" alt="hol-l7-full-stack-web.lb.site-a.vcf.lab: the Ubuntu Apache2 default page. It works." width="1262" height="634" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 89</span>hol-l7-full-stack-web.lb.site-a.vcf.lab: the Ubuntu Apache2 default page. It works.</figcaption>
+          </figure>
+
+          <p>Then the child VS, and its logs:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/90.png" alt="Back in Virtual Services, the child VS." width="1336" height="394" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 90</span>Back in Virtual Services, the child VS.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/91.png" alt="Logs: a GET for /favicon.ico, 404. It came in on 10.1.9.7:443 and went to the server 172.30.0.5 on port 80, through vcf_Avi-se-tkoqr." width="1368" height="610" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 91</span>Logs: a GET for /favicon.ico, 404. It came in on 10.1.9.7:443 and went to the server 172.30.0.5 on port 80, through vcf_Avi-se-tkoqr.</figcaption>
+          </figure>
+
+          <p>HTTPS stops at the SE. The server only gets plain HTTP on 80.</p>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li>Avi controllers line up with NSX Managers, <strong>1:1</strong> or <strong>1:N</strong>.</li>
+            <li>The <strong>controller</strong> is the brain, the <strong>Service Engines</strong> do the load balancing. The cloud connector lets the controller place SEs by itself.</li>
+            <li>An <strong>SE group</strong> sets how many SEs, how big, the HA mode and where they go.</li>
+            <li><strong>Organization Managed</strong> SE groups belong to one org, <strong>Provider Managed</strong> ones are shared.</li>
+            <li>In an All Apps org I never had to open Avi to get a load balancer. A load balancer on the VM, or a Gateway and HTTPRoute, was enough.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-02-ans-l/completion.jpg" alt="Completed November 18, 2026, in 178 minutes." width="805" height="747" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 18, 2026, in 178 minutes.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js?v=20261118a"></script>
+<script src="../assets/site.js?v=20261118a"></script>
+</body>
+</html>
