@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css?v=20261119a">
+<link rel="stylesheet" href="../assets/style.css?v=20261119b">
 </head>
 <body data-page="post" data-root="../" data-slug="application-resiliency-with-avi-gslb">
 <script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
@@ -102,6 +102,27 @@
             <img src="../assets/shots/hol-2740-04-ans-l/8.png" alt="Scope: vCenter vc-wld01-a.site-a.vcf.lab, SE folder AviSeFolder." width="1222" height="562" loading="lazy" decoding="async">
             <figcaption><span class="shot-no">Photo 8</span>Scope: vCenter vc-wld01-a.site-a.vcf.lab, SE folder AviSeFolder.</figcaption>
           </figure>
+
+          <p>The whole SE group:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>gslb01a</th></tr></thead>
+              <tbody>
+                <tr><td>Controller</td><td>Site 1</td></tr>
+                <tr><td>Cloud</td><td>Cloud-nsx-wld01-a</td></tr>
+                <tr><td>HA mode</td><td>N + M (buffer)</td></tr>
+                <tr><td>Service Engines</td><td>Up to 10, 0 buffer</td></tr>
+                <tr><td>Name prefix</td><td>gslb01a</td></tr>
+                <tr><td>vCPU per SE</td><td>1</td></tr>
+                <tr><td>Memory per SE</td><td>8 GB, no memory reserve</td></tr>
+                <tr><td>Disk per SE</td><td>25 GB</td></tr>
+                <tr><td>Host geolocation profile</td><td>On</td></tr>
+                <tr><td>Delete unused SEs after</td><td>120 minutes</td></tr>
+                <tr><td>Scope</td><td>vCenter vc-wld01-a.site-a.vcf.lab, folder AviSeFolder</td></tr>
+              </tbody>
+            </table>
+          </div>
 
           <h3>DNS virtual service in region A</h3>
 
@@ -255,6 +276,25 @@
             <figcaption><span class="shot-no">Photo 29</span>Both sites green. region01a is the leader, region01b is In Sync with continuous replication.</figcaption>
           </figure>
 
+          <p>The two sites:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>region01a</th><th>region01b</th></tr></thead>
+              <tbody>
+                <tr><td>Role</td><td>Leader</td><td>Follower</td></tr>
+                <tr><td>Controller</td><td>Site 1</td><td>Site 2</td></tr>
+                <tr><td>Cluster VIP</td><td>10.1.1.90, port 443</td><td>10.1.1.92, port 443</td></tr>
+                <tr><td>Location</td><td>Palo Alto, CA</td><td>Barcelona</td></tr>
+                <tr><td>Latitude, longitude</td><td>37.4419, -122.143</td><td>41.385, 2.173</td></tr>
+                <tr><td>Replication</td><td>Not applicable</td><td>Continuous</td></tr>
+                <tr><td>DNS virtual service</td><td>global-dns-vs-01a</td><td>global-dns-vs-01b</td></tr>
+                <tr><td>Subdomain</td><td>global.vcf.lab</td><td>global.vcf.lab</td></tr>
+                <tr><td>Host All Subdomains</td><td>Yes</td><td>Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+
           <h2>Module 3: A basic global service</h2>
 
           <p>A GSLB service is one global app with one FQDN, backed by virtual services in the sites. First a check that the DNS virtual service is up:</p>
@@ -315,6 +355,21 @@
             <img src="../assets/shots/hol-2740-04-ans-l/39.png" alt="The basic-app topology: Palo Alto with region01a:adv-app-a, Barcelona with region01b:adv-app-b. All green." width="1270" height="396" loading="lazy" decoding="async">
             <figcaption><span class="shot-no">Photo 39</span>The basic-app topology: Palo Alto with region01a:adv-app-a, Barcelona with region01b:adv-app-b. All green.</figcaption>
           </figure>
+
+          <p>basic-app in one table:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>basic-app</th></tr></thead>
+              <tbody>
+                <tr><td>FQDN</td><td>basic-app.global.vcf.lab</td></tr>
+                <tr><td>Groups algorithm</td><td>Priority-based</td></tr>
+                <tr><td>Health monitor</td><td>System-GSLB-HTTP, all members</td></tr>
+                <tr><td>Palo Alto pool</td><td>Priority 20, round robin. Member adv-app-a on region01a</td></tr>
+                <tr><td>Barcelona pool</td><td>Priority 10, round robin. Member adv-app-b on region01b</td></tr>
+              </tbody>
+            </table>
+          </div>
 
           <h2>Module 4: An advanced global service</h2>
 
@@ -379,12 +434,32 @@
 
           <p>A 2 second TTL makes clients ask again almost right away, so a failover shows up fast. If every member is down, it still answers with all the records instead of nothing.</p>
 
+          <p>The whole adv-app config:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>adv-app</th></tr></thead>
+              <tbody>
+                <tr><td>FQDN</td><td>adv-app.global.vcf.lab</td></tr>
+                <tr><td>Record type</td><td>A/AAAA/CNAME</td></tr>
+                <tr><td>Groups algorithm</td><td>Priority-based</td></tr>
+                <tr><td>Health monitor</td><td>System-GSLB-HTTP</td></tr>
+                <tr><td>Wildcard match</td><td>On</td></tr>
+                <tr><td>EDNS client subnet</td><td>On</td></tr>
+                <tr><td>TTL</td><td>2 seconds</td></tr>
+                <tr><td>Down response</td><td>Response with all records</td></tr>
+                <tr><td>Palo Alto pool</td><td>Priority 10, consistent hash. Members adv-app-a on region01a, adv-app-b on region01b, 10.1.13.11</td></tr>
+                <tr><td>Barcelona pool</td><td>Priority 5, round robin. Members 10.1.13.11, 10.1.14.11</td></tr>
+              </tbody>
+            </table>
+          </div>
+
           <figure class="shot">
             <img src="../assets/shots/hol-2740-04-ans-l/50.png" alt="adv-app and basic-app, both green." width="1332" height="160" loading="lazy" decoding="async">
             <figcaption><span class="shot-no">Photo 50</span>adv-app and basic-app, both green.</figcaption>
           </figure>
 
-          <div class="callout"><b>One of my misconfigs</b>adv-app's domain came out as system-gslb-http.global.vcf.lab. It should be adv-app.global.vcf.lab.</div>
+          <div class="callout"><b>One of my misconfigs</b>adv-app's domain came out as system-gslb-http.global.vcf.lab. It should be adv-app.global.vcf.lab, as in the table above.</div>
 
           <h2>Module 5: A geo-aware global service</h2>
 
@@ -439,6 +514,22 @@
             <figcaption><span class="shot-no">Photo 58</span>All three green: adv-app, basic-app and secure-app.</figcaption>
           </figure>
 
+          <p>secure-app and the geo profile:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>secure-app</th></tr></thead>
+              <tbody>
+                <tr><td>Geo profile</td><td>geoprofile1, AviGeoDb.txt.gz at priority 10</td></tr>
+                <tr><td>FQDN</td><td>secure-app.global.vcf.lab</td></tr>
+                <tr><td>Record type</td><td>A/AAAA/CNAME</td></tr>
+                <tr><td>Groups algorithm</td><td>Geo location-based</td></tr>
+                <tr><td>Health monitor</td><td>System-GSLB-HTTP, all members</td></tr>
+                <tr><td>Palo Alto pool</td><td>Geo. Members secure-app-a on region01a, secure-app-b on region01b, each with the location of its site</td></tr>
+              </tbody>
+            </table>
+          </div>
+
           <h3>Testing it with dig</h3>
 
           <p>dig with <code>+subnet</code> pretends to be a client somewhere else. 139.47.28.29 is a Barcelona address, so the answer should be a 10.1.14.x VIP:</p>
@@ -489,6 +580,20 @@
             </figure>
           </div>
 
+          <p>The policy as far as I got:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>DNS policy</th></tr></thead>
+              <tbody>
+                <tr><td>Virtual service</td><td>global-dns-vs-01a</td></tr>
+                <tr><td>Policy set</td><td>Drop UDP Queries Policy Set</td></tr>
+                <tr><td>Rule 1</td><td>DNS UDP Queries. Match transport protocol UDP, action Drop Query</td></tr>
+                <tr><td>Rule 2</td><td>Prefer Site B</td></tr>
+              </tbody>
+            </table>
+          </div>
+
           <p>Prefer Site B is where my screenshots stop. Something to do properly on the redo.</p>
 
           <h2>Key takeaways</h2>
@@ -520,7 +625,7 @@
 </main>
 
 <footer id="site-footer"></footer>
-<script src="../assets/posts.js?v=20261119a"></script>
-<script src="../assets/site.js?v=20261119a"></script>
+<script src="../assets/posts.js?v=20261119b"></script>
+<script src="../assets/site.js?v=20261119b"></script>
 </body>
 </html>
