@@ -38,10 +38,10 @@ window.SITE = {
    labs only: no (HOL LOG entry number) · status: "completed" or "in-progress" */
 window.POSTS = [
   /* ---------- November ---------- */
-  { no: 16, type: 'lab', slug: 'migrate-to-avi-with-avi-conversion-tool', code: 'HOL-2740-05-ANS-L',
-    title: 'Migrate to VMware Avi Load Balancer using the Avi Conversion Tool',
-    excerpt: 'Moving an F5 BIG-IP config and its iRules into Avi with the Avi Conversion Tool, and a version mismatch on the way: the controller runs 32.1.1, not 31.1.1.',
-    tags: ['avi', 'vcf'], date: '2026-11-20', status: 'in-progress', read: 4 },
+  { type: 'blog', slug: 'migrate-to-avi-with-avi-conversion-tool',
+    title: 'Fixing the Staging Controller Version Error in the Avi Conversion Tool Lab',
+    excerpt: 'If the F5 migration in HOL-2740-05-ANS-L fails with this error and no iRules show up, enter 32.1.1 as the controller version, not 31.1.1.',
+    tags: ['avi'], date: '2026-11-20', read: 2 },
 
   { no: 15, type: 'lab', slug: 'application-resiliency-with-avi-gslb', code: 'HOL-2740-04-ANS-L',
     title: 'Application Resiliency with Avi Global Server Load Balancing',

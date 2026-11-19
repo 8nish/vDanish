@@ -430,10 +430,13 @@
     $('#postNav').innerHTML =
       (older ? '<a href="' + postUrl(older) + '"><small>← previous ' + word + '</small>' + esc(older.title) + '</a>' : '<span class="blank"></span>') +
       (newer ? '<a class="next" href="' + postUrl(newer) + '"><small>next ' + word + ' →</small>' + esc(newer.title) + '</a>' : '<span class="blank"></span>');
+    if (!older && !newer) $('#postNav').style.display = 'none';
 
     var rel = SAME.filter(function (q) { return q !== p && q.tags.some(function (t) { return p.tags.indexOf(t) > -1; }); });
     SAME.forEach(function (q) { if (q !== p && rel.indexOf(q) < 0) rel.push(q); });
     $('#related').innerHTML = rel.slice(0, 3).map(card).join('');
+    var more = $('#related').closest('section');
+    if (more && !rel.length) more.style.display = 'none';
 
     var bar = $('#readProgress');
     function onScroll() {

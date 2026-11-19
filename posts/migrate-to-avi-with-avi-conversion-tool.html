@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Migrate to VMware Avi Load Balancer using the Avi Conversion Tool · vDanish</title>
-<meta name="description" content="Moving an F5 BIG-IP config and its iRules into Avi with the Avi Conversion Tool, and a controller version mismatch in the migration wizard.">
+<title>Fixing the Staging Controller Version Error in the Avi Conversion Tool Lab · vDanish</title>
+<meta name="description" content="If the F5 migration in HOL-2740-05-ANS-L fails with Staging controller version is different from the input provided to the converter, enter the version the controller actually runs: 32.1.1.">
 <meta name="theme-color" content="#070b14">
 <link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css?v=20261120b">
+<link rel="stylesheet" href="../assets/style.css?v=20261120c">
 </head>
 <body data-page="post" data-root="../" data-slug="migrate-to-avi-with-avi-conversion-tool">
 <script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
@@ -26,208 +26,65 @@
       <article>
         <!-- ===== ARTICLE CONTENT START ===== -->
         <div class="prose" id="postBody">
-          <p>My third Avi lab, after <a href="getting-started-with-avi-for-vcf">Getting Started with Avi for VCF</a> and <a href="application-resiliency-with-avi-gslb">the GSLB one</a>. This one is about moving off F5: the Avi Conversion Tool (ACT) reads an F5 BIG-IP config and turns its virtual services and iRules into Avi objects. Click any photo to enlarge it.</p>
+          <p>A quick one from the lab <em>Migrate to VMware Avi Load Balancer using the Avi Conversion Tool</em> (HOL-2740-05-ANS-L). If the F5 migration fails with <strong>Staging controller version is different from the input provided to the converter</strong>, enter 32.1.1 as the controller version. Click any photo to enlarge it.</p>
 
-          <div class="callout warning"><b>Heads up</b>The manual I had in the lab said to enter 31.1.1 as the controller version in the migration wizard. The controller in the pod runs 32.1.1, and with 31.1.1 the import fails. Enter 32.1.1 and it works.</div>
+          <h2>The problem</h2>
 
-          <h2>Lab topology</h2>
+          <p>The manual I had said to enter 31.1.1 as the version of the staging controller:</p>
 
           <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/topology.svg" alt="ACT takes the F5 config file and builds the Avi objects on the controller, all in the hol tenant. Staging and destination are the same controller here." width="1200" height="392" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Diagram</span>ACT takes the F5 config file and builds the Avi objects on the controller, all in the hol tenant. Staging and destination are the same controller here.</figcaption>
+            <img src="../assets/shots/avi-act-version-fix/1.png" alt="Controller Information in the F5 migration wizard, with version 31.1.1." width="1222" height="662" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 1</span>Controller Information in the F5 migration wizard, with version 31.1.1.</figcaption>
           </figure>
 
-          <h2>Workflow</h2>
+          <p>The wizard then fails at the last step, and no iRules come through:</p>
 
           <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/workflow.svg" alt="What I did, in order. Step 4 is where I got stuck." width="1200" height="504" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Diagram</span>What I did, in order. Step 4 is where I got stuck.</figcaption>
-          </figure>
-
-          <h2>Module 1: F5 to Avi</h2>
-
-          <h3>A tenant for the migration</h3>
-
-          <p>Everything coming over from the F5 goes into its own tenant, hol. On the site 1 controller, under Administration:</p>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/1.png" alt="Accounts, Tenants. admin and Acme-East are already there." width="822" height="564" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 1</span>Accounts, Tenants. admin and Acme-East are already there.</figcaption>
+            <img src="../assets/shots/avi-act-version-fix/2.png" alt="Finalizing Import: Staging controller version is different from the input provided to the converter." width="1224" height="660" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>Finalizing Import: Staging controller version is different from the input provided to the converter.</figcaption>
           </figure>
 
           <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/2.png" alt="New tenant hol, with Tenant Access to Provider Service Engine ticked." width="904" height="636" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 2</span>New tenant hol, with Tenant Access to Provider Service Engine ticked.</figcaption>
+            <img src="../assets/shots/avi-act-version-fix/3.png" alt="The iRules list: No iRules found." width="1324" height="256" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 3</span>The iRules list: No iRules found.</figcaption>
           </figure>
 
-          <p>With that ticked, hol uses the Service Engines of the admin tenant and doesn't need its own.</p>
+          <h2>The fix</h2>
+
+          <p>The version has to match what the controller actually runs. You can see it on the controller under Administration:</p>
 
           <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/3.png" alt="Virtual Services in the hol tenant. Nothing there yet." width="1362" height="280" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 3</span>Virtual Services in the hol tenant. Nothing there yet.</figcaption>
+            <img src="../assets/shots/avi-act-version-fix/4.png" alt="Administration Overview: the controller runs 32.1.1." width="612" height="596" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 4</span>Administration Overview: the controller runs 32.1.1.</figcaption>
           </figure>
 
-          <p>The tenant:</p>
-
-          <div class="table">
-            <table>
-              <thead><tr><th></th><th>hol</th></tr></thead>
-              <tbody>
-                <tr><td>Tenant Access to Provider Service Engine</td><td>On</td></tr>
-                <tr><td>Tenant VRF</td><td>Off</td></tr>
-                <tr><td>License reservation</td><td>0</td></tr>
-                <tr><td>License limit</td><td>-1, no limit</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h3>Starting an F5 migration</h3>
-
-          <p>ACT is its own web UI, in the Region A bookmarks next to the controller. It does more than F5:</p>
+          <p>Go back to Controller Information and enter 32.1.1:</p>
 
           <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/4.png" alt="vDefend and Avi Conversion Tool: F5, NSX-T, NSX-LB Supervisor and NGINX Ingress migrations, plus an Illumio policy conversion." width="1360" height="698" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 4</span>vDefend and Avi Conversion Tool: F5, NSX-T, NSX-LB Supervisor and NGINX Ingress migrations, plus an Illumio policy conversion.</figcaption>
+            <img src="../assets/shots/avi-act-version-fix/5.png" alt="Same controller, version 32.1.1." width="980" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>Same controller, version 32.1.1.</figcaption>
           </figure>
+
+          <p>Now the import goes through and the iRules show up:</p>
 
           <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/5.png" alt="F5 Migration, Migrate, Start Migration. The tabs: Convert iRules, Convert Configurations, Deploy." width="1100" height="342" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 5</span>F5 Migration, Migrate, Start Migration. The tabs: Convert iRules, Convert Configurations, Deploy.</figcaption>
+            <img src="../assets/shots/avi-act-version-fix/6.png" alt="The iRules are there now, Fetched Successfully." width="1322" height="362" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 6</span>The iRules are there now, Fetched Successfully.</figcaption>
           </figure>
-
-          <p>Offline mode works from the F5 config file, so there's no live F5 to connect to:</p>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/6.png" alt="Let&#x27;s Begin: Offline Mode." width="978" height="624" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 6</span>Let's Begin: Offline Mode.</figcaption>
-          </figure>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/7.png" alt="Collect Configurations: hol_advanced_bigip.conf uploaded." width="980" height="624" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 7</span>Collect Configurations: hol_advanced_bigip.conf uploaded.</figcaption>
-          </figure>
-
-          <p>The staging controller is where ACT builds the profiles, policies and DataScripts. The destination is where the result gets deployed. In this lab they're the same controller:</p>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/8.png" alt="Controller Information: 10.1.1.91, admin, and version 31.1.1 like the manual said. Thumbprint accepted, same controller as staging." width="1222" height="662" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 8</span>Controller Information: 10.1.1.91, admin, and version 31.1.1 like the manual said. Thumbprint accepted, same controller as staging.</figcaption>
-          </figure>
-
-          <h3>Version mismatch</h3>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/9.png" alt="Finalizing Import: Staging controller version is different from the input provided to the converter." width="1224" height="660" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 9</span>Finalizing Import: Staging controller version is different from the input provided to the converter.</figcaption>
-          </figure>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/10.png" alt="And the iRules list: No iRules found." width="1324" height="256" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 10</span>And the iRules list: No iRules found.</figcaption>
-          </figure>
-
-          <p>The version in the wizard has to match what the controller actually runs. So I checked on the controller:</p>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/11.png" alt="Administration Overview on wld01a-avi: version 32.1.1, build 9129." width="612" height="596" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 11</span>Administration Overview on wld01a-avi: version 32.1.1, build 9129.</figcaption>
-          </figure>
-
-          <p>So the manual I had was out of date. Back to Controller Information with 32.1.1:</p>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/12.png" alt="Same controller, version 32.1.1 this time." width="980" height="624" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 12</span>Same controller, version 32.1.1 this time.</figcaption>
-          </figure>
-
-          <h3>The iRules</h3>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/13.png" alt="This time the iRules came through: iRules (7). Opened is /Common/denylist, which drops clients whose IP is on a denylist." width="1322" height="362" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 13</span>This time the iRules came through: iRules (7). Opened is /Common/denylist, which drops clients whose IP is on a denylist.</figcaption>
-          </figure>
-
-          <p>The two wizard steps between Controller Information and Finalizing Import:</p>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/14.png" alt="Map Destination: tenant hol, Cloud-nsx-wld01-a, VRF wld01-a-t1, SE group Default-Group." width="982" height="624" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 14</span>Map Destination: tenant hol, Cloud-nsx-wld01-a, VRF wld01-a-t1, SE group Default-Group.</figcaption>
-          </figure>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/15.png" alt="Migration Selection: Full." width="978" height="624" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 15</span>Migration Selection: Full.</figcaption>
-          </figure>
-
-          <p>The whole wizard:</p>
-
-          <div class="table">
-            <table>
-              <thead><tr><th></th><th>F5 Migration</th></tr></thead>
-              <tbody>
-                <tr><td>Mode</td><td>Offline</td></tr>
-                <tr><td>Config file</td><td>hol_advanced_bigip.conf</td></tr>
-                <tr><td>Staging controller</td><td>10.1.1.91, user admin</td></tr>
-                <tr><td>Version</td><td>32.1.1, not 31.1.1</td></tr>
-                <tr><td>Destination controller</td><td>Same as staging</td></tr>
-                <tr><td>Tenant</td><td>hol</td></tr>
-                <tr><td>Cloud</td><td>[admin]-Cloud-nsx-wld01-a</td></tr>
-                <tr><td>VRF</td><td>[admin]-wld01-a-t1</td></tr>
-                <tr><td>SE group</td><td>[admin]-Default-Group</td></tr>
-                <tr><td>Merging of similar objects</td><td>On</td></tr>
-                <tr><td>Reuse HTTP policy</td><td>On</td></tr>
-                <tr><td>Migration selection</td><td>Full</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <p>ACT turns each iRule into an Avi object. Opening one shows the original F5 iRule:</p>
-
-          <figure class="shot">
-            <img src="../assets/shots/hol-2740-05-ans-l/16.png" alt="/Common/https_redirect: on an HTTP request, redirect to HTTPS and keep the host and path. It became an HTTP policy set." width="1320" height="158" loading="lazy" decoding="async">
-            <figcaption><span class="shot-no">Photo 16</span>/Common/https_redirect: on an HTTP request, redirect to HTTPS and keep the host and path. It became an HTTP policy set.</figcaption>
-          </figure>
-
-          <p>The six I could see, all in /Common and all Fetched Successfully:</p>
-
-          <div class="table">
-            <table>
-              <thead><tr><th>iRule</th><th>Avi object</th></tr></thead>
-              <tbody>
-                <tr><td>https_<wbr>redirect</td><td>HTTP Policy Set</td></tr>
-                <tr><td>x-forwarded-port</td><td>VSDataScript<wbr>Set</td></tr>
-                <tr><td>path_<wbr>match_<wbr>respond_<wbr>403</td><td>HTTP Policy Set</td></tr>
-                <tr><td>insert_<wbr>true_<wbr>client_<wbr>ip</td><td>HTTP Policy Set</td></tr>
-                <tr><td>x-forwarded-xff-proto</td><td>VSDataScript<wbr>Set</td></tr>
-                <tr><td>denylist</td><td>Network<wbr>Security<wbr>Policy</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <p>My screenshots stop here, at the iRules.</p>
-
-          <h2>Key takeaways</h2>
-
-          <ul>
-            <li>ACT turns an F5 config into Avi objects. iRules become HTTP policy sets, DataScripts or network security policies.</li>
-            <li>Offline mode works from the bigip.conf file, no connection to the F5 needed.</li>
-            <li>The staging controller builds the policies and DataScripts. It can be a separate controller, so production stays clean.</li>
-            <li>The version in the wizard has to match the controller. Check it on the controller first.</li>
-          </ul>
         </div>
         <!-- ===== ARTICLE CONTENT END ===== -->
-        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+        <nav class="pn" id="postNav" aria-label="More articles"></nav>
       </article>
     </div>
     <section class="more-labs">
-      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="shead"><span class="num">//</span><h2>More from the blog</h2><span class="rule"></span></div>
       <div class="labs" id="related"></div>
     </section>
   </div>
 </main>
 
 <footer id="site-footer"></footer>
-<script src="../assets/posts.js?v=20261120b"></script>
-<script src="../assets/site.js?v=20261120b"></script>
+<script src="../assets/posts.js?v=20261120c"></script>
+<script src="../assets/site.js?v=20261120c"></script>
 </body>
 </html>
