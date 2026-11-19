@@ -254,29 +254,13 @@ body.light-theme .theme-toggle .i-moon { display: none; }
 .lab-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto; padding-top: 18px; }
 .lab-foot .meta { margin-left: auto; font: 500 12px/1 var(--mono); color: var(--muted); }
 
-.status.note { color: var(--cyan); }
 .series-stack { display: grid; gap: 18px; }
 .count-badge { display: grid; place-items: center; border-radius: 50%; border: 9px solid var(--line-2); }
 .count-badge .lbl { position: static; }
 
-/* Series switch (HOL LOG / STUDY LOG) */
-.series-tabs {
-  display: inline-flex; gap: 4px; margin-bottom: 28px; padding: 4px;
-  border-radius: 14px; background: var(--panel); border: 1px solid var(--line-2);
-}
-.series-tabs a {
-  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 10px;
-  font: 600 14px/1 var(--mono); letter-spacing: .04em; color: var(--muted); text-decoration: none;
-  transition: color .2s, background-color .2s;
-}
-.series-tabs a:hover { color: var(--ink); background: var(--panel-2); }
-.series-tabs a[aria-current="page"] { color: #041320; background: var(--grad); }
-.series-tabs small { padding: 2px 7px; border-radius: 999px; font-size: 11.5px; background: rgba(127, 142, 168, .18); }
-.series-tabs a[aria-current="page"] small { background: rgba(4, 19, 32, .18); }
 .page-head .eyebrow { display: flex; }
-.tl-item.note .tl-node { background: var(--line-2); color: var(--ink); }
 
-/* Goal checklist used in study entries */
+/* Goal checklist used in some blog articles */
 .prose ul.checks > li::before { content: "✓"; color: var(--green); }
 .prose ul.checks > li.no::before { content: "✗"; color: var(--amber); }
 .prose ul.checks > li.no em { color: var(--amber); font-style: normal; font-size: .9em; }
@@ -345,6 +329,8 @@ a.tl-card:hover { border-color: var(--c, var(--cyan)); transform: translateX(3px
 .tl-card .lab-foot { padding-top: 12px; }
 .tl-item.soon .tl-card { border-style: dashed; background: transparent; }
 .tl-item.soon h3 { color: var(--muted); }
+/* Blog: a plain list of articles, newest first */
+.post-list { list-style: none; margin: 8px 0 72px; padding: 0; display: grid; gap: 16px; }
 
 /* ---------- 11. About (intro + whoami terminal) ---------- */
 .about { padding: 64px 0 80px; }
@@ -554,7 +540,7 @@ body.lb-open { overflow: hidden; }
   .prose { font-size: 16px; }
   .prose pre { font-size: 12.5px; }
 }
-@media (max-width: 380px) {
+@media (max-width: 440px) {
   .brand .word { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

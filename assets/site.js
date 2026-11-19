@@ -19,9 +19,10 @@
   } catch (e) {}
   function url(page) { return (ROOT + (page || '')) || './'; }
 
-  var SERIES = SITE.series || { lab: { name: 'HOL LOG', page: 'series' }, study: { name: 'STUDY LOG', page: 'study-log' } };
-  function seriesOf(p) { return p.type === 'study' ? SERIES.study : SERIES.lab; }
-  function codeOf(p) { return p.code || (seriesOf(p).name + ' #' + (String(p.no).length === 1 ? '0' + p.no : p.no)); }
+  var SERIES = SITE.series || { lab: { name: 'HOL LOG', page: 'series' } };
+  var BLOG = SITE.blog || { name: 'Blog', page: 'blog' };
+  function seriesOf(p) { return SERIES.lab; }
+  function codeOf(p) { return isBlog(p) ? 'BLOG' : p.code || (seriesOf(p).name + ' #' + (String(p.no).length === 1 ? '0' + p.no : p.no)); }
 
   /* ---------- helpers ---------- */
   function $(s, c) { return (c || document).querySelector(s); }
@@ -33,10 +34,9 @@
   function topic(t) { return SITE.topics[t] || { label: t.toUpperCase(), color: '#94a3b8', desc: '' }; }
   function postUrl(p) { return ROOT + 'posts/' + p.slug; }
   function colorOf(p) { return topic(p.tags[0] || '').color; }
-  function isNote(p) { return p.type === 'study'; }
-  var LABS = POSTS.filter(function (p) { return !isNote(p); });
-  var NOTES = POSTS.filter(isNote);
-  var notesCount = NOTES.length;
+  function isBlog(p) { return p.type === 'blog'; }
+  var LABS = POSTS.filter(function (p) { return !isBlog(p); });
+  var BLOGS = POSTS.filter(isBlog);
   var done = LABS.filter(function (p) { return p.status === 'completed'; }).length;
   var target = SITE.catalogTarget || LABS.length || 1;
   var pct = Math.min(100, Math.round(done / target * 100));
@@ -60,8 +60,8 @@
   /* ---------- header + footer ---------- */
   function renderChrome() {
     var current = PAGE === 'post' ? POSTS.filter(function (x) { return x.slug === body.getAttribute('data-slug'); })[0] : null;
-    var active = PAGE === 'study' ? 'series' : PAGE === 'post' ? (current && isNote(current) ? 'series' : 'home') : PAGE;
-    var links = [['', 'Articles', 'home'], [SERIES.lab.page, 'Series', 'series'], ['about', 'About', 'about']];
+    var active = PAGE === 'post' ? (current && isBlog(current) ? 'blog' : 'home') : PAGE;
+    var links = [['', 'Home', 'home'], [SERIES.lab.page, 'Series', 'series'], [BLOG.page, 'Blog', 'blog'], ['about', 'About', 'about']];
     var h = $('#site-header');
     if (h) {
       h.className = 'site-header';
@@ -86,8 +86,8 @@
             '<div><a class="brand" href="' + url() + '"><img src="' + ROOT + 'assets/logo-mark.svg" alt="" width="30" height="30"><span class="word"><em>v</em>DANISH</span></a>' +
             '<p>Lab notes on VMware Cloud Foundation, NSX and vSphere, written while working through the Broadcom Hands-on Labs one at a time.</p></div>' +
             '<div class="foot-links">' +
-              '<div><b>SITE</b><a href="' + url() + '">Articles</a><a href="' + url('about') + '">About</a></div>' +
-              '<div><b>SERIES</b><a href="' + url(SERIES.lab.page) + '">' + esc(SERIES.lab.name) + '</a><a href="' + url(SERIES.study.page) + '">' + esc(SERIES.study.name) + '</a></div>' +
+              '<div><b>SITE</b><a href="' + url() + '">Home</a><a href="' + url(BLOG.page) + '">' + esc(BLOG.name) + '</a><a href="' + url('about') + '">About</a></div>' +
+              '<div><b>SERIES</b><a href="' + url(SERIES.lab.page) + '">' + esc(SERIES.lab.name) + '</a></div>' +
               '<div><b>LINKS</b><a href="' + esc(SITE.catalogUrl) + '" target="_blank" rel="noopener noreferrer">Lab catalog ↗</a>' + (SITE.linkedin ? '<a href="' + esc(SITE.linkedin) + '" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>' : '') + '</div>' +
             '</div>' +
           '</div>' +
@@ -125,16 +125,12 @@
     return '<span class="topics">' + esc(p.tags.map(function (t) { return topic(t).label; }).join(' · ')) + '</span>';
   }
   function statusHTML(p) {
-    if (isNote(p)) return '<span class="status note">Study notes</span>';
+    if (isBlog(p)) return '';
     return p.status === 'completed' ? '<span class="status done">Lab completed</span>' : '<span class="status live">Lab in progress</span>';
-  }
-  function statusText(p) {
-    if (isNote(p)) return 'Study notes';
-    return p.status === 'completed' ? 'Lab completed' : 'Lab in progress';
   }
   function card(p) {
     return '<article class="lab" style="--c:' + colorOf(p) + '">' +
-      '<span class="ghost" aria-hidden="true">#' + esc(pad(p.no)) + '</span>' +
+      (isBlog(p) ? '' : '<span class="ghost" aria-hidden="true">#' + esc(pad(p.no)) + '</span>') +
       '<div class="lab-top"><span class="code">' + esc(codeOf(p)) + '</span>' + statusHTML(p) + '</div>' +
       '<h3><a href="' + postUrl(p) + '">' + esc(p.title) + '</a></h3><p class="ex">' + esc(p.excerpt) + '</p>' +
       '<div class="lab-foot">' + chips(p) + '<span class="meta">' + fmtDate(p.date) + ' · ' + p.read + ' min</span></div>' +
@@ -206,10 +202,10 @@
     // series bands
     $('#seriesRing').innerHTML = ring(pct, done + '/' + target);
     $('#seriesText').textContent = done + ' Hands-on Labs completed so far, one write-up per lab.';
-    var sr = $('#studyRing');
-    if (sr) {
-      sr.innerHTML = countBadge(notesCount, 'entries');
-      $('#studyText').textContent = notesCount + ' entries of notes and lessons from training days, workshops and review sessions.';
+    var br = $('#blogRing');
+    if (br) {
+      br.innerHTML = countBadge(BLOGS.length, 'articles');
+      $('#blogText').textContent = 'Notes from training days and workshops, and anything else worth writing down.';
     }
 
     // author strip
@@ -223,21 +219,13 @@
   function countBadge(n, label) {
     return '<div class="ring count-badge"><div class="lbl"><b>' + n + '</b><small>' + esc(label) + '</small></div></div>';
   }
-  function seriesTabs(active) {
-    var el = $('#seriesTabs'); if (!el) return;
-    var tabs = [['lab', LABS.length], ['study', NOTES.length]];
-    el.innerHTML = tabs.map(function (t) {
-      var s = SERIES[t[0]];
-      return '<a href="' + ROOT + s.page + '"' + (t[0] === active ? ' aria-current="page"' : '') + '>' + esc(s.name) + '<small>' + t[1] + '</small></a>';
-    }).join('');
-  }
   function timeline(list, nextText) {
     // Newest first, so a new entry always lands at the top
     var desc = list.slice().sort(function (a, b) { return (b.no || 0) - (a.no || 0) || b.date.localeCompare(a.date); });
     $('#timeline').innerHTML =
       '<li class="tl-item soon"><span class="tl-node">…</span><div class="tl-card"><h3>Next entry</h3><p>' + esc(nextText) + '</p></div></li>' +
       desc.map(function (p) {
-      return '<li class="tl-item ' + (isNote(p) ? 'note' : p.status === 'completed' ? 'done' : 'live') + '"><span class="tl-node">' + esc(pad(p.no)) + '</span>' +
+      return '<li class="tl-item ' + (p.status === 'completed' ? 'done' : 'live') + '"><span class="tl-node">' + esc(pad(p.no)) + '</span>' +
         '<a class="tl-card" style="--c:' + colorOf(p) + '" href="' + postUrl(p) + '">' +
           '<div class="lab-top"><span class="code">' + esc(codeOf(p)) + '</span>' + statusHTML(p) + '</div>' +
           '<h3>' + esc(p.title) + '</h3><p>' + esc(p.excerpt) + '</p>' +
@@ -249,17 +237,16 @@
     $('#seriesHeadRing').innerHTML = ring(pct, 'catalog');
     $('#stDone').textContent = done;
     $('#stTarget').textContent = target;
-    seriesTabs('lab');
     timeline(LABS, 'The next Hands-on Lab lands here.');
     animateRings();
   }
-  function study() {
-    $('#studyHeadBadge').innerHTML = countBadge(notesCount, 'entries');
-    var first = NOTES[NOTES.length - 1], last = NOTES[0];
-    $('#stFirst').textContent = first ? fmtDate(first.date) : '–';
-    $('#stLast').textContent = last ? fmtDate(last.date) : '–';
-    seriesTabs('study');
-    timeline(NOTES, 'The next study entry lands here.');
+  /* ---------- BLOG: a plain list of articles, newest first ---------- */
+  function blog() {
+    $('#blogList').innerHTML = BLOGS.map(function (p) {
+      return '<li><a class="tl-card" style="--c:' + colorOf(p) + '" href="' + postUrl(p) + '">' +
+        '<h3>' + esc(p.title) + '</h3><p>' + esc(p.excerpt) + '</p>' +
+        '<div class="lab-foot">' + chips(p) + '<span class="meta">' + esc(p.dateLabel || fmtDate(p.date)) + ' · ' + p.read + ' min</span></div></a></li>';
+    }).join('');
   }
 
   /* ---------- POST ---------- */
@@ -397,17 +384,17 @@
     var p = POSTS.filter(function (x) { return x.slug === slug; })[0];
     if (!p) { $('#postHead').innerHTML = '<div class="wrap"><p>This article is missing from assets/posts.js.</p></div>'; return; }
 
-    var SAME = isNote(p) ? NOTES : LABS;
+    var blogPost = isBlog(p), SAME = blogPost ? BLOGS : LABS, word = blogPost ? 'article' : 'entry';
     $('#postHead').innerHTML =
       '<div class="wrap">' +
-        (isNote(p) ? '<a class="back" href="' + ROOT + SERIES.study.page + '">← all ' + esc(SERIES.study.name.toLowerCase()) + ' entries</a>'
-                   : '<a class="back" href="' + url() + '#labs">← all lab notes</a>') +
+        (blogPost ? '<a class="back" href="' + ROOT + BLOG.page + '">← all blog articles</a>'
+                  : '<a class="back" href="' + url() + '#labs">← all lab notes</a>') +
         '<div class="post-tags" style="--c:' + colorOf(p) + '"><span class="code">' + esc(codeOf(p)) + '</span>' + statusHTML(p) + chips(p) + '</div>' +
         '<h1>' + esc(p.title) + '</h1>' +
         '<p class="lead">' + esc(p.excerpt) + '</p>' +
         '<div class="byline"><span class="hexav" aria-hidden="true">' + esc(SITE.initials) + '</span>' +
           '<a href="' + url('about') + '">' + esc(SITE.author) + '</a>' +
-          '<span>' + esc(p.dateLabel || fmtDate(p.date)) + '</span><span>' + p.read + ' min read</span><span>' + esc(seriesOf(p).name) + ' · #' + esc(pad(p.no)) + '</span></div>' +
+          '<span>' + esc(p.dateLabel || fmtDate(p.date)) + '</span><span>' + p.read + ' min read</span>' + (blogPost ? '' : '<span>' + esc(seriesOf(p).name) + ' · #' + esc(pad(p.no)) + '</span>') + '</div>' +
       '</div>';
 
     var b = $('#postBody');
@@ -417,16 +404,16 @@
     heads.forEach(function (h) { var id = slugify(h.textContent) || 'section'; while (used[id]) id += '-2'; used[id] = 1; h.id = id; });
 
     $('#postSide').innerHTML =
-      '<div class="sheet"><h2>' + (isNote(p) ? 'STUDY SHEET' : 'LAB SHEET') + '</h2><dl>' +
+      '<div class="sheet"><h2>' + (blogPost ? 'ARTICLE' : 'LAB SHEET') + '</h2><dl>' +
         (p.code ? '<div><dt>Code</dt><dd>' + esc(p.code) + '</dd></div>' : '') +
-        '<div><dt>Series</dt><dd>' + esc(seriesOf(p).name) + '</dd></div>' +
-        '<div><dt>Entry</dt><dd>#' + esc(pad(p.no)) + '</dd></div>' +
+        (blogPost ? '' : '<div><dt>Series</dt><dd>' + esc(seriesOf(p).name) + '</dd></div>' +
+        '<div><dt>Entry</dt><dd>#' + esc(pad(p.no)) + '</dd></div>') +
         '<div><dt>Date</dt><dd>' + esc(p.dateLabel || fmtDate(p.date)) + '</dd></div>' +
         '<div><dt>Topics</dt><dd>' + esc(p.tags.map(function (t) { return topic(t).label; }).join(', ')) + '</dd></div>' +
         '<div><dt>Read</dt><dd>' + p.read + ' min</dd></div>' +
       '</dl></div>' +
       (heads.length > 1 ? '<div class="sheet toc"><h2>ON THIS PAGE</h2><ol>' + heads.map(function (h) { return '<li><a href="#' + h.id + '">' + esc(h.textContent) + '</a></li>'; }).join('') + '</ol></div>' : '') +
-      (isNote(p) ? '' : '<a class="btn side-btn" href="' + esc(SITE.catalogUrl) + '" target="_blank" rel="noopener noreferrer">Run this lab ' + ICON.ext + '</a>');
+      (blogPost ? '' : '<a class="btn side-btn" href="' + esc(SITE.catalogUrl) + '" target="_blank" rel="noopener noreferrer">Run this lab ' + ICON.ext + '</a>');
 
     if ('IntersectionObserver' in window && heads.length) {
       var io = new IntersectionObserver(function (entries) {
@@ -439,8 +426,8 @@
 
     var i = SAME.indexOf(p), older = SAME[i + 1], newer = SAME[i - 1];
     $('#postNav').innerHTML =
-      (older ? '<a href="' + postUrl(older) + '"><small>← previous entry</small>' + esc(older.title) + '</a>' : '<span class="blank"></span>') +
-      (newer ? '<a class="next" href="' + postUrl(newer) + '"><small>next entry →</small>' + esc(newer.title) + '</a>' : '<span class="blank"></span>');
+      (older ? '<a href="' + postUrl(older) + '"><small>← previous ' + word + '</small>' + esc(older.title) + '</a>' : '<span class="blank"></span>') +
+      (newer ? '<a class="next" href="' + postUrl(newer) + '"><small>next ' + word + ' →</small>' + esc(newer.title) + '</a>' : '<span class="blank"></span>');
 
     var rel = SAME.filter(function (q) { return q !== p && q.tags.some(function (t) { return p.tags.indexOf(t) > -1; }); });
     SAME.forEach(function (q) { if (q !== p && rel.indexOf(q) < 0) rel.push(q); });
@@ -460,6 +447,6 @@
   initTheme();
   if (PAGE === 'home') home();
   else if (PAGE === 'series') series();
-  else if (PAGE === 'study') study();
+  else if (PAGE === 'blog') blog();
   else if (PAGE === 'post') post();
 })();

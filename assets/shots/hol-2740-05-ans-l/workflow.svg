@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 504" width="1200" height="504" role="img" aria-labelledby="t d">
+  <title id="t">Lab workflow: HOL-2740-05-ANS-L</title>
+  <desc id="d">What I did in six steps. 1: a tenant called hol on the controller for everything coming from the F5. 2: the Avi Conversion Tool, F5 Migration, Start Migration, in offline mode. 3: upload hol_advanced_bigip.conf, the sample F5 config of the lab. 4: the staging controller 10.1.1.91 with version 32.1.1, not 31.1.1. With 31.1.1 the import failed and no iRules showed up. 5: map to the hol tenant and the Default-Group SE group, Full migration. 6: the 7 iRules show up, mapped to policies and DataScripts.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/></pattern>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7dd3fc"/></marker>
+  </defs>
+  <style>
+    .card{fill:#0f1626;stroke-width:2}
+    .mod{font-family:JetBrains Mono,Consolas,monospace;font-size:11.5px;font-weight:700;letter-spacing:1px;text-anchor:middle}
+    .ttl{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:20px;font-weight:700;fill:#eef3fb}
+    .txt{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:15px;fill:#c6d1e2}
+    .lbl{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:14px;fill:#c6d1e2}
+    .flow{stroke:#7dd3fc;stroke-width:2.5;fill:none}
+  </style>
+  <rect width="1200" height="504" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="504" rx="18" fill="url(#grid)"/>
+  <text x="40" y="52" font-family="JetBrains Mono,Consolas,monospace" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2740-05-ANS-L · WORKFLOW</text>
+<rect x="40" y="84" width="340" height="140" rx="14" class="card" stroke="#60a5fa"/>
+<rect x="62" y="102" width="74" height="22" rx="6" fill="#60a5fa" fill-opacity=".14"/>
+<text x="99" y="117" class="mod" fill="#60a5fa">STEP 1</text>
+<text x="64" y="152" class="ttl">Tenant hol</text>
+<text x="64" y="181" class="txt">A tenant on the controller for</text><text x="64" y="203" class="txt">everything coming from the F5.</text>
+<rect x="430" y="84" width="340" height="140" rx="14" class="card" stroke="#60a5fa"/>
+<rect x="452" y="102" width="74" height="22" rx="6" fill="#60a5fa" fill-opacity=".14"/>
+<text x="489" y="117" class="mod" fill="#60a5fa">STEP 2</text>
+<text x="454" y="152" class="ttl">Avi Conversion Tool</text>
+<text x="454" y="181" class="txt">F5 Migration, Start Migration.</text><text x="454" y="203" class="txt">Offline mode, no live F5.</text>
+<rect x="820" y="84" width="340" height="140" rx="14" class="card" stroke="#60a5fa"/>
+<rect x="842" y="102" width="74" height="22" rx="6" fill="#60a5fa" fill-opacity=".14"/>
+<text x="879" y="117" class="mod" fill="#60a5fa">STEP 3</text>
+<text x="844" y="152" class="ttl">Upload the config</text>
+<text x="844" y="181" class="txt">hol_advanced_bigip.conf, the</text><text x="844" y="203" class="txt">sample F5 config of the lab.</text>
+<rect x="40" y="290" width="340" height="140" rx="14" class="card" stroke="#f59e0b"/>
+<rect x="62" y="308" width="74" height="22" rx="6" fill="#f59e0b" fill-opacity=".14"/>
+<text x="99" y="323" class="mod" fill="#f59e0b">STEP 4</text>
+<text x="64" y="358" class="ttl">Controller version</text>
+<text x="64" y="387" class="txt">Staging controller 10.1.1.91.</text><text x="64" y="409" class="txt">Version 32.1.1, not 31.1.1.</text>
+<rect x="430" y="290" width="340" height="140" rx="14" class="card" stroke="#60a5fa"/>
+<rect x="452" y="308" width="74" height="22" rx="6" fill="#60a5fa" fill-opacity=".14"/>
+<text x="489" y="323" class="mod" fill="#60a5fa">STEP 5</text>
+<text x="454" y="358" class="ttl">Map and migrate</text>
+<text x="454" y="387" class="txt">Tenant hol, SE group Default-Group,</text><text x="454" y="409" class="txt">then a Full migration.</text>
+<rect x="820" y="290" width="340" height="140" rx="14" class="card" stroke="#34d399"/>
+<rect x="842" y="308" width="74" height="22" rx="6" fill="#34d399" fill-opacity=".14"/>
+<text x="879" y="323" class="mod" fill="#34d399">STEP 6</text>
+<text x="844" y="358" class="ttl">iRules</text>
+<text x="844" y="387" class="txt">The 7 iRules show up, mapped</text><text x="844" y="409" class="txt">to policies and DataScripts.</text>
+<line x1="382" y1="154" x2="426" y2="154" class="flow" marker-end="url(#ar)"/>
+<line x1="772" y1="154" x2="816" y2="154" class="flow" marker-end="url(#ar)"/>
+<line x1="382" y1="360" x2="426" y2="360" class="flow" marker-end="url(#ar)"/>
+<line x1="772" y1="360" x2="816" y2="360" class="flow" marker-end="url(#ar)"/>
+<path d="M990 226 V257 H210 V286" class="flow" marker-end="url(#ar)"/>
+<rect x="42" y="462" width="26" height="14" rx="7" fill="#f59e0b" fill-opacity=".14" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="82" y="474" class="lbl">Where I got stuck: with 31.1.1 from the manual, the import failed and the iRules list stayed empty.</text>
+</svg>
