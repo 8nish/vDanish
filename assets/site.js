@@ -205,7 +205,7 @@
     var br = $('#blogRing');
     if (br) {
       br.innerHTML = countBadge(BLOGS.length, 'articles');
-      $('#blogText').textContent = 'Notes from training days and workshops, and anything else worth writing down.';
+      $('#blogText').textContent = 'Articles that aren\'t part of a series.' + (BLOGS.length ? '' : ' Nothing here yet.');
     }
 
     // author strip
@@ -242,7 +242,9 @@
   }
   /* ---------- BLOG: a plain list of articles, newest first ---------- */
   function blog() {
-    $('#blogList').innerHTML = BLOGS.map(function (p) {
+    $('#blogList').innerHTML = !BLOGS.length
+      ? '<li class="tl-item soon"><div class="tl-card"><h3>First article</h3><p>The first article lands here.</p></div></li>'
+      : BLOGS.map(function (p) {
       return '<li><a class="tl-card" style="--c:' + colorOf(p) + '" href="' + postUrl(p) + '">' +
         '<h3>' + esc(p.title) + '</h3><p>' + esc(p.excerpt) + '</p>' +
         '<div class="lab-foot">' + chips(p) + '<span class="meta">' + esc(p.dateLabel || fmtDate(p.date)) + ' · ' + p.read + ' min</span></div></a></li>';

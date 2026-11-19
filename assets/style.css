@@ -260,10 +260,6 @@ body.light-theme .theme-toggle .i-moon { display: none; }
 
 .page-head .eyebrow { display: flex; }
 
-/* Goal checklist used in some blog articles */
-.prose ul.checks > li::before { content: "✓"; color: var(--green); }
-.prose ul.checks > li.no::before { content: "✗"; color: var(--amber); }
-.prose ul.checks > li.no em { color: var(--amber); font-style: normal; font-size: .9em; }
 
 .empty { margin-top: 20px; padding: 40px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line-2); border-radius: var(--r); }
 .empty .btn { margin-top: 14px; }
