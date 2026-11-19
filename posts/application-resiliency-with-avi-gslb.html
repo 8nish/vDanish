@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Resiliency with Avi Global Server Load Balancing · vDanish</title>
+<meta name="description" content="Avi GSLB across two sites: a DNS virtual service in each region, a leader and a follower site, then a basic, an advanced and a geo-aware global service, and a DNS policy at the end.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=20261119a">
+</head>
+<body data-page="post" data-root="../" data-slug="application-resiliency-with-avi-gslb">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>My second Avi lab, after <a href="getting-started-with-avi-for-vcf">Getting Started with Avi for VCF</a>. This one is GSLB: two Avi controllers act as two sites, one in Palo Alto and one in Barcelona, and DNS decides which site a client gets sent to. Click any photo to enlarge it.</p>
+
+          <div class="callout warning"><b>Redo coming</b>I made a few misconfigs in this run and some of my screenshots are missing, so I'll redo this lab sometime and update this post.</div>
+
+          <h2>Lab topology</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/topology.svg" alt="Two Avi controllers as two GSLB sites. Each has its own DNS virtual service and its own copy of the apps. The leader syncs the GSLB config to the follower." width="1200" height="590" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>Two Avi controllers as two GSLB sites. Each has its own DNS virtual service and its own copy of the apps. The leader syncs the GSLB config to the follower.</figcaption>
+          </figure>
+
+          <h2>Workflow</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/workflow.svg" alt="What I did, in order. Modules 1 and 2 set up GSLB, 3 to 5 are global services on top of it, 6 is a DNS policy." width="1200" height="470" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>What I did, in order. Modules 1 and 2 set up GSLB, 3 to 5 are global services on top of it, 6 is a DNS policy.</figcaption>
+          </figure>
+
+          <h2>Module 1: GSLB infrastructure dependencies</h2>
+
+          <p>A quick refresher on Avi first. The Service Engine is the actual load balancer, it does the data plane work:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/1.png" alt="The client hits a virtual service, the pool picks a server. All of it runs on a Service Engine." width="1134" height="310" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 1</span>The client hits a virtual service, the pool picks a server. All of it runs on a Service Engine.</figcaption>
+          </figure>
+
+          <p>The controller is the single point of management, the brain of the whole Avi setup:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/2.png" alt="The controller is the control plane. Service Engines are the data plane, on bare metal, VMs or containers." width="636" height="620" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 2</span>The controller is the control plane. Service Engines are the data plane, on bare metal, VMs or containers.</figcaption>
+          </figure>
+
+          <h3>What GSLB needs</h3>
+
+          <p>GSLB runs on DNS. A DNS virtual service answers the queries for the global apps with the VIP of whichever site is best at that moment. So before anything else, each region needs one.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/3.png" alt="A bigger GSLB setup. Every site has a controller, only some of them run the DNS service." width="856" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 3</span>A bigger GSLB setup. Every site has a controller, only some of them run the DNS service.</figcaption>
+          </figure>
+
+          <h3>SE group for GSLB in region A</h3>
+
+          <p>The DNS virtual service gets its own SE group. On the site 1 controller, <strong>Infrastructure &gt; Cloud Resources &gt; Service Engine Group</strong>, cloud Cloud-nsx-wld01-a:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/4.png" alt="Only Default-Group so far. Create." width="1200" height="544" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 4</span>Only Default-Group so far. Create.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/5.png" alt="Name gslb01a." width="1222" height="388" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 5</span>Name gslb01a.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/6.png" alt="N + M, with the buffer Service Engines set to 0." width="1222" height="426" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 6</span>N + M, with the buffer Service Engines set to 0.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/7.png" alt="Prefix gslb01a, 1 vCPU, 8 GB memory, 25 GB disk, Enable Host Geolocation Profile ticked." width="824" height="654" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 7</span>Prefix gslb01a, 1 vCPU, 8 GB memory, 25 GB disk, Enable Host Geolocation Profile ticked.</figcaption>
+          </figure>
+
+          <p>8 GB because the geo database from Module 5 can hold millions of entries, and the geolocation profile keeps part of that memory just for it. In production you'd also tick Enable Memory Reserve. The lab leaves it off to save resources.</p>
+
+          <p>Then a vCenter in the Scope tab, and save:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/8.png" alt="Scope: vCenter vc-wld01-a.site-a.vcf.lab, SE folder AviSeFolder." width="1222" height="562" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 8</span>Scope: vCenter vc-wld01-a.site-a.vcf.lab, SE folder AviSeFolder.</figcaption>
+          </figure>
+
+          <h3>DNS virtual service in region A</h3>
+
+          <p><strong>Applications &gt; Virtual Services &gt; Create &gt; Advanced Setup</strong>. DNS has to work over UDP and TCP, so the VS listens on port 53 twice. UDP comes from the network profile, TCP from a second service port with its own profile:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/9.png" alt="Create, Advanced Setup." width="766" height="536" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 9</span>Create, Advanced Setup.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/10.png" alt="global-dns-vs-01a: type DNS, profile System-DNS, cloud Cloud-nsx-wld01-a, VRF wld01-a-t1." width="992" height="620" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 10</span>global-dns-vs-01a: type DNS, profile System-DNS, cloud Cloud-nsx-wld01-a, VRF wld01-a-t1.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/11.png" alt="The VsVIP: static 10.1.13.137, FQDN global-dns-vs-01a.lb.site-a.vcf.lab." width="872" height="642" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 11</span>The VsVIP: static 10.1.13.137, FQDN global-dns-vs-01a.lb.site-a.vcf.lab.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/12.png" alt="Two service ports on 53. The second one overrides the network profile with System-TCP-Proxy." width="1222" height="466" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 12</span>Two service ports on 53. The second one overrides the network profile with System-TCP-Proxy.</figcaption>
+          </figure>
+
+          <h3>DNS virtual service in region B</h3>
+
+          <p>Same thing on the site 2 controller, which has its own cloud:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/13.png" alt="Site 2 controller. Create, Advanced Setup." width="682" height="538" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 13</span>Site 2 controller. Create, Advanced Setup.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/14.png" alt="global-dns-vs-01b on Cloud-nsx-mgmt-a, VRF mgmt-a-t1. Network profile System-UDP-Per-Pkt, SE group gslb01b." width="840" height="648" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 14</span>global-dns-vs-01b on Cloud-nsx-mgmt-a, VRF mgmt-a-t1. Network profile System-UDP-Per-Pkt, SE group gslb01b.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/15.png" alt="Static 10.1.14.137, FQDN global-dns-vs-01b.lb.site-b.vcf.lab." width="1222" height="684" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 15</span>Static 10.1.14.137, FQDN global-dns-vs-01b.lb.site-b.vcf.lab.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/16.png" alt="Port 53 again with System-TCP-Proxy, for TCP." width="1222" height="528" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 16</span>Port 53 again with System-TCP-Proxy, for TCP.</figcaption>
+            </figure>
+          </div>
+
+          <p>Both of them side by side:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>Region A</th><th>Region B</th></tr></thead>
+              <tbody>
+                <tr><td>Controller</td><td>Site 1</td><td>Site 2</td></tr>
+                <tr><td>Virtual service</td><td>global-dns-vs-01a</td><td>global-dns-vs-01b</td></tr>
+                <tr><td>Cloud</td><td>Cloud-nsx-wld01-a</td><td>Cloud-nsx-mgmt-a</td></tr>
+                <tr><td>VRF</td><td>wld01-a-t1</td><td>mgmt-a-t1</td></tr>
+                <tr><td>SE group</td><td>gslb01a</td><td>gslb01b</td></tr>
+                <tr><td>VIP</td><td>10.1.13.137</td><td>10.1.14.137</td></tr>
+                <tr><td>FQDN</td><td>global-dns-vs-01a.lb.site-a.vcf.lab</td><td>global-dns-vs-01b.lb.site-b.vcf.lab</td></tr>
+                <tr><td>App profile</td><td>System-DNS</td><td>System-DNS</td></tr>
+                <tr><td>UDP 53</td><td>System-UDP-Per-Pkt</td><td>System-UDP-Per-Pkt</td></tr>
+                <tr><td>TCP 53</td><td>System-TCP-Proxy</td><td>System-TCP-Proxy</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Module 2: Building the GSLB infrastructure</h2>
+
+          <p>How a request goes, from the lab's diagrams. The app runs in more than one site, DNS picks the site, and after that the client talks straight to it:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/17.png" alt="Step 1: the corporate DNS hands A.acme.com to one of the Avi DNS services, which answers with the VIP of VS-A3." width="678" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 17</span>Step 1: the corporate DNS hands A.acme.com to one of the Avi DNS services, which answers with the VIP of VS-A3.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/18.png" alt="Step 2: the client sends its request to that VIP." width="676" height="628" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 18</span>Step 2: the client sends its request to that VIP.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/19.png" alt="Step 3: the SEs in DC 3 load balance it to one of VS-A3&#x27;s servers." width="676" height="628" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 19</span>Step 3: the SEs in DC 3 load balance it to one of VS-A3's servers.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Leader site, region A</h3>
+
+          <p>All GSLB config is done on the leader. The followers are read-only. On the site 1 controller, <strong>Infrastructure &gt; GSLB &gt; Sites</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/20.png" alt="GSLB is off until there&#x27;s a leader site. Create Leader Site." width="1250" height="592" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 20</span>GSLB is off until there's a leader site. Create Leader Site.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/21.png" alt="region01a, Active Member (Leader), with the admin login for this controller." width="1056" height="555" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 21</span>region01a, Active Member (Leader), with the admin login for this controller.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/22.png" alt="Controller cluster VIP 10.1.1.90 on 443. Location Palo Alto, CA: 37.4419, -122.143." width="970" height="624" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 22</span>Controller cluster VIP 10.1.1.90 on 443. Location Palo Alto, CA: 37.4419, -122.143.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/23.png" alt="Subdomain global.vcf.lab, served by global-dns-vs-01a with Host All Subdomains." width="1060" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 23</span>Subdomain global.vcf.lab, served by global-dns-vs-01a with Host All Subdomains.</figcaption>
+            </figure>
+          </div>
+
+          <p>Every global app will live under global.vcf.lab. The location gets used for geo load balancing in Module 5.</p>
+
+          <h3>Follower site, region B</h3>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/24.png" alt="Sites, Create, New Site." width="780" height="568" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 24</span>Sites, Create, New Site.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/25.png" alt="region01b, Active Member (Follower), Continuous Replication." width="1058" height="610" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 25</span>region01b, Active Member (Follower), Continuous Replication.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/26.png" alt="Cluster VIP 10.1.1.92, location Barcelona: 41.385, 2.173." width="944" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 26</span>Cluster VIP 10.1.1.92, location Barcelona: 41.385, 2.173.</figcaption>
+          </figure>
+
+          <p>The leader can't see site B's DNS virtual service until the site is saved. So tick <strong>Setup DNS Virtual Services After</strong>, save, then add it:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/27.png" alt="No DNS virtual services to pick yet. Setup DNS Virtual Services After, Save." width="896" height="638" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 27</span>No DNS virtual services to pick yet. Setup DNS Virtual Services After, Save.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/28.png" alt="Then global-dns-vs-01b, Host All Subdomains." width="900" height="638" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 28</span>Then global-dns-vs-01b, Host All Subdomains.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/29.png" alt="Both sites green. region01a is the leader, region01b is In Sync with continuous replication." width="1336" height="252" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 29</span>Both sites green. region01a is the leader, region01b is In Sync with continuous replication.</figcaption>
+          </figure>
+
+          <h2>Module 3: A basic global service</h2>
+
+          <p>A GSLB service is one global app with one FQDN, backed by virtual services in the sites. First a check that the DNS virtual service is up:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/30.png" alt="global-dns-vs-01a is green on 10.1.13.137." width="1160" height="488" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 30</span>global-dns-vs-01a is green on 10.1.13.137.</figcaption>
+          </figure>
+
+          <p><strong>Applications &gt; GSLB Services &gt; Create</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/31.png" alt="No GSLB services yet." width="1368" height="240" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 31</span>No GSLB services yet.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/32.png" alt="basic-app." width="1222" height="328" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 32</span>basic-app.</figcaption>
+            </figure>
+          </div>
+
+          <p>Two GSLB pools, one per site. The higher priority wins, so Palo Alto at 20 takes all the traffic while its health monitor passes, and Barcelona at 10 only takes over if Palo Alto goes down. That's active/standby, like a DR site.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/33.png" alt="Palo Alto: priority 20, round robin." width="1060" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 33</span>Palo Alto: priority 20, round robin.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/34.png" alt="Member: the virtual service adv-app-a on region01a." width="898" height="638" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 34</span>Member: the virtual service adv-app-a on region01a.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/35.png" alt="Palo Alto in the GSLB Pool tab." width="1222" height="398" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 35</span>Palo Alto in the GSLB Pool tab.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/36.png" alt="Barcelona: priority 10, round robin." width="1060" height="610" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 36</span>Barcelona: priority 10, round robin.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/37.png" alt="Member: adv-app-b on region01b." width="900" height="638" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 37</span>Member: adv-app-b on region01b.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/38.png" alt="Both pools, 20 and 10." width="1220" height="458" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 38</span>Both pools, 20 and 10.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/39.png" alt="The basic-app topology: Palo Alto with region01a:adv-app-a, Barcelona with region01b:adv-app-b. All green." width="1270" height="396" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 39</span>The basic-app topology: Palo Alto with region01a:adv-app-a, Barcelona with region01b:adv-app-b. All green.</figcaption>
+          </figure>
+
+          <h2>Module 4: An advanced global service</h2>
+
+          <p>A GSLB pool isn't a server pool. It groups virtual services across sites, and a member can also be a plain IP, like a standalone server or another vendor's load balancer.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/40.png" alt="One GSLB service, one pool at priority 5, four virtual services in it." width="788" height="626" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 40</span>One GSLB service, one pool at priority 5, four virtual services in it.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/41.png" alt="GSLB Services: basic-app is green. Create." width="1368" height="242" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 41</span>GSLB Services: basic-app is green. Create.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/42.png" alt="adv-app: priority-based between the pools, Wildcard Match and EDNS Client Subnet ticked." width="950" height="626" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 42</span>adv-app: priority-based between the pools, Wildcard Match and EDNS Client Subnet ticked.</figcaption>
+          </figure>
+
+          <p>EDNS Client Subnet lets a DNS resolver pass the client's subnet along with the query. Without it, Avi only sees the resolver's IP.</p>
+
+          <p>Palo Alto mixes two virtual services and one plain IP, the standalone web server in region A. It uses consistent hash, so the same client IP, or the same EDNS subnet, always lands on the same member. A bit like persistence:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/43.png" alt="Palo Alto: priority 10, consistent hash." width="994" height="620" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 43</span>Palo Alto: priority 10, consistent hash.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/44.png" alt="Three members: adv-app-a, adv-app-b and 10.1.13.11." width="1222" height="488" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 44</span>Three members: adv-app-a, adv-app-b and 10.1.13.11.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/45.png" alt="Adding adv-app-a on region01a." width="944" height="628" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 45</span>Adding adv-app-a on region01a.</figcaption>
+          </figure>
+
+          <p>Barcelona gets priority 5, so it's the backup, with two plain IPs:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/46.png" alt="Barcelona: priority 5, round robin." width="1066" height="608" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 46</span>Barcelona: priority 5, round robin.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/47.png" alt="A member by IP: 10.1.13.11." width="902" height="636" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 47</span>A member by IP: 10.1.13.11.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/48.png" alt="10.1.13.11 and 10.1.14.11." width="900" height="636" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 48</span>10.1.13.11 and 10.1.14.11.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/49.png" alt="TTL 2 seconds, Down Response: Response with all records." width="1222" height="600" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 49</span>TTL 2 seconds, Down Response: Response with all records.</figcaption>
+          </figure>
+
+          <p>A 2 second TTL makes clients ask again almost right away, so a failover shows up fast. If every member is down, it still answers with all the records instead of nothing.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/50.png" alt="adv-app and basic-app, both green." width="1332" height="160" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 50</span>adv-app and basic-app, both green.</figcaption>
+          </figure>
+
+          <div class="callout"><b>One of my misconfigs</b>adv-app's domain came out as system-gslb-http.global.vcf.lab. It should be adv-app.global.vcf.lab.</div>
+
+          <h2>Module 5: A geo-aware global service</h2>
+
+          <p>Here the DNS answers with the site closest to the client. For that it needs a geo DB, a file that maps IP ranges to locations. Every DNS Service Engine loads its own copy.</p>
+
+          <h3>Geo DB</h3>
+
+          <p><strong>Infrastructure &gt; GSLB &gt; Geo Profile &gt; Create</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/51.png" alt="Geo Profile. Create." width="698" height="564" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 51</span>Geo Profile. Create.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/52.png" alt="geoprofile1 with the AviGeoDb.txt.gz entry, priority 10." width="902" height="636" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 52</span>geoprofile1 with the AviGeoDb.txt.gz entry, priority 10.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/53.png" alt="geoprofile1, 1 entry." width="1336" height="156" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 53</span>geoprofile1, 1 entry.</figcaption>
+            </figure>
+          </div>
+
+          <h3>secure-app</h3>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/54.png" alt="Back in GSLB Services. Create." width="1368" height="242" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 54</span>Back in GSLB Services. Create.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/55.png" alt="secure-app, with Geo location-based as the groups algorithm." width="1222" height="544" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 55</span>secure-app, with Geo location-based as the groups algorithm.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/56.png" alt="Health monitor System-GSLB-HTTP, domain secure-app.global.vcf.lab." width="1222" height="544" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 56</span>Health monitor System-GSLB-HTTP, domain secure-app.global.vcf.lab.</figcaption>
+          </figure>
+
+          <p>One pool with a virtual service from each site. The lab has both members inherit their location from their site, so the Palo Alto and Barcelona coordinates from Module 2 get used:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/57.png" alt="secure-app-a on region01a, secure-app-b on region01b." width="898" height="638" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 57</span>secure-app-a on region01a, secure-app-b on region01b.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/58.png" alt="All three green: adv-app, basic-app and secure-app." width="1334" height="194" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 58</span>All three green: adv-app, basic-app and secure-app.</figcaption>
+          </figure>
+
+          <h3>Testing it with dig</h3>
+
+          <p>dig with <code>+subnet</code> pretends to be a client somewhere else. 139.47.28.29 is a Barcelona address, so the answer should be a 10.1.14.x VIP:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/59.png" alt="From the lab manual: the answer was 10.1.13.154, a Palo Alto address." width="1290" height="698" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 59</span>From the lab manual: the answer was 10.1.13.154, a Palo Alto address.</figcaption>
+          </figure>
+
+          <p>It can come back as either site. The resolver on the console strips the EDNS option, so Avi only sees the resolver's internal IP. That IP isn't in the geo DB, so it falls back to round robin. Sending the query straight to the DNS virtual service with <code>dig @10.1.13.137</code> keeps the subnet, and then the closest site comes back.</p>
+
+          <h2>Module 6: DNS policy</h2>
+
+          <p>The manual I had stops at Module 5, so this part is only from my screenshots. A DNS policy sits on a DNS virtual service and acts on queries before GSLB answers them. On the site 1 controller, global-dns-vs-01a:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/60.png" alt="Virtual Services on site 1. global-dns-vs-01a." width="1160" height="542" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 60</span>Virtual Services on site 1. global-dns-vs-01a.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/61.png" alt="Policies tab. Create under DNS Policy." width="1220" height="590" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 61</span>Policies tab. Create under DNS Policy.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/62.png" alt="Rule DNS UDP Queries: match transport protocol UDP, action Drop Query." width="1220" height="428" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 62</span>Rule DNS UDP Queries: match transport protocol UDP, action Drop Query.</figcaption>
+          </figure>
+
+          <p>dig uses UDP by default, so the next query should get dropped:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/63.png" alt="Logs: an A query for adv-app.global.vcf.lab from 10.1.10.130 over UDP. DNS query: policy drop." width="1298" height="656" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 63</span>Logs: an A query for adv-app.global.vcf.lab from 10.1.10.130 over UDP. DNS query: policy drop.</figcaption>
+          </figure>
+
+          <p>Only UDP gets dropped. TCP queries still come in on the TCP service port from Module 1.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/64.png" alt="Edit the Drop UDP Queries Policy Set." width="1222" height="584" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 64</span>Edit the Drop UDP Queries Policy Set.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-04-ans-l/65.png" alt="A second rule, Prefer Site B, under DNS UDP Queries." width="1215" height="314" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 65</span>A second rule, Prefer Site B, under DNS UDP Queries.</figcaption>
+            </figure>
+          </div>
+
+          <p>Prefer Site B is where my screenshots stop. Something to do properly on the redo.</p>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li>GSLB is DNS. The DNS virtual service answers with one site's VIP, then the client goes straight to that site.</li>
+            <li>Each region gets its own DNS virtual service, listening on UDP and TCP 53.</li>
+            <li>All GSLB config is done on the <strong>leader</strong>. Followers are read-only and stay in sync.</li>
+            <li>GSLB pool <strong>priority</strong> gives active/standby. The higher number wins.</li>
+            <li>Geo load balancing needs the real client IP. If the resolver strips EDNS, it falls back to round robin.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-04-ans-l/completion.jpg" alt="Completed November 19, 2026, in 180 minutes." width="786" height="697" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Certificate</span>Completed November 19, 2026, in 180 minutes.</figcaption>
+          </figure>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js?v=20261119a"></script>
+<script src="../assets/site.js?v=20261119a"></script>
+</body>
+</html>

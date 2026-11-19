@@ -37,6 +37,11 @@ window.SITE = {
    status: "completed" or "in-progress" · date: YYYY-MM-DD · read: minutes · no: entry number within its own series */
 window.POSTS = [
   /* ---------- November ---------- */
+  { no: 15, type: 'lab', slug: 'application-resiliency-with-avi-gslb', code: 'HOL-2740-04-ANS-L',
+    title: 'Application Resiliency with Avi Global Server Load Balancing',
+    excerpt: 'Avi GSLB across two sites: a DNS virtual service in each region, a leader and a follower site, then a basic, an advanced and a geo-aware global service.',
+    tags: ['avi', 'vcf'], date: '2026-11-19', status: 'completed', read: 8 },
+
   { no: 14, type: 'lab', slug: 'getting-started-with-avi-for-vcf', code: 'HOL-2740-02-ANS-L',
     title: 'Getting Started with Avi for VCF',
     excerpt: 'Avi Load Balancer in VCF 9.1: the controller, Service Engines and SE groups, then a Layer 4 and a Layer 7 load balancer deployed from VCF Automation.',
