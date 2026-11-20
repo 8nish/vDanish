@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migrate to VMware Avi Load Balancer using the Avi Conversion Tool · vDanish</title>
+<meta name="description" content="Moving an F5 config and the NSX load balancer to Avi with the Avi Conversion Tool: iRules, a patch, Ansible playbooks, then a traffic cutover from NSX to Avi.">
+<meta name="theme-color" content="#070b14">
+<link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css?v=20261120d">
+</head>
+<body data-page="post" data-root="../" data-slug="migrate-f5-and-nsx-lb-to-avi">
+<script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
+<div class="read-progress" id="readProgress"></div>
+<a class="skip" href="#postBody">Skip to article</a>
+<header id="site-header"></header>
+
+<main id="main">
+  <section class="post-head" id="postHead"></section>
+  <div class="wrap">
+    <div class="post-grid">
+      <aside class="post-side" id="postSide"></aside>
+      <article>
+        <!-- ===== ARTICLE CONTENT START ===== -->
+        <div class="prose" id="postBody">
+          <p>My third Avi lab, after <a href="getting-started-with-avi-for-vcf">Getting Started with Avi for VCF</a> and <a href="application-resiliency-with-avi-gslb">the GSLB one</a>. This one is about moving to Avi from other load balancers with the Avi Conversion Tool (ACT): an F5 config in Module 1, and the NSX load balancer in Module 2. Click any photo to enlarge it.</p>
+
+          <div class="callout warning"><b>Two fixes</b>Two steps in Module 1 didn't work the way the lab manual provided says: the controller version and the patch file. Both fixes are below, and in <a href="migrate-to-avi-with-avi-conversion-tool">a short blog post</a>.</div>
+
+          <h2>Lab topology</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/topology.svg" alt="ACT reads the F5 config file and the NSX load balancer, and pushes playbooks to the Avi controller. Everything ends up in the hol tenant." width="1200" height="524" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>ACT reads the F5 config file and the NSX load balancer, and pushes playbooks to the Avi controller. Everything ends up in the hol tenant.</figcaption>
+          </figure>
+
+          <h2>Workflow</h2>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/workflow.svg" alt="What I did, in order. The amber steps are the two fixes." width="1200" height="512" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Diagram</span>What I did, in order. The amber steps are the two fixes.</figcaption>
+          </figure>
+
+          <h2>Module 1: F5 to Avi</h2>
+
+          <h3>A tenant for the migration</h3>
+
+          <p>Everything coming over goes into its own tenant, hol. On the Avi controller, <strong>Administration &gt; Tenants</strong>:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/1.png" alt="Tenants. Create." width="822" height="564" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 1</span>Tenants. Create.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/2.png" alt="hol, with Tenant Access to Provider Service Engine ticked." width="904" height="636" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 2</span>hol, with Tenant Access to Provider Service Engine ticked.</figcaption>
+            </figure>
+          </div>
+
+          <p>With that ticked, hol uses the Service Engines of the admin tenant and doesn't need its own.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/3.png" alt="Virtual Services in hol. Nothing there yet." width="1362" height="280" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 3</span>Virtual Services in hol. Nothing there yet.</figcaption>
+          </figure>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>hol</th></tr></thead>
+              <tbody>
+                <tr><td>Tenant Access to Provider Service Engine</td><td>On</td></tr>
+                <tr><td>Tenant VRF</td><td>Off</td></tr>
+                <tr><td>License reservation</td><td>0</td></tr>
+                <tr><td>License limit</td><td>-1, no limit</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>The F5 migration wizard</h3>
+
+          <p>ACT has its own web UI, and it does more than F5:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/4.png" alt="vDefend and Avi Conversion Tool: F5, NSX-T, NSX-LB Supervisor and NGINX Ingress migrations, and an Illumio policy conversion." width="1360" height="698" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 4</span>vDefend and Avi Conversion Tool: F5, NSX-T, NSX-LB Supervisor and NGINX Ingress migrations, and an Illumio policy conversion.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/5.png" alt="F5 Migration, Migrate, Start Migration." width="1100" height="342" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 5</span>F5 Migration, Migrate, Start Migration.</figcaption>
+          </figure>
+
+          <p>Offline mode works from the F5 config file, so no live F5 is needed. The lab already has the file:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/6.png" alt="Let&#x27;s Begin: Offline Mode." width="978" height="624" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 6</span>Let's Begin: Offline Mode.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/7.png" alt="Collect Configurations: hol_advanced_bigip.conf uploaded." width="980" height="624" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 7</span>Collect Configurations: hol_advanced_bigip.conf uploaded.</figcaption>
+            </figure>
+          </div>
+
+          <p>The staging controller is where ACT builds the profiles, policies and DataScripts. The destination is where it all gets deployed. In the lab they're the same controller, in production they should be separate:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/8.png" alt="Controller Information: 10.1.1.91, admin, version 32.1.1. Generate for the thumbprint." width="980" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 8</span>Controller Information: 10.1.1.91, admin, version 32.1.1. Generate for the thumbprint.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Fix 1</b>The lab manual provided says 31.1.1 here. The controller runs 32.1.1, and with 31.1.1 the import fails and no iRules show up.</div>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/9.png" alt="Map Destination: tenant hol, Cloud-nsx-wld01-a, VRF wld01-a-t1, SE group Default-Group." width="982" height="624" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 9</span>Map Destination: tenant hol, Cloud-nsx-wld01-a, VRF wld01-a-t1, SE group Default-Group.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/10.png" alt="Migration Selection: Full. Migrate." width="978" height="624" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 10</span>Migration Selection: Full. Migrate.</figcaption>
+            </figure>
+          </div>
+
+          <p>The wizard:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>F5 Migration</th></tr></thead>
+              <tbody>
+                <tr><td>Mode</td><td>Offline</td></tr>
+                <tr><td>Config file</td><td>hol_advanced_bigip.conf</td></tr>
+                <tr><td>Staging controller</td><td>10.1.1.91, user admin</td></tr>
+                <tr><td>Version</td><td>32.1.1</td></tr>
+                <tr><td>Destination controller</td><td>Same as staging</td></tr>
+                <tr><td>Tenant</td><td>hol</td></tr>
+                <tr><td>Cloud</td><td>Cloud-nsx-wld01-a</td></tr>
+                <tr><td>VRF</td><td>wld01-a-t1</td></tr>
+                <tr><td>SE group</td><td>Default-Group</td></tr>
+                <tr><td>Merging of similar objects</td><td>On</td></tr>
+                <tr><td>Reuse HTTP policy</td><td>On</td></tr>
+                <tr><td>Migration selection</td><td>Full</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>The iRules</h3>
+
+          <p>ACT turns each iRule into an Avi object, and keeps the F5 iRule next to it:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/11.png" alt="All of them Fetched Successfully. Opened is /Common/denylist: drop the connection if the client IP is on the denylist." width="1322" height="362" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 11</span>All of them Fetched Successfully. Opened is /Common/denylist: drop the connection if the client IP is on the denylist.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/12.png" alt="/Common/https_redirect: redirect HTTP to HTTPS, keeping the host and path." width="1320" height="158" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 12</span>/Common/https_redirect: redirect HTTP to HTTPS, keeping the host and path.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/13.png" alt="/Common/x-forwarded-xff-proto: adds the X-Forwarded-For and X-Forwarded-Proto headers." width="1320" height="132" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 13</span>/Common/x-forwarded-xff-proto: adds the X-Forwarded-For and X-Forwarded-Proto headers.</figcaption>
+            </figure>
+          </div>
+
+          <p>The lab manual provided says x-forwarded-xff-proto comes up as Needs Review. In my lab it was already converted, so nothing to do there.</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th>iRule</th><th>Avi object</th></tr></thead>
+              <tbody>
+                <tr><td>https_<wbr>redirect</td><td>HTTP Policy Set</td></tr>
+                <tr><td>x-forwarded-port</td><td>VSDataScript<wbr>Set</td></tr>
+                <tr><td>path_<wbr>match_<wbr>respond_<wbr>403</td><td>HTTP Policy Set</td></tr>
+                <tr><td>insert_<wbr>true_<wbr>client_<wbr>ip</td><td>HTTP Policy Set</td></tr>
+                <tr><td>x-forwarded-xff-proto</td><td>VSDataScript<wbr>Set</td></tr>
+                <tr><td>denylist</td><td>Network<wbr>Security<wbr>Policy</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/14.png" alt="All iRules reviewed. Continue to Configuration." width="1132" height="392" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 14</span>All iRules reviewed. Continue to Configuration.</figcaption>
+          </figure>
+
+          <p>The virtual services didn't need anything either:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/15.png" alt="iRule migration: 6 reviewed, 1 unused. Config migration: 110 reviewed." width="1310" height="82" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 15</span>iRule migration: 6 reviewed, 1 unused. Config migration: 110 reviewed.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/16.png" alt="Deploy: destination 10.1.1.91 on 32.1.1, mapped to the hol tenant." width="1320" height="370" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 16</span>Deploy: destination 10.1.1.91 on 32.1.1, mapped to the hol tenant.</figcaption>
+            </figure>
+          </div>
+
+          <h3>The patch and the playbook</h3>
+
+          <p>Generate Playbook starts with a patch: a find and replace over all the virtual services before the playbook gets built. The lab has one ready in the f5_migration folder:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/17.png" alt="Generate Playbook, All." width="496" height="612" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 17</span>Generate Playbook, All.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/18.png" alt="tier1_patch.yml in the f5_migration folder." width="994" height="636" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 18</span>tier1_patch.yml in the f5_migration folder.</figcaption>
+            </figure>
+          </div>
+
+          <p>This is the second thing that didn't work. The file uses a VRF and a network this lab doesn't have, so the playbook ends in Error. Left is the file as it came, right is what worked:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/19.png" alt="Left: tier1_patch.yml as it came. Right: my fix." width="1569" height="640" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 19</span>Left: tier1_patch.yml as it came. Right: my fix.</figcaption>
+          </figure>
+
+          <div class="callout"><b>Fix 2</b>wld01-a-t1 is the same VRF picked in Map Destination, and wld01-avi-data is the network for the VIPs. The fixed patch is in <a href="migrate-to-avi-with-avi-conversion-tool">the blog post</a>, ready to copy.</div>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>tier1_patch.yml as it came</th><th>What worked</th></tr></thead>
+              <tbody>
+                <tr><td>VRF</td><td>t1-wld-a</td><td>wld01-a-t1</td></tr>
+                <tr><td>VIP network</td><td>wld-a-avi-data</td><td>wld01-avi-data</td></tr>
+                <tr><td>tier1_lr</td><td>A Tier-1 ID, in VsVip and Pool</td><td>Left out</td></tr>
+                <tr><td>Playbook push</td><td>Error</td><td>Went through</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/20.png" alt="Apply Patch. This shot still has the file as it came. The fixed one goes here." width="1224" height="662" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 20</span>Apply Patch. This shot still has the file as it came. The fixed one goes here.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/21.png" alt="Playbook name hol-f5, all 110 virtual services. Generate." width="1224" height="656" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 21</span>Playbook name hol-f5, all 110 virtual services. Generate.</figcaption>
+          </figure>
+
+          <p>Each generate makes two playbooks: one creates the services, the _delete one rolls them back.</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/22.png" alt="My three tries with Error, then vDanish-hol-f5.yml with the fixed patch. Push to Controller." width="1316" height="378" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 22</span>My three tries with Error, then vDanish-hol-f5.yml with the fixed patch. Push to Controller.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/23.png" alt="View Transcript shows what a push changed." width="1318" height="294" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 23</span>View Transcript shows what a push changed.</figcaption>
+          </figure>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/24.png" alt="And there they are: 110 virtual services in the hol tenant." width="1360" height="602" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 24</span>And there they are: 110 virtual services in the hol tenant.</figcaption>
+          </figure>
+
+          <h2>Module 2: NSX load balancer to Avi</h2>
+
+          <h3>What's on NSX now</h3>
+
+          <p>First a look at the NSX side. In NSX, <strong>Networking &gt; Load Balancing &gt; Virtual Servers</strong>:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/25.png" alt="hol-nsx-http-vs-01: 172.16.230.101 on port 80, L7 HTTP, pool-01." width="1360" height="574" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 25</span>hol-nsx-http-vs-01: 172.16.230.101 on port 80, L7 HTTP, pool-01.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/26.png" alt="pool-01: web1 10.1.13.11 and web2 10.1.13.12, port 30001." width="1222" height="346" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 26</span>pool-01: web1 10.1.13.11 and web2 10.1.13.12, port 30001.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/27.png" alt="http://172.16.230.101 opens." width="1362" height="702" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 27</span>http://172.16.230.101 opens.</figcaption>
+            </figure>
+          </div>
+
+          <p>vs-14 is HTTPS, with the same two servers behind it:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/28.png" alt="hol-nsx-http-vs-14: 172.16.230.114 on 443, pool-14." width="1316" height="140" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 28</span>hol-nsx-http-vs-14: 172.16.230.114 on 443, pool-14.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/29.png" alt="pool-14: web1 and web2 again." width="1224" height="332" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 29</span>pool-14: web1 and web2 again.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/30.png" alt="SSL on both sides: client SSL with the hol-wildcard certificate, and server SSL to the pool." width="738" height="566" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 30</span>SSL on both sides: client SSL with the hol-wildcard certificate, and server SSL to the pool.</figcaption>
+          </figure>
+
+          <p>But it doesn't open:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/31.png" alt="https://172.16.230.114: 502 Bad Gateway from the NSX LB." width="1330" height="226" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 31</span>https://172.16.230.114: 502 Bad Gateway from the NSX LB.</figcaption>
+          </figure>
+
+          <p>That's expected. vs-14 has a rule that only accepts one SNI name, and I went to the IP:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/32.png" alt="Load Balancer Rules: 1 rule in the Transport phase." width="1050" height="502" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 32</span>Load Balancer Rules: 1 rule in the Transport phase.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/33.png" alt="SNI name equals 172.16.230.10, then SSL Mode Selection: SSL End to End." width="1044" height="614" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 33</span>SNI name equals 172.16.230.10, then SSL Mode Selection: SSL End to End.</figcaption>
+            </figure>
+          </div>
+
+          <p>vs-11 is a plain HTTPS one, and that one works:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/34.png" alt="hol-nsx-http-vs-11: 172.16.230.111 on 443, pool-11." width="1316" height="136" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 34</span>hol-nsx-http-vs-11: 172.16.230.111 on 443, pool-11.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/35.png" alt="pool-11: web1 and web2." width="1224" height="340" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 35</span>pool-11: web1 and web2.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/36.png" alt="https://172.16.230.111 opens." width="1338" height="700" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 36</span>https://172.16.230.111 opens.</figcaption>
+          </figure>
+
+          <p>The three I checked. Behind all of them are web1 10.1.13.11 and web2 10.1.13.12, on port 30001:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th>Virtual server</th><th>VIP</th><th>Pool</th><th>In the browser</th></tr></thead>
+              <tbody>
+                <tr><td>hol-nsx-http-<wbr>vs-01</td><td>172.16.230.101, port 80</td><td>pool-01</td><td>Opens</td></tr>
+                <tr><td>hol-nsx-http-<wbr>vs-14</td><td>172.16.230.114, port 443</td><td>pool-14</td><td>502, SNI rule</td></tr>
+                <tr><td>hol-nsx-http-<wbr>vs-11</td><td>172.16.230.111, port 443</td><td>pool-11</td><td>Opens</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>The NSX-T migration wizard</h3>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/37.png" alt="Back in ACT. NSX-T Migration, Start." width="434" height="588" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 37</span>Back in ACT. NSX-T Migration, Start.</figcaption>
+          </figure>
+
+          <p>This time ACT connects to the NSX Manager and pulls the load balancer config itself:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/38.png" alt="Collect Configurations: NSX Manager 10.1.1.24, thumbprint accepted, Skip Pool Members IP Validation ticked." width="1224" height="662" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 38</span>Collect Configurations: NSX Manager 10.1.1.24, thumbprint accepted, Skip Pool Members IP Validation ticked.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/39.png" alt="Controller Information: Avi at 10.1.1.91, version 32.1.1." width="1224" height="656" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 39</span>Controller Information: Avi at 10.1.1.91, version 32.1.1.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/40.png" alt="Map Destination: only a tenant this time, hol. Migrate." width="1224" height="664" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 40</span>Map Destination: only a tenant this time, hol. Migrate.</figcaption>
+          </figure>
+
+          <p>Migrate only pulls the config in and translates it. Nothing gets created in Avi yet.</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>NSX-T Migration</th></tr></thead>
+              <tbody>
+                <tr><td>NSX Manager</td><td>10.1.1.24, user admin</td></tr>
+                <tr><td>Skip Pool Members IP Validation</td><td>On</td></tr>
+                <tr><td>Avi controller</td><td>10.1.1.91, user admin</td></tr>
+                <tr><td>Version</td><td>32.1.1</td></tr>
+                <tr><td>Tenant</td><td>hol</td></tr>
+                <tr><td>Merging of similar objects</td><td>On</td></tr>
+                <tr><td>Virtual services</td><td>9, filtered by hol</td></tr>
+                <tr><td>Playbook</td><td>hol-nsx-conversion</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Reviewing the 9 virtual services</h3>
+
+          <p>Filtering by hol leaves the 9 lab ones. Each one has to be reviewed, anything not reviewed gets skipped:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/41.png" alt="9 virtual services, all Needs Review." width="1320" height="386" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 41</span>9 virtual services, all Needs Review.</figcaption>
+          </figure>
+
+          <p>A review is three screens: the referenced objects like the pool, the virtual service, then a final review. The yellow box is what won't come over, like NSX tags and the passive monitor:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/42.png" alt="Referenced Objects for vs-01: pool-01 as NSX config on the left, Avi config on the right." width="1348" height="626" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 42</span>Referenced Objects for vs-01: pool-01 as NSX config on the left, Avi config on the right.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/43.png" alt="Virtual Service. Skipped: tags." width="1348" height="622" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 43</span>Virtual Service. Skipped: tags.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/44.png" alt="Review. Ready." width="1348" height="624" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 44</span>Review. Ready.</figcaption>
+          </figure>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/45.png" alt="vs-01: Reviewed." width="1890" height="75" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 45</span>vs-01: Reviewed.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/46.png" alt="Same for the other 8." width="1318" height="394" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 46</span>Same for the other 8.</figcaption>
+            </figure>
+          </div>
+
+          <h3>Playbook, cutover and clean up</h3>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/47.png" alt="All reviewed. Continue to Deploy." width="1130" height="392" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 47</span>All reviewed. Continue to Deploy.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/48.png" alt="Generate Playbook, All." width="868" height="494" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 48</span>Generate Playbook, All.</figcaption>
+            </figure>
+          </div>
+
+          <p>No patch step for NSX, and this one went through on the first try:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/49.png" alt="hol-nsx-conversion, 9 virtual services. Generate." width="522" height="612" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 49</span>hol-nsx-conversion, 9 virtual services. Generate.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/50.png" alt="hol-nsx-conversion.yml. Push to Controller." width="1324" height="230" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 50</span>hol-nsx-conversion.yml. Push to Controller.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/51.png" alt="The transcript: 41 ok, 40 changed, 0 failed, in 14 seconds." width="1026" height="618" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 51</span>The transcript: 41 ok, 40 changed, 0 failed, in 14 seconds.</figcaption>
+          </figure>
+
+          <p>Now the services exist in Avi, but NSX still has the traffic. Cutover moves it: the virtual server goes off on NSX and on in Avi.</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/52.png" alt="All 9 selected. Traffic, NSX → Avi." width="1324" height="404" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 52</span>All 9 selected. Traffic, NSX → Avi.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/53.png" alt="Avi Enabled, NSX Deactivated. Cutover done for all 9." width="1324" height="412" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 53</span>Avi Enabled, NSX Deactivated. Cutover done for all 9.</figcaption>
+            </figure>
+          </div>
+
+          <figure class="shot">
+            <img src="../assets/shots/hol-2740-05-act/54.png" alt="In Avi: Virtual Services (119), the 110 from the F5 plus these 9, with the same VIPs they had on NSX." width="498" height="612" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 54</span>In Avi: Virtual Services (119), the 110 from the F5 plus these 9, with the same VIPs they had on NSX.</figcaption>
+          </figure>
+
+          <p>Cutover and clean up are separate, so you can still roll back to NSX until you clean up. Clean up deletes the old virtual servers from NSX:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/55.png" alt="Clean Up: all 9. Confirm, Yes, Continue." width="784" height="616" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 55</span>Clean Up: all 9. Confirm, Yes, Continue.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/56.png" alt="Done. Avi has all 9, NSX has nothing left." width="1322" height="386" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Photo 56</span>Done. Avi has all 9, NSX has nothing left.</figcaption>
+            </figure>
+          </div>
+
+          <p>Both migrations side by side:</p>
+
+          <div class="table">
+            <table>
+              <thead><tr><th></th><th>F5</th><th>NSX</th></tr></thead>
+              <tbody>
+                <tr><td>Source</td><td>hol_<wbr>advanced_<wbr>bigip.conf</td><td>NSX Manager 10.1.1.24</td></tr>
+                <tr><td>Mapping</td><td>Tenant, cloud, VRF, SE group</td><td>Tenant only</td></tr>
+                <tr><td>Virtual services</td><td>110</td><td>9</td></tr>
+                <tr><td>Patch</td><td>Fixed tier1_patch.yml</td><td>None</td></tr>
+                <tr><td>After the push</td><td>Done</td><td>Cutover, then clean up</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Key takeaways</h2>
+
+          <ul>
+            <li>ACT moves an F5 config or the NSX load balancer to Avi. Nothing gets created until the playbook is pushed.</li>
+            <li>iRules become Avi objects: HTTP policy sets, DataScripts or network security policies.</li>
+            <li>The version in the wizard has to match what the controller runs.</li>
+            <li>A patch has to use the names of your own Avi setup, like the VRF and the network.</li>
+            <li>Every playbook comes with a _delete one, and cutover is separate from clean up. Both give you a way back.</li>
+          </ul>
+
+          <h2>Lab completed</h2>
+
+          <p>I ran it twice, so there are two:</p>
+
+          <div class="shot-grid">
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/completion-1.jpg" alt="November 19, 2026, 22 minutes." width="806" height="746" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Certificate</span>November 19, 2026, 22 minutes.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="../assets/shots/hol-2740-05-act/completion-2.jpg" alt="November 19, 2026, 81 minutes." width="803" height="742" loading="lazy" decoding="async">
+              <figcaption><span class="shot-no">Certificate</span>November 19, 2026, 81 minutes.</figcaption>
+            </figure>
+          </div>
+        </div>
+        <!-- ===== ARTICLE CONTENT END ===== -->
+        <nav class="pn" id="postNav" aria-label="More lab notes"></nav>
+      </article>
+    </div>
+    <section class="more-labs">
+      <div class="shead"><span class="num">//</span><h2>More from the lab</h2><span class="rule"></span></div>
+      <div class="labs" id="related"></div>
+    </section>
+  </div>
+</main>
+
+<footer id="site-footer"></footer>
+<script src="../assets/posts.js?v=20261120d"></script>
+<script src="../assets/site.js?v=20261120d"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 524" width="1200" height="524" role="img" aria-labelledby="t d">
+  <title id="t">Lab topology: HOL-2740-05-ANS-L</title>
+  <desc id="d">Two sources on the left: an F5 BIG-IP config file, hol_advanced_bigip.conf, and the NSX Manager 10.1.1.24 with its load balancer and 9 hol-nsx-http virtual servers. In the middle the Avi Conversion Tool (ACT) with its F5 Migration and NSX-T Migration wizards. The config file is uploaded to ACT, and ACT talks to NSX over its API. ACT pushes Ansible playbooks to the Avi Controller wld01a-avi at 10.1.1.91, version 32.1.1, where everything lands in the tenant hol: 110 virtual services from the F5 and 9 from NSX, on Cloud-nsx-wld01-a, VRF wld01-a-t1 and SE group Default-Group. For NSX, ACT also does the traffic cutover and cleans up the old virtual servers.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#94b2e6" stroke-opacity=".06"/></pattern>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7dd3fc"/></marker>
+  </defs>
+  <style>
+    .mono{font-family:JetBrains Mono,Consolas,monospace}
+    .card{fill:#0f1626;stroke-width:2}
+    .chip{fill:#141d31;stroke:#3a4a68;stroke-width:1.5}
+    .name{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:18px;font-weight:700}
+    .loc{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:16px;font-weight:400;fill:#c6d1e2}
+    .lbl{font-family:Inter,Segoe UI,Arial,sans-serif;font-size:14px;fill:#c6d1e2}
+    .role{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;font-weight:700;letter-spacing:1px;text-anchor:middle}
+    .vmn{font-family:JetBrains Mono,Consolas,monospace;font-size:14px;font-weight:700;fill:#eef3fb}
+    .vms{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;fill:#7f8ea8}
+    .q{font-family:JetBrains Mono,Consolas,monospace;font-size:12px;font-weight:700;fill:#7dd3fc;text-anchor:middle}
+    .flow{stroke:#7dd3fc;stroke-width:2.5;fill:none}
+  </style>
+  <rect width="1200" height="524" rx="18" fill="#0a1120"/>
+  <rect width="1200" height="524" rx="18" fill="url(#grid)"/>
+  <text x="40" y="52" class="mono" font-size="15" font-weight="600" letter-spacing="2" fill="#22d3ee">HOL-2740-05-ANS-L · LAB TOPOLOGY</text>
+<rect x="40" y="84" width="320" height="160" rx="16" class="card" stroke="#fb7185"/>
+<text x="60" y="118" class="name" fill="#fb7185">F5 BIG-IP<tspan dx="10" class="loc">config</tspan></text>
+<text x="60" y="143" class="vms">Module 1 · no live F5 needed</text>
+<rect x="60" y="160" width="280" height="68" rx="10" class="chip"/>
+<text x="78" y="188" class="vmn">hol_advanced_bigip.conf</text>
+<text x="78" y="212" class="vms">virtual services and iRules</text>
+<rect x="40" y="268" width="320" height="160" rx="16" class="card" stroke="#60a5fa"/>
+<text x="60" y="302" class="name" fill="#60a5fa">NSX Manager<tspan dx="10" class="loc">10.1.1.24</tspan></text>
+<text x="60" y="327" class="vms">Module 2 · NSX load balancer</text>
+<rect x="60" y="344" width="280" height="68" rx="10" class="chip"/>
+<text x="78" y="372" class="vmn">9 virtual servers</text>
+<text x="78" y="396" class="vms">hol-nsx-http-vs-01 to vs-15</text>
+<rect x="440" y="84" width="320" height="344" rx="16" class="card" stroke="#22d3ee"/>
+<text x="460" y="118" class="name" fill="#22d3ee">ACT<tspan dx="10" class="loc">Avi Conversion Tool</tspan></text>
+<text x="460" y="143" class="vms">vDefend and Avi Conversion Tool</text>
+<rect x="460" y="160" width="280" height="108" rx="10" class="chip"/>
+<text x="478" y="188" class="vmn">F5 Migration</text>
+<text x="478" y="212" class="vms">iRules become Avi objects,</text>
+<text x="478" y="234" class="vms">then patch, playbook, push</text>
+<rect x="460" y="300" width="280" height="108" rx="10" class="chip"/>
+<text x="478" y="328" class="vmn">NSX-T Migration</text>
+<text x="478" y="352" class="vms">review all 9, playbook,</text>
+<text x="478" y="374" class="vms">cutover, clean up</text>
+<rect x="840" y="84" width="320" height="344" rx="16" class="card" stroke="#f59e0b"/>
+<text x="860" y="118" class="name" fill="#f59e0b">Avi Controller</text>
+<rect x="1054" y="100" width="86" height="24" rx="12" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="1097" y="116" class="role" fill="#f59e0b">32.1.1</text>
+<text x="860" y="143" class="vms">wld01a-avi · 10.1.1.91</text>
+<rect x="860" y="160" width="280" height="108" rx="10" class="chip"/>
+<text x="878" y="188" class="vmn">tenant hol</text>
+<text x="878" y="212" class="vms">110 virtual services from F5</text>
+<text x="878" y="234" class="vms">9 from NSX</text>
+<rect x="860" y="300" width="280" height="108" rx="10" class="chip"/>
+<text x="878" y="328" class="vmn">Cloud-nsx-wld01-a</text>
+<text x="878" y="352" class="vms">VRF wld01-a-t1</text>
+<text x="878" y="374" class="vms">SE group Default-Group</text>
+<line x1="360" y1="194" x2="436" y2="194" class="flow" marker-end="url(#ar)"/><text x="398" y="182" class="q">upload</text>
+<line x1="364" y1="378" x2="436" y2="378" class="flow" marker-start="url(#ar)" marker-end="url(#ar)"/><text x="400" y="366" class="q">API</text>
+<line x1="760" y1="256" x2="836" y2="256" class="flow" marker-end="url(#ar)"/><text x="798" y="244" class="q">playbook</text>
+<path d="M42 466 H68" class="flow" marker-end="url(#ar)"/><text x="82" y="471" class="lbl">ACT reads the F5 config and the NSX load balancer, and pushes Ansible playbooks to Avi.</text>
+<path d="M36 494 H74" class="flow" marker-start="url(#ar)" marker-end="url(#ar)"/><text x="82" y="499" class="lbl">For NSX it also does the cutover: virtual server off on NSX, on in Avi, then clean up on NSX.</text>
+</svg>

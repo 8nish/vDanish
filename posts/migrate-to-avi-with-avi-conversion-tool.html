@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fixing the Staging Controller Version Error in the Avi Conversion Tool Lab · vDanish</title>
-<meta name="description" content="If the F5 migration in HOL-2740-05-ANS-L fails with Staging controller version is different from the input provided to the converter, enter the version the controller actually runs: 32.1.1.">
+<title>Two Fixes for the Avi Conversion Tool Lab · vDanish</title>
+<meta name="description" content="Two fixes for HOL-2740-05-ANS-L: enter 32.1.1 as the controller version, not 31.1.1, and fix the VRF and network names in tier1_patch.yml before generating the playbook.">
 <meta name="theme-color" content="#070b14">
 <link rel="icon" type="image/svg+xml" href="../assets/logo-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style.css?v=20261120c">
+<link rel="stylesheet" href="../assets/style.css?v=20261120d">
 </head>
 <body data-page="post" data-root="../" data-slug="migrate-to-avi-with-avi-conversion-tool">
 <script>try{var t=localStorage.getItem('vdanish-theme');if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.body.classList.add('light-theme')}catch(e){}</script>
@@ -26,9 +26,11 @@
       <article>
         <!-- ===== ARTICLE CONTENT START ===== -->
         <div class="prose" id="postBody">
-          <p>A quick one from the lab <em>Migrate to VMware Avi Load Balancer using the Avi Conversion Tool</em> (HOL-2740-05-ANS-L). If the F5 migration fails with <strong>Staging controller version is different from the input provided to the converter</strong>, enter 32.1.1 as the controller version. Click any photo to enlarge it.</p>
+          <p>Two fixes from the lab <em>Migrate to VMware Avi Load Balancer using the Avi Conversion Tool</em> (HOL-2740-05-ANS-L), for the two places where the lab manual provided didn't work for me. Both are in the F5 migration in Module 1. The whole lab is in <a href="migrate-f5-and-nsx-lb-to-avi">HOL LOG #16</a>. Click any photo to enlarge it.</p>
 
-          <h2>The problem</h2>
+          <h2>1. The controller version</h2>
+
+          <h3>The problem</h3>
 
           <p>The lab manual provided says to enter 31.1.1 as the version of the staging controller:</p>
 
@@ -49,7 +51,7 @@
             <figcaption><span class="shot-no">Photo 3</span>The iRules list: No iRules found.</figcaption>
           </figure>
 
-          <h2>The fix</h2>
+          <h3>The fix</h3>
 
           <p>The version has to match what the controller actually runs. You can see it on the controller under Administration:</p>
 
@@ -71,6 +73,60 @@
             <img src="../assets/shots/avi-act-version-fix/6.png" alt="The iRules are there now, Fetched Successfully." width="1322" height="362" loading="lazy" decoding="async">
             <figcaption><span class="shot-no">Photo 6</span>The iRules are there now, Fetched Successfully.</figcaption>
           </figure>
+
+          <h2>2. The patch file</h2>
+
+          <h3>The problem</h3>
+
+          <p>Before the playbook gets generated, the lab manual provided says to copy <code>tier1_patch.yml</code> from the f5_migration folder and paste it into Apply Patch. With that file as it is, the playbook ends in Error when you push it. It took me three tries:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/avi-act-version-fix/7.png" alt="Three playbooks that ended in Error. The top one, vDanish-hol-f5.yml, has the fixed patch and is ready to push." width="1316" height="378" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 7</span>Three playbooks that ended in Error. The top one, vDanish-hol-f5.yml, has the fixed patch and is ready to push.</figcaption>
+          </figure>
+
+          <h3>The fix</h3>
+
+          <p>The file uses a VRF (t1-wld-a) and a network (wld-a-avi-data) that this lab doesn't have. Change them to <strong>wld01-a-t1</strong>, the same VRF you pick in Map Destination, and <strong>wld01-avi-data</strong>, and take out the two tier1_lr lines:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/avi-act-version-fix/8.png" alt="Left: tier1_patch.yml as it comes in the lab. Right: the patch that worked." width="1569" height="640" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 8</span>Left: tier1_patch.yml as it comes in the lab. Right: the patch that worked.</figcaption>
+          </figure>
+
+          <p>The fixed patch, to paste into Apply Patch:</p>
+
+<pre data-lang="yaml"><code>#Version 2671
+
+VirtualService:
+  - match_name: ".*"
+    patch:
+      vrf_context_ref: /api/vrfcontext/?name=wld01-a-t1
+      enabled: true
+      traffic_enabled: true
+
+VsVip:
+  - match_name: ".*"
+    patch:
+      vip:
+      - vip_id: 1
+        auto_allocate_ip: false
+        prefix_length: 32
+        placement_networks:
+        - network_ref: /api/network/?name=wld01-avi-data
+      vrf_context_ref: /api/vrfcontext/?name=wld01-a-t1
+
+Pool:
+  - match_name: ".*"
+    patch:
+      vrf_ref: /api/vrfcontext/?name=wld01-a-t1</code></pre>
+
+          <p>Then generate the playbook and push it. All 110 virtual services from the F5 config show up in the hol tenant:</p>
+
+          <figure class="shot">
+            <img src="../assets/shots/avi-act-version-fix/9.png" alt="Virtual Services (110) in the hol tenant." width="1360" height="602" loading="lazy" decoding="async">
+            <figcaption><span class="shot-no">Photo 9</span>Virtual Services (110) in the hol tenant.</figcaption>
+          </figure>
         </div>
         <!-- ===== ARTICLE CONTENT END ===== -->
         <nav class="pn" id="postNav" aria-label="More articles"></nav>
@@ -84,7 +140,7 @@
 </main>
 
 <footer id="site-footer"></footer>
-<script src="../assets/posts.js?v=20261120c"></script>
-<script src="../assets/site.js?v=20261120c"></script>
+<script src="../assets/posts.js?v=20261120d"></script>
+<script src="../assets/site.js?v=20261120d"></script>
 </body>
 </html>

@@ -38,10 +38,14 @@ window.SITE = {
    labs only: no (HOL LOG entry number) · status: "completed" or "in-progress" */
 window.POSTS = [
   /* ---------- November ---------- */
+  { no: 16, type: 'lab', slug: 'migrate-f5-and-nsx-lb-to-avi', code: 'HOL-2740-05-ANS-L',
+    title: 'Migrate to VMware Avi Load Balancer using the Avi Conversion Tool',
+    excerpt: 'Moving an F5 config and the NSX load balancer to Avi with the Avi Conversion Tool, with two fixes where the lab manual provided didn\'t work for me.',
+    tags: ['avi', 'nsx'], date: '2026-11-20', status: 'completed', read: 9 },
   { type: 'blog', slug: 'migrate-to-avi-with-avi-conversion-tool',
-    title: 'Fixing the Staging Controller Version Error in the Avi Conversion Tool Lab',
-    excerpt: 'If the F5 migration in HOL-2740-05-ANS-L fails with this error and no iRules show up, enter 32.1.1 as the controller version, not 31.1.1.',
-    tags: ['avi'], date: '2026-11-20', read: 2 },
+    title: 'Two Fixes for the Avi Conversion Tool Lab',
+    excerpt: 'Two things in HOL-2740-05-ANS-L that don\'t work as the lab manual provided says: the controller version (32.1.1, not 31.1.1) and the tier1_patch.yml file.',
+    tags: ['avi'], date: '2026-11-20', read: 3 },
 
   { no: 15, type: 'lab', slug: 'application-resiliency-with-avi-gslb', code: 'HOL-2740-04-ANS-L',
     title: 'Application Resiliency with Avi Global Server Load Balancing',
